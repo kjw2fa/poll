@@ -1,0 +1,14 @@
+{
+  "name": "poll-backend",
+  "version": "1.0.0",
+  "description": "Backend for the poll application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1",
+    "sqlite3": "^5.0.2"
+  }
+}

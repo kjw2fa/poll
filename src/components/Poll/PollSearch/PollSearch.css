@@ -1,0 +1,16 @@
+.poll-search {
+    padding: 20px;
+    text-align: center;
+}
+
+.search-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.search-container input {
+    width: 300px;
+    padding: 10px;
+    margin-right: 10px;
+}

@@ -1,0 +1,42 @@
+.create-poll {
+    padding: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.option input {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.add-option-container {
+    display: flex;
+}
+
+.add-option-container input {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.poll-created-success {
+    text-align: center;
+}
