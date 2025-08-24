@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import './Vote.css';
+var SortedMap = require("collections/sorted-map");
 
 const Draggable = ({ id, children }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
@@ -32,9 +33,13 @@ const Droppable = ({ id, children }) => {
 const Vote = () => {
     const { id } = useParams();
     const [poll, setPoll] = useState(null);
-    const [options, setOptions] = useState([]);
-    const [ratings, setRatings] = useState(Array.from({ length: 10 }, (_, i) => ({ id: `rating-${i + 1}`, options: [] })));
     const [name, setName] = useState('');
+    var initialRatingsMap = new SortedMap();
+    // Initialize ratings map with keys 1-10 and empty sets.
+    for (let i = 10; i >= 1; i--) {
+        initialRatingsMap.set(i, new Set());
+    }
+    const [ratings, setRatings] = useState(initialRatingsMap);
 
     useEffect(() => {
         const fetchPoll = async () => {
@@ -43,7 +48,6 @@ const Vote = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setPoll(data);
-                    setOptions(data.options.map((option, index) => ({ id: `option-${index}`, text: option })));
                 } else {
                     console.error('Failed to fetch poll');
                 }
@@ -56,44 +60,23 @@ const Vote = () => {
     }, [id]);
 
     const handleDragEnd = (event) => {
+        // "active" is the item being dragged.
+        // "over" is the droppable area it is dropped over.
         const { active, over } = event;
+        const option = active.id;
 
-        if (!active.data.current) return;
+        let newRatings = new SortedMap(ratings);
 
-        const draggedOption = active.data.current.option;
-        const optionId = active.id;
+        // Remove the option from any previous rating it was in.
+        newRatings.forEach((options) => options.delete(option));
 
-        let newRatings = [...ratings];
-        let newOptions = [...options];
-
-        // Determine if the dragged item was originally from the options list or a rating cell
-        const isFromOptionsList = newOptions.some(opt => opt.id === optionId);
-
-        // Remove from original location
-        if (isFromOptionsList) {
-            newOptions = newOptions.filter(opt => opt.id !== optionId);
-        } else {
-            // It was from a rating cell, remove it from there
-            newRatings = newRatings.map(r => ({
-                ...r,
-                options: r.options.filter(opt => opt.id !== optionId)
-            }));
-        }
-
-        // Add to new location
-        if (over && over.id.startsWith('rating-')) {
-            // Dropped into a rating cell
-            const ratingId = over.id;
-            newRatings = newRatings.map(r =>
-                r.id === ratingId ? { ...r, options: [...r.options, draggedOption] } : r
-            );
-        } else {
-            // Dropped outside any droppable area, or back to the options container
-            newOptions = [...newOptions, draggedOption];
+        // If it was dropped over a rating cell, add it to that rating's options.
+        if (over) {
+            const newRatingValue = over.id;
+            newRatings.get(newRatingValue).add(option);
         }
 
         setRatings(newRatings);
-        setOptions(newOptions);
     };
 
     const handleSubmit = async () => {
@@ -120,6 +103,24 @@ const Vote = () => {
         return <div>Loading...</div>;
     }
 
+
+    const draggableOption = option =>
+        <Draggable key={option} id={option} data={{ option }}>
+            <div className="option">{option}</div>
+        </Draggable>;
+
+    const tableBody = [];
+    ratings.forEach((options, ratingValue) => {
+        tableBody.push(<tr key={ratingValue}>
+            <td>{ratingValue}</td>
+            <Droppable id={ratingValue}>
+                {options.map(draggableOption)}
+            </Droppable>
+        </tr>)
+    });
+
+    const options = poll ? new Set(poll.options) : new Set();
+    const ratedOptions = new Set(ratings.values().flatMap(set => Array.from(set)));
     return (
         <div className="vote">
             <h2>{poll.title}</h2>
@@ -131,11 +132,7 @@ const Vote = () => {
                 <div className="vote-container">
                     <div className="options-container">
                         <h3>Options</h3>
-                        {options.map(option => (
-                            <Draggable key={option.id} id={option.id} data={{ option }}>
-                                <div className="option-item">{option.text}</div>
-                            </Draggable>
-                        ))}
+                        {options.filter(option => !ratedOptions.has(option)).map(draggableOption)}
                     </div>
                     <div className="ratings-container">
                         <h3>Ratings</h3>
@@ -147,18 +144,7 @@ const Vote = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {ratings.map(rating => (
-                                    <tr key={rating.id}>
-                                        <td>{11 - parseInt(rating.id.split('-')[1])}</td>
-                                        <Droppable id={rating.id}>
-                                            {rating.options.map(option => (
-                                                <Draggable key={option.id} id={option.id} data={{ option }}>
-                                                    <div className="dropped-option">{option.text}</div>
-                                                </Draggable>
-                                            ))}
-                                        </Droppable>
-                                    </tr>
-                                ))}
+                                {tableBody}
                             </tbody>
                         </table>
                     </div>
