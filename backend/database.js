@@ -12,17 +12,17 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         console.log('Connected to the SQLite database.')
         db.run(`CREATE TABLE Polls (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            userId INTEGER,
             title TEXT,
-            options TEXT,
-            userId INTEGER
+            options TEXT
             )`,
             (err) => {
                 if (err) {
                     // Table already created
                 } else {
                     // Table just created, creating some rows
-                    var insert = 'INSERT INTO Polls (title, options) VALUES (?,?)'
-                    db.run(insert, ["What's your favorite color?", JSON.stringify(["Red", "Green", "Blue"])])
+                    var insert = 'INSERT INTO Polls (userId, title, options) VALUES (?,?,?)'
+                    db.run(insert, [null, "What's your favorite color?", JSON.stringify(["Red", "Green", "Blue"])])
                 }
             });
         db.run(`CREATE TABLE Votes (

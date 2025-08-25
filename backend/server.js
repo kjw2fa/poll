@@ -31,8 +31,8 @@ app.post('/api/polls', (req, res) => {
     const { title, options, userId } = req.body;
     const optionsJson = JSON.stringify(options);
     db.run(
-        `INSERT INTO Polls (title, options, userId) VALUES (?, ?, ?)`,
-        [title, optionsJson, userId],
+        `INSERT INTO Polls (userId, title, options) VALUES (?, ?, ?)`,
+        [userId, title, optionsJson],
         function (err) {
             if (err) {
                 return res.status(500).json({ error: err.message });
