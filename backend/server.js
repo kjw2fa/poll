@@ -31,13 +31,23 @@ app.post('/api/polls', (req, res) => {
     const { title, options, userId } = req.body;
     const optionsJson = JSON.stringify(options);
     db.run(
-        `INSERT INTO Polls (userId, title, options) VALUES (?, ?, ?)`,
-        [userId, title, optionsJson],
+        `INSERT INTO Polls (title, options) VALUES (?, ?)`,
+        [title, optionsJson],
         function (err) {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            res.status(201).json({ id: this.lastID });
+            const pollId = this.lastID;
+            db.run(
+                `INSERT INTO PollPermissions (pollId, userId, canEdit) VALUES (?, ?, ?)`,
+                [pollId, userId, true],
+                function (err2) {
+                    if (err2) {
+                        return res.status(500).json({ error: err2.message });
+                    }
+                    res.status(201).json({ id: pollId });
+                }
+            );
         }
     );
 });
@@ -182,8 +192,12 @@ app.post('/api/signup', async (req, res) => {
 
 app.get('/api/user/:userId/polls', (req, res) => {
     const userId = req.params.userId;
-    // Polls created by user
-    db.all(`SELECT * FROM Polls WHERE userId = ?`, [userId], (err, createdPolls) => {
+    // Polls user can edit (created)
+    db.all(`
+        SELECT Polls.* FROM Polls
+        JOIN PollPermissions ON Polls.id = PollPermissions.pollId
+        WHERE PollPermissions.userId = ? AND PollPermissions.canEdit = 1
+    `, [userId], (err, createdPolls) => {
         if (err) return res.status(500).json({ error: err.message });
         // Polls user voted on
         db.all(`

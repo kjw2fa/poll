@@ -12,7 +12,6 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         console.log('Connected to the SQLite database.')
         db.run(`CREATE TABLE Polls (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            userId INTEGER,
             title TEXT,
             options TEXT
             )`,
@@ -21,7 +20,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                     // Table already created
                 } else {
                     // Table just created, creating some rows
-                    var insert = 'INSERT INTO Polls (userId, title, options) VALUES (?,?,?)'
+                    var insert = 'INSERT INTO Polls (title, options) VALUES (?,?,?)'
                     db.run(insert, [null, "What's your favorite color?", JSON.stringify(["Red", "Green", "Blue"])])
                 }
             });
@@ -53,6 +52,17 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             username TEXT UNIQUE,
             email TEXT UNIQUE,
             password TEXT
+            )`,
+            (err) => {
+                if (err) {
+                    // Table already created
+                }
+            });
+        db.run(`CREATE TABLE PollPermissions (
+            pollId INTEGER,
+            userId INTEGER,
+            canEdit BOOLEAN,
+            PRIMARY KEY (pollId, userId)
             )`,
             (err) => {
                 if (err) {
