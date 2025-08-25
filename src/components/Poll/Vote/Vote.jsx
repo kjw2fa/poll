@@ -83,6 +83,8 @@ const Vote = () => {
     };
 
     const handleSubmit = async () => {
+        const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('username') || name;
         // Flatten ratingsToOptions map of [{ option, rating }, ...]
         const ratingsArray = [];
         ratingsToOptions.forEach((options, ratingValue) => {
@@ -90,29 +92,17 @@ const Vote = () => {
                 ratingsArray.push({ option, rating: ratingValue });
             });
         });
-        const userId = null; // TODO implement user accounts
-        try {
-            const response = await fetch('http://localhost:3001/api/votes', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    pollId: id,
-                    userId,
-                    userName: name,
-                    ratings: ratingsArray
-                }),
-            });
-
-            if (response.ok) {
-                alert('Votes submitted successfully!');
-            } else {
-                console.error('Failed to submit votes');
-            }
-        } catch (error) {
-            console.error('Error submitting votes:', error);
-        }
+        await fetch('http://localhost:3001/api/votes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pollId: id,
+                userId,
+                userName,
+                ratings: ratingsArray
+            }),
+        });
+        alert('Votes submitted successfully!');
     };
 
     if (!poll) {

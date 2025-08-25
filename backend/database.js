@@ -47,6 +47,17 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                     // Table already created
                 }
             });
+        db.run(`CREATE TABLE Users (
+            userId INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            email TEXT UNIQUE,
+            password TEXT
+            )`,
+            (err) => {
+                if (err) {
+                    // Table already created
+                }
+            });
     }
 });
 

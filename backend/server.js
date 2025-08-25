@@ -1,12 +1,31 @@
 const express = require('express');
 const cors = require('cors');
 const db = require('./database.js');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const port = 3001;
+const JWT_SECRET = 'ghosdjfojwelfasdlfjocieaitnkn3i5023r1j';
 
 app.use(cors());
 app.use(express.json());
+
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    db.get(`SELECT * FROM Users WHERE username = ?`, [username], async (err, user) => {
+        if (err || !user) {
+            return res.status(400).json({ error: 'Invalid username or password.' });
+        }
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) {
+            return res.status(400).json({ error: 'Invalid username or password.' });
+        }
+        // Issue JWT token
+        const token = jwt.sign({ userId: user.userId, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+        res.json({ token, userId: user.userId, username: user.username });
+    });
+});
 
 app.post('/api/polls', (req, res) => {
     const { title, options } = req.body;
@@ -133,6 +152,28 @@ app.get('/api/polls/:id/results', (req, res) => {
             });
         });
     });
+});
+
+app.post('/api/signup', async (req, res) => {
+    const { username, email, password } = req.body;
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: 'All fields required.' });
+    }
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        db.run(
+            `INSERT INTO Users (username, email, password) VALUES (?, ?, ?)`,
+            [username, email, hashedPassword],
+            function (err) {
+                if (err) {
+                    return res.status(400).json({ error: err.message });
+                }
+                res.status(201).json({ userId: this.lastID, username, email });
+            }
+        );
+    } catch (err) {
+        res.status(500).json({ error: 'Server error.' });
+    }
 });
 
 app.listen(port, () => {
