@@ -96,6 +96,8 @@ app.get('/api/polls/:id/results', (req, res) => {
                 if (row.userName) votersSet.add(row.userName);
                 if (row.option && optionRatings[row.option]) {
                     optionRatings[row.option].push(row.rating);
+                } else if (row.option) {
+                    console.warn("Unknown option in VoteDetails:", row.option);
                 }
             });
 
@@ -108,7 +110,9 @@ app.get('/api/polls/:id/results', (req, res) => {
                     const sum = ratingsArr.reduce((a, b) => a + b, 0);
                     const avg = sum / ratingsArr.length;
                     averageRatings[option] = avg;
-                    if (avg > maxAverageRating) maxAverageRating = avg;
+                    if (avg > maxAverageRating) {
+                        maxAverageRating = avg;
+                    }
                 }
             }
 

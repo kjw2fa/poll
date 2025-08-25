@@ -57,6 +57,15 @@ const PollResults = () => {
                 <p>No clear winning option yet.</p>
             )}
 
+            <h3>All Option Average Ratings:</h3>
+            <ul>
+                {Object.entries(pollResults.allAverageRatings).map(([option, avg]) => (
+                    <li key={option}>
+                        {option}: {avg.toFixed(2)}
+                    </li>
+                ))}
+            </ul>
+
             <h3>Total Votes: {pollResults.totalVotes}</h3>
             <h3>Voters:</h3>
             {pollResults.voters.length > 0 ? (
