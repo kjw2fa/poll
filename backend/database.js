@@ -27,8 +27,9 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         db.run(`CREATE TABLE Votes (
             voteId INTEGER PRIMARY KEY AUTOINCREMENT,
             pollId INTEGER,
-            userId INTEGER,
-            userName TEXT
+            userId TEXT,
+            userName TEXT,
+            UNIQUE(pollId, userId)
             )`,
             (err) => {
                 if (err) {

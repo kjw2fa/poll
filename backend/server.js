@@ -69,23 +69,35 @@ app.get('/api/polls/:id', (req, res) => {
 
 app.post('/api/votes', (req, res) => {
     const { pollId, userId, userName, ratings } = req.body;
-    // ratings: [{ option: "Red", rating: 10 }, ...]
+
+    // Use INSERT OR REPLACE to ensure uniqueness of (pollId, userId)
     db.run(
-        `INSERT INTO Votes (pollId, userId, userName) VALUES (?, ?, ?)`,
+        `INSERT OR REPLACE INTO Votes (pollId, userId, userName) VALUES (?, ?, ?)`,
         [pollId, userId, userName],
         function (err) {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
             const voteId = this.lastID;
-            const stmt = db.prepare(
-                `INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)`
+            // Delete any existing VoteDetails for this voteId and pollId
+            db.run(
+                `DELETE FROM VoteDetails WHERE pollId = ? AND voteId = ?`,
+                [pollId, voteId],
+                function (err2) {
+                    if (err2) {
+                        return res.status(500).json({ error: err2.message });
+                    }
+                    // Insert new VoteDetails
+                    const stmt = db.prepare(
+                        `INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)`
+                    );
+                    ratings.forEach(({ option, rating }) => {
+                        stmt.run([pollId, voteId, option, rating]);
+                    });
+                    stmt.finalize();
+                    res.status(201).json({ voteId });
+                }
             );
-            ratings.forEach(({ rating, option }) => {
-                stmt.run([pollId, voteId, option, rating]);
-            });
-            stmt.finalize();
-            res.status(201).json({ voteId });
         }
     );
 });
