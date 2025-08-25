@@ -13,13 +13,16 @@ import './App.css';
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
+  const [userId, setUserId] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUsername = localStorage.getItem('username');
+    const storedUserId = localStorage.getItem('userId');
     setLoggedIn(!!token);
     setUsername(storedUsername || '');
+    setUserId(storedUserId || '');
   }, []);
 
   const handleLogout = () => {
@@ -28,6 +31,7 @@ function App() {
     localStorage.removeItem('username');
     setLoggedIn(false);
     setUsername('');
+    setUserId('');
     navigate('/');
   };
 
@@ -41,7 +45,7 @@ function App() {
       <MenuBar />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreatePoll />} />
+        <Route path="/create" element={<CreatePoll userId={userId} />} />
         <Route path="/poll" element={<Poll />} />
         <Route path="/poll/:id" element={<Poll />} />
         <Route path="/poll/:id/results" element={<PollResults />} />

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './CreatePoll.css';
 
-const CreatePoll = () => {
+const CreatePoll = ({ userId }) => {
     const [title, setTitle] = useState('');
     const [options, setOptions] = useState([]);
     const [newOption, setNewOption] = useState('');
@@ -51,7 +51,7 @@ const CreatePoll = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ title, options }),
+                body: JSON.stringify({ title, options, userId }),
             });
 
             if (response.ok) {

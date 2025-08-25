@@ -28,14 +28,18 @@ app.post('/api/login', (req, res) => {
 });
 
 app.post('/api/polls', (req, res) => {
-    const { title, options } = req.body;
+    const { title, options, userId } = req.body;
     const optionsJson = JSON.stringify(options);
-    db.run(`INSERT INTO Polls (title, options) VALUES (?, ?)`, [title, optionsJson], function (err) {
-        if (err) {
-            return console.log(err.message);
+    db.run(
+        `INSERT INTO Polls (title, options, userId) VALUES (?, ?, ?)`,
+        [title, optionsJson, userId],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            res.status(201).json({ id: this.lastID });
         }
-        res.status(201).json({ id: this.lastID });
-    });
+    );
 });
 
 app.get('/api/polls/:id', (req, res) => {
