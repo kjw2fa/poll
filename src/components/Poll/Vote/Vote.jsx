@@ -34,12 +34,12 @@ const Vote = () => {
     const { id } = useParams();
     const [poll, setPoll] = useState(null);
     const [name, setName] = useState('');
-    var initialRatingsMap = new SortedMap();
-    // Initialize ratings map with keys 1-10 and empty sets.
+    var initialRatingsToOptionsMap = new SortedMap();
+    // Initialize ratingsToOptions map with keys 1-10 and empty sets.
     for (let i = 10; i >= 1; i--) {
-        initialRatingsMap.set(i, new Set());
+        initialRatingsToOptionsMap.set(i, new Set());
     }
-    const [ratings, setRatings] = useState(initialRatingsMap);
+    const [ratingsToOptions, setRatingsToOptions] = useState(initialRatingsToOptionsMap);
 
     useEffect(() => {
         const fetchPoll = async () => {
@@ -60,33 +60,44 @@ const Vote = () => {
     }, [id]);
 
     const handleDragEnd = (event) => {
-        // "active" is the item being dragged.
-        // "over" is the droppable area it is dropped over.
         const { active, over } = event;
         const option = active.id;
 
-        let newRatings = new SortedMap(ratings);
+        let newRatingsToOptions = new SortedMap(ratingsToOptions);
 
         // Remove the option from any previous rating it was in.
-        newRatings.forEach((options) => options.delete(option));
+        newRatingsToOptions.forEach((options) => options.delete(option));
 
         // If it was dropped over a rating cell, add it to that rating's options.
         if (over) {
             const newRatingValue = over.id;
-            newRatings.get(newRatingValue).add(option);
+            newRatingsToOptions.get(newRatingValue).add(option);
         }
 
-        setRatings(newRatings);
+        setRatingsToOptions(newRatingsToOptions);
     };
 
     const handleSubmit = async () => {
+        // Flatten ratingsToOptions map of [{ option, rating }, ...]
+        const ratingsArray = [];
+        ratingsToOptions.forEach((options, ratingValue) => {
+            options.forEach(option => {
+                ratingsArray.push({ option, rating: ratingValue });
+            });
+        });
+        const userId = null; // TODO implement user accounts
         try {
             const response = await fetch('http://localhost:3001/api/votes', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ pollId: id, name, ratings }),
+                body: JSON.stringify({
+                    pollId: id,
+                    userId,
+                    userName: name,
+                    ratings: ratingsArray
+                }),
             });
 
             if (response.ok) {
@@ -103,14 +114,13 @@ const Vote = () => {
         return <div>Loading...</div>;
     }
 
-
     const draggableOption = option =>
         <Draggable key={option} id={option} data={{ option }}>
             <div className="option">{option}</div>
         </Draggable>;
 
     const tableBody = [];
-    ratings.forEach((options, ratingValue) => {
+    ratingsToOptions.forEach((options, ratingValue) => {
         tableBody.push(<tr key={ratingValue}>
             <td>{ratingValue}</td>
             <Droppable id={ratingValue}>
@@ -120,7 +130,7 @@ const Vote = () => {
     });
 
     const options = poll ? new Set(poll.options) : new Set();
-    const ratedOptions = new Set(ratings.values().flatMap(set => Array.from(set)));
+    const ratedOptions = new Set(ratingsToOptions.values().flatMap(set => Array.from(set)));
     return (
         <div className="vote">
             <h2>{poll.title}</h2>

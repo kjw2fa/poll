@@ -11,7 +11,7 @@ app.use(express.json());
 app.post('/api/polls', (req, res) => {
     const { title, options } = req.body;
     const optionsJson = JSON.stringify(options);
-    db.run(`INSERT INTO Polls (title, options) VALUES (?, ?)`, [title, optionsJson], function(err) {
+    db.run(`INSERT INTO Polls (title, options) VALUES (?, ?)`, [title, optionsJson], function (err) {
         if (err) {
             return console.log(err.message);
         }
@@ -23,7 +23,7 @@ app.get('/api/polls/:id', (req, res) => {
     const id = req.params.id;
     db.get(`SELECT * FROM Polls WHERE id = ?`, [id], (err, row) => {
         if (err) {
-            res.status(400).json({"error":err.message});
+            res.status(400).json({ "error": err.message });
             return;
         }
         res.json({
@@ -35,14 +35,26 @@ app.get('/api/polls/:id', (req, res) => {
 });
 
 app.post('/api/votes', (req, res) => {
-    const { pollId, name, ratings } = req.body;
-    const ratingsJson = JSON.stringify(ratings);
-    db.run(`INSERT INTO Votes (pollId, name, ratings) VALUES (?, ?, ?)`, [pollId, name, ratingsJson], function(err) {
-        if (err) {
-            return console.log(err.message);
+    const { pollId, userId, userName, ratings } = req.body;
+    // ratings: [{ option: "Red", rating: 10 }, ...]
+    db.run(
+        `INSERT INTO Votes (pollId, userId, userName) VALUES (?, ?, ?)`,
+        [pollId, userId, userName],
+        function (err) {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            const voteId = this.lastID;
+            const stmt = db.prepare(
+                `INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)`
+            );
+            ratings.forEach(({ rating, option }) => {
+                stmt.run([pollId, voteId, option, rating]);
+            });
+            stmt.finalize();
+            res.status(201).json({ voteId });
         }
-        res.status(201).json({ id: this.lastID });
-    });
+    );
 });
 
 app.get('/api/polls/:id/results', (req, res) => {
@@ -61,68 +73,59 @@ app.get('/api/polls/:id/results', (req, res) => {
         const pollTitle = pollRow.title;
         const pollOptions = JSON.parse(pollRow.options);
 
-        db.all(`SELECT name, ratings FROM Votes WHERE pollId = ?`, [pollId], (err, voteRows) => {
+        // Get all votes and their details for this poll
+        db.all(`
+            SELECT Votes.voteId, Votes.userName, VoteDetails.option, VoteDetails.rating
+            FROM Votes
+            LEFT JOIN VoteDetails ON Votes.voteId = VoteDetails.voteId
+            WHERE Votes.pollId = ?
+        `, [pollId], (err, rows) => {
             if (err) {
                 res.status(400).json({ "error": err.message });
                 return;
             }
 
-            const voters = [];
-            const totalVotes = voteRows.length;
-
-            const optionRatings = {}; // Initialize optionRatings
+            // Aggregate ratings per option
+            const optionRatings = {};
             pollOptions.forEach(option => {
                 optionRatings[option] = [];
             });
 
-            voteRows.forEach(vote => {
-                const voterName = vote.name;
-                const ratings = JSON.parse(vote.ratings);
-                if (voterName) {
-                    voters.push(voterName);
+            const votersSet = new Set();
+            rows.forEach(row => {
+                if (row.userName) votersSet.add(row.userName);
+                if (row.option && optionRatings[row.option]) {
+                    optionRatings[row.option].push(row.rating);
                 }
-
-                ratings.forEach(rating => {
-                    if (rating.options && rating.options.length > 0) {
-                        rating.options.forEach(option => {
-                            // Assuming rating.id is like 'rating-1' to 'rating-10'
-                            const score = 11 - parseInt(rating.id.split('-')[1]);
-                            if (optionRatings[option.text]) {
-                                optionRatings[option.text].push(score);
-                            }
-                        });
-                    }
-                });
             });
 
+            // Calculate averages
             const averageRatings = {};
             let maxAverageRating = -1;
-
-            for (const optionText in optionRatings) {
-                const ratingsArray = optionRatings[optionText];
-                if (ratingsArray.length > 0) {
-                    const sum = ratingsArray.reduce((a, b) => a + b, 0);
-                    const average = sum / ratingsArray.length;
-                    averageRatings[optionText] = average;
-                    if (average > maxAverageRating) {
-                        maxAverageRating = average;
-                    }
+            for (const option in optionRatings) {
+                const ratingsArr = optionRatings[option];
+                if (ratingsArr.length > 0) {
+                    const sum = ratingsArr.reduce((a, b) => a + b, 0);
+                    const avg = sum / ratingsArr.length;
+                    averageRatings[option] = avg;
+                    if (avg > maxAverageRating) maxAverageRating = avg;
                 }
             }
 
+            // Find winning options
             const winningOptions = [];
-            for (const optionText in averageRatings) {
-                if (averageRatings[optionText] === maxAverageRating) {
-                    winningOptions.push({ option: optionText, averageRating: maxAverageRating });
+            for (const option in averageRatings) {
+                if (averageRatings[option] === maxAverageRating) {
+                    winningOptions.push({ option, averageRating: maxAverageRating });
                 }
             }
 
             res.json({
                 pollTitle,
-                totalVotes,
-                voters,
+                totalVotes: votersSet.size,
+                voters: Array.from(votersSet),
                 results: winningOptions,
-                allAverageRatings: averageRatings // Optional: for debugging or more detailed display
+                allAverageRatings: averageRatings
             });
         });
     });
