@@ -8,6 +8,7 @@ import Poll from './components/Poll/Poll';
 import PollResults from './components/Poll/PollResults/PollResults';
 import Signup from './components/Signup/Signup';
 import Login from './components/Login/Login';
+import MyPolls from './components/MyPolls/MyPolls';
 import './App.css';
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
         <Route path="/poll/:id/results" element={<PollResults />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/mypolls" element={<MyPolls userId={userId} />} />
       </Routes>
     </div>
   );

@@ -180,6 +180,24 @@ app.post('/api/signup', async (req, res) => {
     }
 });
 
+app.get('/api/user/:userId/polls', (req, res) => {
+    const userId = req.params.userId;
+    // Polls created by user
+    db.all(`SELECT * FROM Polls WHERE userId = ?`, [userId], (err, createdPolls) => {
+        if (err) return res.status(500).json({ error: err.message });
+        // Polls user voted on
+        db.all(`
+            SELECT Polls.* FROM Polls
+            JOIN Votes ON Polls.id = Votes.pollId
+            WHERE Votes.userId = ?
+            GROUP BY Polls.id
+        `, [userId], (err2, votedPolls) => {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ createdPolls, votedPolls });
+        });
+    });
+});
+
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });

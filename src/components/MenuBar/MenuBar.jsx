@@ -8,6 +8,7 @@ const MenuBar = () => {
             <Link to="/">Home</Link>
             <Link to="/create">Create Poll</Link>
             <Link to="/poll">View Polls</Link>
+            <Link to="/mypolls">My Polls</Link>
         </div>
     );
 };
