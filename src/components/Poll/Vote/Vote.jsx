@@ -30,16 +30,21 @@ const Droppable = ({ id, children }) => {
     );
 };
 
+const descendingMapFactory = () => new SortedMap(undefined, undefined, (a, b) => {
+    // b - a will return a positive number if b > a, sorting it first.
+    return b - a;
+});
+
 const Vote = () => {
     const { id } = useParams();
     const [poll, setPoll] = useState(null);
     const [name, setName] = useState('');
-    var initialRatingsToOptionsMap = new SortedMap();
+    const descendingMap = descendingMapFactory();
     // Initialize ratingsToOptions map with keys 1-10 and empty sets.
     for (let i = 10; i >= 1; i--) {
-        initialRatingsToOptionsMap.set(i, new Set());
+        descendingMap.set(i, new Set());
     }
-    const [ratingsToOptions, setRatingsToOptions] = useState(initialRatingsToOptionsMap);
+    const [ratingsToOptions, setRatingsToOptions] = useState(descendingMap);
 
     useEffect(() => {
         const fetchPoll = async () => {
@@ -63,7 +68,7 @@ const Vote = () => {
         const { active, over } = event;
         const option = active.id;
 
-        let newRatingsToOptions = new SortedMap(ratingsToOptions);
+        let newRatingsToOptions = ratingsToOptions.clone();
 
         // Remove the option from any previous rating it was in.
         newRatingsToOptions.forEach((options) => options.delete(option));
