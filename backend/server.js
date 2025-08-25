@@ -212,6 +212,61 @@ app.get('/api/user/:userId/polls', (req, res) => {
     });
 });
 
+app.get('/api/poll/:pollId/permissions', (req, res) => {
+    const pollId = req.params.pollId;
+    const userId = req.query.userId;
+    db.get(
+        `SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?`,
+        [pollId, userId],
+        (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ canEdit: row ? !!row.canEdit : false });
+        }
+    );
+});
+
+app.get('/api/poll/:pollId/vote', (req, res) => {
+    const pollId = req.params.pollId;
+    const userId = req.query.userId;
+    db.get(
+        `SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1`,
+        [pollId, userId],
+        (err, voteRow) => {
+            if (err || !voteRow) return res.json({ ratings: null });
+            db.all(
+                `SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?`,
+                [pollId, voteRow.voteId],
+                (err2, details) => {
+                    if (err2) return res.json({ ratings: null });
+                    const ratings = {};
+                    details.forEach(d => { ratings[d.option] = d.rating; });
+                    res.json({ ratings });
+                }
+            );
+        }
+    );
+});
+
+app.post('/api/poll/:pollId/edit', (req, res) => {
+    const pollId = req.params.pollId;
+    const { userId, title, options } = req.body;
+    db.get(
+        `SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?`,
+        [pollId, userId],
+        (err, row) => {
+            if (err || !row || !row.canEdit) return res.status(403).json({ error: 'No edit permission' });
+            db.run(
+                `UPDATE Polls SET title = ?, options = ? WHERE id = ?`,
+                [title, JSON.stringify(options), pollId],
+                function (err2) {
+                    if (err2) return res.status(500).json({ error: err2.message });
+                    res.json({ success: true });
+                }
+            );
+        }
+    );
+});
+
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
 });

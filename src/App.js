@@ -47,8 +47,8 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/create" element={<CreatePoll userId={userId} />} />
-        <Route path="/poll" element={<Poll />} />
-        <Route path="/poll/:id" element={<Poll />} />
+        <Route path="/poll" element={<Poll userId={userId} />} />
+        <Route path="/poll/:id" element={<Poll userId={userId} />} />
         <Route path="/poll/:id/results" element={<PollResults />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />

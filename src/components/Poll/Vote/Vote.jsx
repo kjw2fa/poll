@@ -35,16 +35,21 @@ const descendingMapFactory = () => new SortedMap(undefined, undefined, (a, b) =>
     return b - a;
 });
 
-const Vote = () => {
-    const { id } = useParams();
-    const [poll, setPoll] = useState(null);
-    const [name, setName] = useState('');
-    const descendingMap = descendingMapFactory();
-    // Initialize ratingsToOptions map with keys 1-10 and empty sets.
-    for (let i = 10; i >= 1; i--) {
-        descendingMap.set(i, new Set());
+const initialDescendingMap = (maxRating) => {
+    const map = descendingMapFactory();
+    for (let i = 1; i <= maxRating; i++) {
+        map.set(i, new Set());
     }
-    const [ratingsToOptions, setRatingsToOptions] = useState(descendingMap);
+    return map;
+}
+
+const Vote = ({ userId }) => {
+    const { id } = useParams();
+    const [name, setName] = useState('');
+    const [pollId, setPollId] = useState('');
+    const [poll, setPoll] = useState(null);
+    const [message, setMessage] = useState('');
+    const [ratingsToOptions, setRatingsToOptions] = useState(initialDescendingMap(10));
 
     useEffect(() => {
         const fetchPoll = async () => {
@@ -53,6 +58,19 @@ const Vote = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setPoll(data);
+
+                    if (userId) {
+                        // Check if user has voted
+                        const voteRes = await fetch(`http://localhost:3001/api/poll/${id}/vote?userId=${userId}`);
+                        if (voteRes.ok) {
+                            const voteData = await voteRes.json();
+                            const previousRatingsToOptions = initialDescendingMap(10);
+                            Object.entries(voteData.ratings).forEach(([option, rating]) => {
+                                previousRatingsToOptions.get(rating).add(option);
+                            });
+                            setRatingsToOptions(previousRatingsToOptions);
+                        }
+                    }
                 } else {
                     console.error('Failed to fetch poll');
                 }
@@ -62,7 +80,7 @@ const Vote = () => {
         };
 
         fetchPoll();
-    }, [id]);
+    }, [id, userId]);
 
     const handleDragEnd = (event) => {
         const { active, over } = event;
@@ -83,8 +101,7 @@ const Vote = () => {
     };
 
     const handleSubmit = async () => {
-        const userId = localStorage.getItem('userId');
-        const userName = localStorage.getItem('username') || name;
+        const userName = localStorage.getItem('username') || 'Anonymous';
         // Flatten ratingsToOptions map of [{ option, rating }, ...]
         const ratingsArray = [];
         ratingsToOptions.forEach((options, ratingValue) => {
