@@ -1,20 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import PollSettings from '../../PollSettings/PollSettings';
 
-const EditPoll = ({ poll, userId, onPollUpdated }) => {
-    const [title, setTitle] = useState(poll.title);
-    const [options, setOptions] = useState([...poll.options]);
+const EditPoll = ({ userId, poll: initialPoll, onPollUpdated }) => {
+    const [poll, setPoll] = useState(initialPoll);
     const [message, setMessage] = useState('');
+    const { id } = useParams();
 
-    const handleSave = async () => {
+    useEffect(() => {
+        setPoll(initialPoll);
+    }, [initialPoll]);
+
+    const handleSave = async (pollData) => {
         try {
-            const res = await fetch(`http://localhost:3001/api/poll/${poll.id}/edit`, {
+            const res = await fetch(`http://localhost:3001/api/poll/${id}/edit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, title, options }),
+                body: JSON.stringify({ userId, ...pollData }),
             });
             if (res.ok) {
                 setMessage('Poll updated!');
-                onPollUpdated({ ...poll, title, options });
+                if (onPollUpdated) {
+                    onPollUpdated({ ...poll, ...pollData });
+                }
             } else {
                 setMessage('Failed to update poll.');
             }
@@ -25,23 +33,11 @@ const EditPoll = ({ poll, userId, onPollUpdated }) => {
 
     return (
         <div>
-            <h3>Edit Poll</h3>
-            <input value={title} onChange={e => setTitle(e.target.value)} />
-            <ul>
-                {options.map((option, idx) => (
-                    <li key={idx}>
-                        <input
-                            value={option}
-                            onChange={e => {
-                                const newOptions = [...options];
-                                newOptions[idx] = e.target.value;
-                                setOptions(newOptions);
-                            }}
-                        />
-                    </li>
-                ))}
-            </ul>
-            <button onClick={handleSave}>Save Poll</button>
+            {poll ? (
+                <PollSettings poll={poll} onSave={handleSave} isEditing={true} />
+            ) : (
+                <p>Loading poll...</p>
+            )}
             {message && <div>{message}</div>}
         </div>
     );

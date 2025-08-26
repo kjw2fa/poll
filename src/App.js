@@ -5,6 +5,7 @@ import MenuBar from './components/MenuBar/MenuBar';
 import HomePage from './components/HomePage/HomePage';
 import CreatePoll from './components/CreatePoll/CreatePoll';
 import Poll from './components/Poll/Poll';
+import EditPoll from './components/Poll/EditPoll/EditPoll';
 import PollResults from './components/Poll/PollResults/PollResults';
 import Signup from './components/Signup/Signup';
 import Login from './components/Login/Login';
@@ -49,6 +50,8 @@ function App() {
         <Route path="/create" element={<CreatePoll userId={userId} />} />
         <Route path="/poll" element={<Poll userId={userId} />} />
         <Route path="/poll/:id" element={<Poll userId={userId} />} />
+        <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
+        <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
         <Route path="/poll/:id/results" element={<PollResults />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />

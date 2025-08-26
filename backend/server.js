@@ -59,6 +59,10 @@ app.get('/api/polls/:id', (req, res) => {
             res.status(400).json({ "error": err.message });
             return;
         }
+        if (!row) {
+            res.status(404).json({ "error": "Poll not found" });
+            return;
+        }
         res.json({
             "id": row.id,
             "title": row.title,
