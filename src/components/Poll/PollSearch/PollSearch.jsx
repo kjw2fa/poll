@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Input } from "../../ui/input";
+import { Button } from "../../ui/button";
 import './PollSearch.css';
 
 const PollSearch = ({ onSearch }) => {
@@ -23,14 +25,14 @@ const PollSearch = ({ onSearch }) => {
 
     return (
         <div className="poll-search">
-            <input
+            <Input
                 type="text"
                 value={pollId}
                 onChange={(e) => setPollId(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Enter Poll ID"
             />
-            <button onClick={handleSearch}>Search</button>
+            <Button onClick={handleSearch}>Search</Button>
         </div>
     );
 };

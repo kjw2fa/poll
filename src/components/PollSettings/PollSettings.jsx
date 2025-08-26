@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 import './PollSettings.css';
 
 const PollSettings = ({ poll, onSave, isEditing }) => {
@@ -54,27 +57,27 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
 
     return (
         <form onSubmit={handleSubmit}>
-            <div className="form-group">
-                <label>Title</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="title">Title</Label>
+                <Input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
-            <div className="form-group">
-                <label>Add Option</label>
-                <div className="add-option-container">
-                    <input type="text" value={newOption} onChange={handleNewOptionChange} onKeyDown={handleKeyDown} />
-                    <button type="button" onClick={handleAddNewOption}>Add Option</button>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="new-option">Add Option</Label>
+                <div className="flex w-full max-w-sm items-center space-x-2">
+                    <Input type="text" id="new-option" value={newOption} onChange={handleNewOptionChange} onKeyDown={handleKeyDown} />
+                    <Button type="button" onClick={handleAddNewOption}>Add Option</Button>
                 </div>
             </div>
-            <div className="form-group">
-                <label>Options</label>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+                <Label>Options</Label>
                 {options.map((option, index) => (
-                    <div key={index} className="option">
-                        <input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
-                        <button type="button" onClick={() => handleRemoveOption(index)}>X</button>
+                    <div key={index} className="flex w-full max-w-sm items-center space-x-2">
+                        <Input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
+                        <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
                     </div>
                 ))}
             </div>
-            <button type="submit">{isEditing ? 'Save Changes' : 'Create Poll'}</button>
+            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Poll'}</Button>
         </form>
     );
 };

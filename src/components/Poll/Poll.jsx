@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import Vote from './Vote/Vote';
 import PollResults from './PollResults/PollResults';
 import EditPoll from './EditPoll/EditPoll';
@@ -10,7 +11,6 @@ const Poll = ({ userId }) => {
     const navigate = useNavigate();
     const [poll, setPoll] = useState(null);
     const [canEdit, setCanEdit] = useState(false);
-    const [activeTab, setActiveTab] = useState('vote');
 
     useEffect(() => {
         if (id) {
@@ -64,16 +64,24 @@ const Poll = ({ userId }) => {
     return (
         <div>
             {poll && <h2>{poll.title}</h2>}
-            <div className="tab-navigation">
-                <button onClick={() => setActiveTab('vote')}>Vote</button>
-                <button onClick={() => setActiveTab('results')}>Results</button>
-                {canEdit && <button onClick={() => setActiveTab('edit')}>Edit</button>}
-            </div>
-            <div className="tab-content">
-                {activeTab === 'vote' && <Vote userId={userId} />}
-                {activeTab === 'results' && <PollResults />}
-                {activeTab === 'edit' && canEdit && <EditPoll userId={userId} poll={poll} onPollUpdated={handlePollUpdated} />}
-            </div>
+            <Tabs defaultValue="vote">
+                <TabsList>
+                    <TabsTrigger value="vote">Vote</TabsTrigger>
+                    <TabsTrigger value="results">Results</TabsTrigger>
+                    {canEdit && <TabsTrigger value="edit">Edit</TabsTrigger>}
+                </TabsList>
+                <TabsContent value="vote">
+                    <Vote userId={userId} />
+                </TabsContent>
+                <TabsContent value="results">
+                    <PollResults />
+                </TabsContent>
+                {canEdit && (
+                    <TabsContent value="edit">
+                        <EditPoll userId={userId} poll={poll} onPollUpdated={handlePollUpdated} />
+                    </TabsContent>
+                )}
+            </Tabs>
         </div>
     );
 };

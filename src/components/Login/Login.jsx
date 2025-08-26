@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');
@@ -28,22 +31,26 @@ const Login = ({ onLogin }) => {
     };
 
     return (
-        <div className="login-page">
+        <div className="grid w-full max-w-sm items-center gap-1.5">
             <h2>Login</h2>
-            <input
+            <Label htmlFor="username">Username</Label>
+            <Input
                 type="text"
+                id="username"
                 placeholder="Username"
                 value={username}
                 onChange={e => setUsername(e.target.value)}
             />
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
                 type="password"
+                id="password"
                 placeholder="Password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
             />
-            <button onClick={handleLogin}>Login</button>
+            <Button onClick={handleLogin}>Login</Button>
             {message && <div>{message}</div>}
         </div>
     );

@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 
 const Signup = () => {
     const [signupUsername, setSignupUsername] = useState('');
@@ -29,27 +32,33 @@ const Signup = () => {
     };
 
     return (
-        <div className="signup-page">
+        <div className="grid w-full max-w-sm items-center gap-1.5">
             <h2>Create Account</h2>
-            <input
+            <Label htmlFor="username">Username</Label>
+            <Input
                 type="text"
+                id="username"
                 placeholder="Username"
                 value={signupUsername}
                 onChange={e => setSignupUsername(e.target.value)}
             />
-            <input
+            <Label htmlFor="email">Email</Label>
+            <Input
                 type="email"
+                id="email"
                 placeholder="Email"
                 value={signupEmail}
                 onChange={e => setSignupEmail(e.target.value)}
             />
-            <input
+            <Label htmlFor="password">Password</Label>
+            <Input
                 type="password"
+                id="password"
                 placeholder="Password"
                 value={signupPassword}
                 onChange={e => setSignupPassword(e.target.value)}
             />
-            <button onClick={handleSignup}>Create Account</button>
+            <Button onClick={handleSignup}>Create Account</Button>
             {signupMessage && <div>{signupMessage}</div>}
         </div>
     );
