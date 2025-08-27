@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils.ts";
 
 function Input({
   className,
-  type,
+  type = "text",
   ...props
 }) {
   return (
