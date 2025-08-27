@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import Vote from './Vote/Vote';
-import PollResults from './PollResults/PollResults';
-import EditPoll from './EditPoll/EditPoll';
-import PollSearch from './PollSearch/PollSearch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
+import Vote from './Vote/Vote.tsx';
+import PollResults from './PollResults/PollResults.tsx';
+import EditPoll from './EditPoll/EditPoll.tsx';
+import PollSearch from './PollSearch/PollSearch.tsx';
 
 const Poll = ({ userId }) => {
     const { id } = useParams();

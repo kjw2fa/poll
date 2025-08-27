@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input } from "../../ui/input";
-import { Button } from "../../ui/button";
+import { Input } from "../../ui/input.tsx";
+import { Button } from "../../ui/button.tsx";
 
 const PollSearch = ({ onSearch }) => {
     const [pollId, setPollId] = useState('');

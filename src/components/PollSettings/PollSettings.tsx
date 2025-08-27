@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
+import { Input } from "../ui/input.tsx";
+import { Button } from "../ui/button.tsx";
+import { Label } from "../ui/label.tsx";
 
 const PollSettings = ({ poll, onSave, isEditing }) => {
     const [title, setTitle] = useState('');

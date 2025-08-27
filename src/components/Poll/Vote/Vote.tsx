@@ -139,14 +139,14 @@ const Vote = ({ userId }) => {
         tableBody.push(<tr key={ratingValue}>
             <td>{ratingValue}</td>
             <Droppable id={ratingValue}>
-                {options.map(draggableOption)}
+                {Array.from(options).map(draggableOption)}
             </Droppable>
         </tr>)
     });
 
     const options = poll ? new Set(poll.options) : new Set();
     // Use toArray() to convert OrderedMap to an array for flatMap
-    const ratedOptions = new Set(ratingsToOptions.toArray().flatMap(entry => Array.from(entry[1])));
+    const ratedOptions = new Set([...ratingsToOptions].flatMap(entry => Array.from(entry[1])));
     return (
         <div className="vote">
             <h2>{poll.title}</h2>
@@ -158,7 +158,7 @@ const Vote = ({ userId }) => {
                 <div className="vote-container">
                     <div className="options-container">
                         <h3>Options</h3>
-                        {options.filter(option => !ratedOptions.has(option)).map(draggableOption)}
+                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
                     </div>
                     <div className="ratings-container">
                         <h3>Ratings</h3>

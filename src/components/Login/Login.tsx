@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Label } from "../ui/label";
+import { Input } from "../ui/input.tsx";
+import { Button } from "../ui/button.tsx";
+import { Label } from "../ui/label.tsx";
 
 const Login = ({ onLogin }) => {
     const [username, setUsername] = useState('');

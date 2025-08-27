@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
-import Header from './components/Header/Header';
-import MenuBar from './components/MenuBar/MenuBar';
-import HomePage from './components/HomePage/HomePage';
-import CreatePoll from './components/CreatePoll/CreatePoll';
-import Poll from './components/Poll/Poll';
-import EditPoll from './components/Poll/EditPoll/EditPoll';
-import PollResults from './components/Poll/PollResults/PollResults';
-import Signup from './components/Signup/Signup';
-import Login from './components/Login/Login';
-import MyPolls from './components/MyPolls/MyPolls';
+import Header from './components/Header/Header.tsx';
+import MenuBar from './components/MenuBar/MenuBar.tsx';
+import HomePage from './components/HomePage/HomePage.tsx';
+import CreatePoll from './components/CreatePoll/CreatePoll.tsx';
+import Poll from './components/Poll/Poll.tsx';
+import EditPoll from './components/Poll/EditPoll/EditPoll.tsx';
+import PollResults from './components/Poll/PollResults/PollResults.tsx';
+import Signup from './components/Signup/Signup.tsx';
+import Login from './components/Login/Login.tsx';
+import MyPolls from './components/MyPolls/MyPolls.tsx';
 import './index.css';
 
 function App() {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import PollSettings from '../../PollSettings/PollSettings';
+import PollSettings from '../../PollSettings/PollSettings.tsx';
 
 const EditPoll = ({ userId, poll: initialPoll, onPollUpdated }) => {
     const [poll, setPoll] = useState(initialPoll);

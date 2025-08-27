@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menubar, MenubarMenu, MenubarTrigger } from "../ui/menubar";
+import { Menubar, MenubarMenu, MenubarTrigger } from "../ui/menubar.tsx";
 
 const MenuBar = () => {
     return (
