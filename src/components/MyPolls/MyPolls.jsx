@@ -7,14 +7,21 @@ const MyPolls = ({ userId }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!userId) return;
-        fetch(`http://localhost:3001/api/user/${userId}/polls`)
-            .then(res => res.json())
-            .then(data => {
+        const fetchMyPolls = async () => {
+            if (!userId) return;
+            try {
+                const response = await fetch(`http://localhost:3001/api/user/${userId}/polls`);
+                const data = await response.json();
                 setCreatedPolls(data.createdPolls || []);
                 setVotedPolls(data.votedPolls || []);
+            } catch (error) {
+                console.error('Error fetching my polls:', error);
+            } finally {
                 setLoading(false);
-            });
+            }
+        };
+
+        fetchMyPolls();
     }, [userId]);
 
     if (!userId) return <div>Please log in to view your polls.</div>;
