@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PollSettings from '../PollSettings/PollSettings';
-import './CreatePoll.css';
 
 const CreatePoll = ({ userId }) => {
     const [createdPollId, setCreatedPollId] = useState(null);

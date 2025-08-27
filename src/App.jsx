@@ -10,7 +10,7 @@ import PollResults from './components/Poll/PollResults/PollResults';
 import Signup from './components/Signup/Signup';
 import Login from './components/Login/Login';
 import MyPolls from './components/MyPolls/MyPolls';
-import './App.css';
+import './index.css';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -38,7 +38,7 @@ function App() {
   };
 
   return (
-    <div className="App">
+    <div className="App bg-gray-100 p-4">
       <Header
         loggedIn={loggedIn}
         username={username}

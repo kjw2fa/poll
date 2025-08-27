@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
-import './Vote.css';
-var SortedMap = require("collections/sorted-map");
+import { OrderedMap } from "js-sdsl"; // Import OrderedMap
 
 const Draggable = ({ id, children }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
@@ -30,17 +29,16 @@ const Droppable = ({ id, children }) => {
     );
 };
 
-const descendingMapFactory = () => new SortedMap(undefined, undefined, (a, b) => {
-    // b - a will return a positive number if b > a, sorting it first.
-    return b - a;
-});
+// Custom comparator for descending order
+const descendingComparator = (a, b) => b - a;
 
 const initialDescendingMap = (maxRating) => {
-    const map = descendingMapFactory();
+    // OrderedMap takes an array of [key, value] pairs and a comparator
+    const initialData = [];
     for (let i = 1; i <= maxRating; i++) {
-        map.set(i, new Set());
+        initialData.push([i, new Set()]);
     }
-    return map;
+    return new OrderedMap(initialData, descendingComparator);
 }
 
 const Vote = ({ userId }) => {
@@ -61,12 +59,13 @@ const Vote = ({ userId }) => {
 
                     if (userId) {
                         // Check if user has voted
-                        const voteRes = await fetch(`http://localhost:3001/api/poll/${id}/vote?userId=${userId}`);
+                        const voteRes = await fetch(`http://3001/api/poll/${id}/vote?userId=${userId}`);
                         if (voteRes.ok) {
                             const voteData = await voteRes.json();
                             const previousRatingsToOptions = initialDescendingMap(10);
                             Object.entries(voteData.ratings).forEach(([option, rating]) => {
-                                previousRatingsToOptions.get(rating).add(option);
+                                // Use getElementByKey to get the Set, then add
+                                previousRatingsToOptions.getElementByKey(rating).value.add(option);
                             });
                             setRatingsToOptions(previousRatingsToOptions);
                         }
@@ -86,15 +85,17 @@ const Vote = ({ userId }) => {
         const { active, over } = event;
         const option = active.id;
 
-        let newRatingsToOptions = ratingsToOptions.clone();
+        // Create a new OrderedMap instance for immutability
+        let newRatingsToOptions = new OrderedMap(ratingsToOptions.toArray(), descendingComparator);
 
         // Remove the option from any previous rating it was in.
-        newRatingsToOptions.forEach((options) => options.delete(option));
+        newRatingsToOptions.forEach((key, value) => value.delete(option));
 
         // If it was dropped over a rating cell, add it to that rating's options.
         if (over) {
             const newRatingValue = over.id;
-            newRatingsToOptions.get(newRatingValue).add(option);
+            // Use getElementByKey to get the Set, then add
+            newRatingsToOptions.getElementByKey(newRatingValue).value.add(option);
         }
 
         setRatingsToOptions(newRatingsToOptions);
@@ -104,7 +105,8 @@ const Vote = ({ userId }) => {
         const userName = localStorage.getItem('username') || 'Anonymous';
         // Flatten ratingsToOptions map of [{ option, rating }, ...]
         const ratingsArray = [];
-        ratingsToOptions.forEach((options, ratingValue) => {
+        // Iterate using forEach, which provides key and value
+        ratingsToOptions.forEach((ratingValue, options) => {
             options.forEach(option => {
                 ratingsArray.push({ option, rating: ratingValue });
             });
@@ -132,7 +134,8 @@ const Vote = ({ userId }) => {
         </Draggable>;
 
     const tableBody = [];
-    ratingsToOptions.forEach((options, ratingValue) => {
+    // Iterate using forEach, which provides key and value
+    ratingsToOptions.forEach((ratingValue, options) => {
         tableBody.push(<tr key={ratingValue}>
             <td>{ratingValue}</td>
             <Droppable id={ratingValue}>
@@ -142,7 +145,8 @@ const Vote = ({ userId }) => {
     });
 
     const options = poll ? new Set(poll.options) : new Set();
-    const ratedOptions = new Set(ratingsToOptions.values().flatMap(set => Array.from(set)));
+    // Use toArray() to convert OrderedMap to an array for flatMap
+    const ratedOptions = new Set(ratingsToOptions.toArray().flatMap(entry => Array.from(entry[1])));
     return (
         <div className="vote">
             <h2>{poll.title}</h2>
