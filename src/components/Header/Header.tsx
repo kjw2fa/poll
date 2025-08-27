@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Header = ({ loggedIn, username, onLogout }) => {
     return (
         <div className="header">
-            <h1>Polling Website</h1>
+            <h1>Poll Everything</h1>
             <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '1rem', padding: '1rem' }}>
                 {loggedIn ? (
                     <>
