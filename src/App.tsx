@@ -38,25 +38,26 @@ function App() {
   };
 
   return (
-    <div className="App bg-gray-100 p-4">
-      <Header
+    <div className="App">
+      <MenuBar
         loggedIn={loggedIn}
         username={username}
         onLogout={handleLogout}
       />
-      <MenuBar />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/create" element={<CreatePoll userId={userId} />} />
-        <Route path="/poll" element={<Poll userId={userId} />} />
-        <Route path="/poll/:id" element={<Poll userId={userId} />} />
-        <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
-        <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
-        <Route path="/poll/:id/results" element={<PollResults />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/mypolls" element={<MyPolls userId={userId} />} />
-      </Routes>
+      <main className="pt-16">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/create" element={<CreatePoll userId={userId} />} />
+          <Route path="/poll" element={<Poll userId={userId} />} />
+          <Route path="/poll/:id" element={<Poll userId={userId} />} />
+          <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
+          <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
+          <Route path="/poll/:id/results" element={<PollResults />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/mypolls" element={<MyPolls userId={userId} />} />
+        </Routes>
+      </main>
     </div>
   );
 }
