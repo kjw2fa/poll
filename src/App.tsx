@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import Header from './components/Header/Header.tsx';
 import MenuBar from './components/MenuBar/MenuBar.tsx';
 import HomePage from './components/HomePage/HomePage.tsx';
@@ -12,7 +12,7 @@ import Login from './components/Login/Login.tsx';
 import MyPolls from './components/MyPolls/MyPolls.tsx';
 import './index.css';
 
-function App() {
+const AppContent = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState('');
@@ -59,6 +59,12 @@ function App() {
         </Routes>
       </main>
     </div>
+  );
+}
+
+function App() {
+  return (
+      <AppContent />
   );
 }
 

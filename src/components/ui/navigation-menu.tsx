@@ -8,17 +8,17 @@ import { cn } from "../../lib/utils"
 const NavigationMenu = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, viewport, ...props }, ref) => (
   <NavigationMenuPrimitive.Root
     ref={ref}
     className={cn(
-      "relative z-10 flex flex-1 items-center justify-between", // Added flex-1, items-center, justify-between
+      "relative z-10 flex items-center justify-start",
       className
     )}
     {...props}
   >
     {children}
-    <NavigationMenuViewport />
+    {viewport !== false && <NavigationMenuViewport />}
   </NavigationMenuPrimitive.Root>
 ))
 NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName
@@ -30,7 +30,7 @@ const NavigationMenuList = React.forwardRef<
   <NavigationMenuPrimitive.List
     ref={ref}
     className={cn(
-      "group flex flex-1 list-none items-center justify-center space-x-1",
+      "group flex list-none items-center justify-center space-x-1",
       className
     )}
     {...props}
@@ -79,13 +79,16 @@ NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName
 
 const NavigationMenuLink = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Link>,
-  Omit<React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>, 'children'> // Omit children
->(({ className, ...props }, ref) => (
+  React.ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Link>
+>(({ className, children, active, ...props }, ref) => (
   <NavigationMenuPrimitive.Link
     ref={ref}
-    className={cn("navigation-menu-link", navigationMenuTriggerStyle(), className)}
+    className={cn(navigationMenuTriggerStyle(), className)}
+    active={active}
     {...props}
-  />
+  >
+    {children}
+  </NavigationMenuPrimitive.Link>
 ));
 
 const NavigationMenuViewport = React.forwardRef<

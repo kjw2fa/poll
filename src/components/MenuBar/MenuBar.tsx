@@ -1,31 +1,67 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-    Menubar,
-    MenubarMenu,
-    MenubarTrigger
-} from "../ui/menubar.tsx";
-import Header from '../Header/Header.tsx'; // Import Header to reuse account info logic
+    NavigationMenu,
+    NavigationMenuItem,
+    NavigationMenuLink,
+    NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 const MenuBar = ({ loggedIn, username, onLogout }) => {
     return (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background border-b shadow-sm flex items-center justify-between px-4 py-2">
-            <Menubar className="flex-grow-0"> {/* Navigation on the left */}
-                <MenubarMenu>
-                    <MenubarTrigger><NavLink to="/" className={({ isActive }) => isActive ? "active" : ""}>Home</NavLink></MenubarTrigger>
-                </MenubarMenu>
-                <MenubarMenu>
-                    <MenubarTrigger><NavLink to="/create" className={({ isActive }) => isActive ? "active" : ""}>Create Poll</NavLink></MenubarTrigger>
-                </MenubarMenu>
-                <MenubarMenu>
-                    <MenubarTrigger><NavLink to="/poll" className={({ isActive }) => isActive ? "active" : ""}>View Polls</NavLink></MenubarTrigger>
-                </MenubarMenu>
-                <MenubarMenu>
-                    <MenubarTrigger><NavLink to="/mypolls" className={({ isActive }) => isActive ? "active" : ""}>My Polls</NavLink></MenubarTrigger>
-                </MenubarMenu>
-            </Menubar>
-            <Header loggedIn={loggedIn} username={username} onLogout={onLogout} /> {/* Account info on the right */}
-        </div>
+            <NavigationMenu viewport={false}>
+                <NavigationMenuList>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <Link to="/">Home</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <Link to="/create">Create Poll</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <Link to="/poll">View Polls</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+                    <NavigationMenuItem>
+                        <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                            <Link to="/mypolls">My Polls</Link>
+                        </NavigationMenuLink>
+                    </NavigationMenuItem>
+
+                    <div style={{ flexGrow: 1 }}></div>
+
+                    {loggedIn ? (
+                        <>
+                            <NavigationMenuItem>
+                                <span className={navigationMenuTriggerStyle() + ' cursor-default'}>Welcome, {username}</span>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem>
+                                <button onClick={onLogout} className={navigationMenuTriggerStyle()}>
+                                    Logout
+                                </button>
+                            </NavigationMenuItem>
+                        </>
+                    ) : (
+                        <>
+                            <NavigationMenuItem>
+                                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                                    <Link to="/signup">Create Account</Link>
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                            <NavigationMenuItem>
+                                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+                                    <Link to="/login">Login</Link>
+                                </NavigationMenuLink>
+                            </NavigationMenuItem>
+                        </>
+                    )}
+                </NavigationMenuList>
+            </NavigationMenu>
     );
 };
 
