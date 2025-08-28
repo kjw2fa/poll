@@ -10,7 +10,8 @@ import {
 
 const MenuBar = ({ loggedIn, username, onLogout }) => {
     return (
-            <NavigationMenu viewport={false}>
+        <div className="flex justify-between w-full px-4 py-2">
+            <NavigationMenu>
                 <NavigationMenuList>
                     <NavigationMenuItem>
                         <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
@@ -32,9 +33,11 @@ const MenuBar = ({ loggedIn, username, onLogout }) => {
                             <Link to="/mypolls">My Polls</Link>
                         </NavigationMenuLink>
                     </NavigationMenuItem>
+                </NavigationMenuList>
+            </NavigationMenu>
 
-                    <div style={{ flexGrow: 1 }}></div>
-
+            <NavigationMenu>
+                <NavigationMenuList>
                     {loggedIn ? (
                         <>
                             <NavigationMenuItem>
@@ -62,6 +65,7 @@ const MenuBar = ({ loggedIn, username, onLogout }) => {
                     )}
                 </NavigationMenuList>
             </NavigationMenu>
+        </div>
     );
 };
 
