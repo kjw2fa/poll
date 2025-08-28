@@ -62,7 +62,7 @@ const Poll = ({ userId }) => {
     }
 
     return (
-        <div>
+        <div className="flex flex-col gap-4">
             {poll && <h2>{poll.title}</h2>}
             <Tabs defaultValue="vote">
                 <TabsList>
