@@ -50,7 +50,7 @@ const MenuBar = ({ loggedIn, username, onLogout }) => {
                         <>
                             <NavigationMenuItem>
                                 <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                                    <Link to="/signup">Create Account</Link>
+                                    <Link to="/signup">Sign Up</Link>
                                 </NavigationMenuLink>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
