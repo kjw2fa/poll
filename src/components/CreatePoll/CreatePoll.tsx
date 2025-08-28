@@ -30,12 +30,12 @@ const CreatePoll = ({ userId }) => {
     };
 
     return (
-        <div className="create-poll">
+        <div className="flex flex-col gap-4">
             <h2>Create a New Poll</h2>
             {!createdPollId ? (
                 <PollSettings onSave={handleSave} isEditing={false} />
             ) : (
-                <div className="poll-created-success">
+                <div className="poll-created-success flex flex-col gap-2">
                     <h3>Poll Created Successfully!</h3>
                     <p>Poll ID: {createdPollId}</p>
                     <p>Shareable URL: <a href={createdPollUrl} target="_blank" rel="noopener noreferrer">{createdPollUrl}</a></p>
