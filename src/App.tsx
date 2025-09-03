@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Route, Routes, useNavigate } from 'react-router-dom';
+import { RelayEnvironmentProvider } from 'react-relay/hooks';
+import RelayEnvironment from './RelayEnvironment';
 import Header from './components/Header/Header.tsx';
 import MenuBar from './components/MenuBar/MenuBar.tsx';
 import HomePage from './components/HomePage/HomePage.tsx';
@@ -12,7 +14,7 @@ import Login from './components/Login/Login.tsx';
 import MyPolls from './components/MyPolls/MyPolls.tsx';
 import './index.css';
 
-const AppContent = () => {
+function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState('');
@@ -38,33 +40,29 @@ const AppContent = () => {
   };
 
   return (
-    <div className="App">
-      <MenuBar
-        loggedIn={loggedIn}
-        username={username}
-        onLogout={handleLogout}
-      />
-      <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/create" element={<CreatePoll userId={userId} />} />
-          <Route path="/poll" element={<Poll userId={userId} />} />
-          <Route path="/poll/:id" element={<Poll userId={userId} />} />
-          <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
-          <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
-          <Route path="/poll/:id/results" element={<PollResults />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/mypolls" element={<MyPolls userId={userId} />} />
-        </Routes>
-      </main>
-    </div>
-  );
-}
-
-function App() {
-  return (
-      <AppContent />
+    <RelayEnvironmentProvider environment={RelayEnvironment}>
+      <div className="App">
+        <MenuBar
+          loggedIn={loggedIn}
+          username={username}
+          onLogout={handleLogout}
+        />
+        <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/create" element={<CreatePoll userId={userId} />} />
+            <Route path="/poll" element={<Poll userId={userId} />} />
+            <Route path="/poll/:id" element={<Poll userId={userId} />} />
+            <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
+            <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
+            <Route path="/poll/:id/results" element={<PollResults />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/mypolls" element={<MyPolls userId={userId} />} />
+          </Routes>
+        </main>
+      </div>
+    </RelayEnvironmentProvider>
   );
 }
 

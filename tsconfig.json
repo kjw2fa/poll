@@ -16,7 +16,8 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "__generated__/*": ["./src/__generated__/*"]
     }
   },
   "include": ["src", "./vite.config.ts"],

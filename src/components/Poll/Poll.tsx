@@ -1,60 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
 import Vote from './Vote/Vote.tsx';
 import PollResults from './PollResults/PollResults.tsx';
 import EditPoll from './EditPoll/EditPoll.tsx';
 import PollSearch from './PollSearch/PollSearch.tsx';
+import { useLazyLoadQuery, graphql } from 'react-relay';
+import { ErrorBoundary } from 'react-error-boundary';
+import { PollQuery as PollQueryType } from './__generated__/PollQuery.graphql';
 
-const Poll = ({ userId }) => {
+const PollQuery = graphql`
+  query PollQuery($id: ID!, $userId: ID!) {
+    poll(id: $id) {
+      id
+      title
+      options
+      creator {
+        name
+      }
+      permissions(userId: $userId) {
+        canEdit
+      }
+      votes(userId: $userId) {
+        option
+        rating
+      }
+    }
+  }
+`;
+
+const PollComponent = ({ userId }) => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const [poll, setPoll] = useState(null);
-    const [canEdit, setCanEdit] = useState(false);
 
-    useEffect(() => {
-        if (id) {
-            const fetchPollData = async () => {
-                try {
-                    const pollResponse = await fetch(`http://localhost:3001/api/polls/${id}`);
-                    if (pollResponse.ok) {
-                        const pollData = await pollResponse.json();
-                        setPoll(pollData);
-                    } else {
-                        console.error('Failed to fetch poll');
-                    }
-                } catch (error) {
-                    console.error('Error fetching poll:', error);
-                }
-            };
+    const data = useLazyLoadQuery<PollQueryType>(
+        PollQuery,
+        { id, userId },
+    );
 
-            const fetchPermissions = async () => {
-                try {
-                    const permissionsResponse = await fetch(`http://localhost:3001/api/poll/${id}/permissions?userId=${userId}`);
-                    if (permissionsResponse.ok) {
-                        const permissionsData = await permissionsResponse.json();
-                        setCanEdit(permissionsData.canEdit);
-                    } else {
-                        console.error('Failed to fetch permissions');
-                    }
-                } catch (error) {
-                    console.error('Error fetching permissions:', error);
-                }
-            };
+    const poll = data.poll;
+    const canEdit = poll?.permissions?.canEdit;
 
-            fetchPollData();
-            if (userId) {
-                fetchPermissions();
-            }
-        }
-    }, [id, userId]);
-
-    const handleSearch = (pollId) => {
+    const handleSearch = (pollId: string) => {
         navigate(`/poll/${pollId}`);
     };
 
-    const handlePollUpdated = (updatedPoll) => {
-        setPoll(updatedPoll);
+    const handlePollUpdated = (updatedPoll: any) => {
+        // This will be handled by Relay's data management
     };
 
     if (!id) {
@@ -63,7 +55,7 @@ const Poll = ({ userId }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            {poll && <h2>{poll.title}</h2>}
+            {poll && <h2>{poll.title} by {poll.creator.name}</h2>}
             <Tabs defaultValue="vote">
                 <TabsList>
                     <TabsTrigger value="vote">Vote</TabsTrigger>
@@ -71,7 +63,7 @@ const Poll = ({ userId }) => {
                     {canEdit && <TabsTrigger value="edit">Edit</TabsTrigger>}
                 </TabsList>
                 <TabsContent value="vote">
-                    <Vote userId={userId} />
+                    <Vote userId={userId} poll={poll} />
                 </TabsContent>
                 <TabsContent value="results">
                     <PollResults />
@@ -83,6 +75,16 @@ const Poll = ({ userId }) => {
                 )}
             </Tabs>
         </div>
+    );
+};
+
+const Poll = (props: { userId: string }) => {
+    return (
+        <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading...</div>}>
+                <PollComponent {...props} />
+            </Suspense>
+        </ErrorBoundary>
     );
 };
 

@@ -13,22 +13,22 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
         db.run(`CREATE TABLE Polls (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             title TEXT,
-            options TEXT
+            options TEXT,
+            creatorId INTEGER
             )`,
             (err) => {
                 if (err) {
                     // Table already created
                 } else {
                     // Table just created, creating some rows
-                    var insert = 'INSERT INTO Polls (title, options) VALUES (?,?,?)'
-                    db.run(insert, [null, "What's your favorite color?", JSON.stringify(["Red", "Green", "Blue"])])
+                    var insert = 'INSERT INTO Polls (title, options, creatorId) VALUES (?,?,?)'
+                    db.run(insert, ["What's your favorite color?", JSON.stringify(["Red", "Green", "Blue"]), 1])
                 }
             });
         db.run(`CREATE TABLE Votes (
             voteId INTEGER PRIMARY KEY AUTOINCREMENT,
             pollId INTEGER,
             userId TEXT,
-            userName TEXT,
             UNIQUE(pollId, userId)
             )`,
             (err) => {
@@ -49,8 +49,8 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
                 }
             });
         db.run(`CREATE TABLE Users (
-            userId INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE,
             email TEXT UNIQUE,
             password TEXT
             )`,

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useMutation, graphql } from 'react-relay';
+import { LoginMutation as LoginMutationType } from './__generated__/LoginMutation.graphql';
 import { cn } from "../../lib/utils.ts";
 import { Button } from "../ui/button.tsx";
 import {
@@ -11,31 +13,40 @@ import {
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 
+const LoginMutation = graphql`
+  mutation LoginMutation($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      token
+      userId
+      username
+    }
+  }
+`;
+
 const Login = ({ onLogin }) => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const [commitMutation, isMutationInFlight] = useMutation<LoginMutationType>(LoginMutation);
 
-  const handleLogin = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
+  const handleLogin = () => {
+    commitMutation({
+      variables: {
+        username,
+        password,
+      },
+      onCompleted: (response) => {
+        const { token, userId, username } = response.login;
         setMessage('Login successful!');
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.userId);
-        localStorage.setItem('username', data.username); // Assuming backend still returns username
-        if (onLogin) onLogin(data);
-      } else {
-        setMessage(data.error || 'Login failed.');
-      }
-    } catch (error) {
-      setMessage('Error logging in.');
-    }
+        localStorage.setItem('token', token);
+        localStorage.setItem('userId', userId);
+        localStorage.setItem('username', username);
+        if (onLogin) onLogin({ token, userId, username });
+      },
+      onError: (error) => {
+        setMessage(error.message || 'Login failed.');
+      },
+    });
   };
 
   return (
@@ -77,14 +88,14 @@ const Login = ({ onLogin }) => {
               </div>
               <div className="grid gap-6">
                 <div className="grid gap-3">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="username">Username</Label>
                   <Input
-                    id="email"
-                    type="email"
+                    id="username"
+                    type="text"
                     placeholder="m@example.com"
                     required
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
+                    value={username}
+                    onChange={e => setUsername(e.target.value)}
                   />
                 </div>
                 <div className="grid gap-3">
@@ -106,7 +117,7 @@ const Login = ({ onLogin }) => {
                     onKeyDown={e => e.key === 'Enter' && handleLogin()}
                   />
                 </div>
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full" disabled={isMutationInFlight}>
                   Login
                 </Button>
               </div>

@@ -1,0 +1,72 @@
+schema {
+  query: RootQueryType
+  mutation: Mutation
+}
+
+type LoginResponse {
+  token: String
+  userId: ID
+  username: String
+}
+
+type Mutation {
+  createPoll(title: String!, options: [String]!, userId: ID!): Poll
+  submitVote(pollId: ID!, userId: ID!, ratings: [RatingInput!]!): Poll
+  editPoll(pollId: ID!, userId: ID!, title: String!, options: [String]!): Poll
+  signup(username: String!, email: String!, password: String!): User
+  login(username: String!, password: String!): LoginResponse
+}
+
+type MyPolls {
+  createdPolls: [Poll]
+  votedPolls: [Poll]
+}
+
+type Permissions {
+  canEdit: Boolean
+}
+
+type Poll {
+  id: ID
+  title: String
+  options: [String]
+  creator: User
+  permissions(userId: ID): Permissions
+  votes(userId: ID!): [Vote]
+}
+
+type PollResult {
+  pollTitle: String
+  totalVotes: Int
+  voters: [String]
+  results: [WinningOption]
+  allAverageRatings: [WinningOption]
+}
+
+input RatingInput {
+  option: String!
+  rating: Int!
+}
+
+type RootQueryType {
+  polls: [Poll]
+  poll(id: ID): Poll
+  myPolls(userId: ID!): MyPolls
+  pollResults(pollId: ID!): PollResult
+}
+
+type User {
+  id: ID
+  name: String
+}
+
+type Vote {
+  option: String
+  rating: Int
+}
+
+type WinningOption {
+  option: String
+  averageRating: Float
+}
+

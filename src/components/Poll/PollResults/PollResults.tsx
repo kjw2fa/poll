@@ -1,43 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense } from 'react';
 import { useParams } from 'react-router-dom';
+import { useLazyLoadQuery, graphql } from 'react-relay';
+import { ErrorBoundary } from 'react-error-boundary';
+import { PollResultsQuery as PollResultsQueryType } from './__generated__/PollResultsQuery.graphql';
 
-const PollResults = () => {
+const PollResultsQuery = graphql`
+  query PollResultsQuery($pollId: ID!) {
+    pollResults(pollId: $pollId) {
+      pollTitle
+      totalVotes
+      voters
+      results {
+        option
+        averageRating
+      }
+      allAverageRatings {
+        option
+        averageRating
+      }
+    }
+  }
+`;
+
+const PollResultsComponent = () => {
     const { id } = useParams();
-    const [pollResults, setPollResults] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const data = useLazyLoadQuery<PollResultsQueryType>(
+        PollResultsQuery,
+        { pollId: id },
+    );
 
-    useEffect(() => {
-        const fetchPollResults = async () => {
-            try {
-                const response = await fetch(`http://localhost:3001/api/polls/${id}/results`);
-                if (response.ok) {
-                    const data = await response.json();
-                    setPollResults(data);
-                } else {
-                    setError('Failed to fetch poll results');
-                }
-            } catch (err) {
-                setError('Error fetching poll results:' + err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPollResults();
-    }, [id]);
-
-    if (loading) {
+    if (!data || !data.pollResults) {
         return <div>Loading results...</div>;
     }
 
-    if (error) {
-        return <div>Error: {error}</div>;
-    }
-
-    if (!pollResults) {
-        return <div>No results found for this poll.</div>;
-    }
+    const { pollResults } = data;
 
     return (
         <div className="poll-results">
@@ -58,9 +54,9 @@ const PollResults = () => {
 
             <h3>All Option Average Ratings:</h3>
             <ul>
-                {Object.entries(pollResults.allAverageRatings).map(([option, avg]) => (
-                    <li key={option}>
-                        {option}: {avg.toFixed(2)}
+                {pollResults.allAverageRatings.map((result, index) => (
+                    <li key={index}>
+                        {result.option}: {result.averageRating.toFixed(2)}
                     </li>
                 ))}
             </ul>
@@ -79,6 +75,16 @@ const PollResults = () => {
                 <p>No named votes cast yet.</p>
             )}
         </div>
+    );
+};
+
+const PollResults = () => {
+    return (
+        <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading...</div>}>
+                <PollResultsComponent />
+            </Suspense>
+        </ErrorBoundary>
     );
 };
 

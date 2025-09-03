@@ -1,34 +1,40 @@
 import React, { useState } from 'react';
+import { useMutation, graphql } from 'react-relay';
+import { SignupMutation as SignupMutationType } from './__generated__/SignupMutation.graphql';
 import { Input } from "../ui/input.tsx";
 import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
+
+const SignupMutation = graphql`
+  mutation SignupMutation($username: String!, $email: String!, $password: String!) {
+    signup(username: $username, email: $email, password: $password) {
+      id
+      name
+    }
+  }
+`;
 
 const Signup = () => {
     const [signupUsername, setSignupUsername] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
     const [signupMessage, setSignupMessage] = useState('');
+    const [commitMutation, isMutationInFlight] = useMutation<SignupMutationType>(SignupMutation);
 
-    const handleSignup = async () => {
-        try {
-            const response = await fetch('http://localhost:3001/api/signup', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: signupUsername,
-                    email: signupEmail,
-                    password: signupPassword
-                }),
-            });
-            const data = await response.json();
-            if (response.ok) {
+    const handleSignup = () => {
+        commitMutation({
+            variables: {
+                username: signupUsername,
+                email: signupEmail,
+                password: signupPassword,
+            },
+            onCompleted: (response) => {
                 setSignupMessage('Signup successful!');
-            } else {
-                setSignupMessage(data.error || 'Signup failed.');
-            }
-        } catch (error) {
-            setSignupMessage('Error signing up.');
-        }
+            },
+            onError: (error) => {
+                setSignupMessage(error.message || 'Signup failed.');
+            },
+        });
     };
 
     return (
@@ -58,7 +64,7 @@ const Signup = () => {
                 value={signupPassword}
                 onChange={e => setSignupPassword(e.target.value)}
             />
-            <Button onClick={handleSignup}>Create Account</Button>
+            <Button onClick={handleSignup} disabled={isMutationInFlight}>Create Account</Button>
             {signupMessage && <div>{signupMessage}</div>}
         </div>
     );

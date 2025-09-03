@@ -1,34 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useParams } from 'react-router-dom';
 import PollSettings from '../../PollSettings/PollSettings.tsx';
+import { useMutation, graphql } from 'react-relay';
+import { ErrorBoundary } from 'react-error-boundary';
+import { EditPollMutation as EditPollMutationType } from './__generated__/EditPollMutation.graphql';
 
-const EditPoll = ({ userId, poll: initialPoll, onPollUpdated }) => {
+const EditPollMutation = graphql`
+  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [String]!) {
+    editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {
+      id
+      title
+      options
+    }
+  }
+`;
+
+const EditPollComponent = ({ userId, poll: initialPoll, onPollUpdated }) => {
     const [poll, setPoll] = useState(initialPoll);
     const [message, setMessage] = useState('');
     const { id } = useParams();
+    const [commitMutation, isMutationInFlight] = useMutation<EditPollMutationType>(EditPollMutation);
 
     useEffect(() => {
         setPoll(initialPoll);
     }, [initialPoll]);
 
-    const handleSave = async (pollData) => {
-        try {
-            const res = await fetch(`http://localhost:3001/api/poll/${id}/edit`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, ...pollData }),
-            });
-            if (res.ok) {
+    const handleSave = (pollData: any) => {
+        commitMutation({
+            variables: {
+                pollId: id,
+                userId,
+                ...pollData,
+            },
+            onCompleted: (response) => {
                 setMessage('Poll updated!');
                 if (onPollUpdated) {
                     onPollUpdated({ ...poll, ...pollData });
                 }
-            } else {
+            },
+            onError: (error) => {
                 setMessage('Failed to update poll.');
-            }
-        } catch (err) {
-            setMessage('Error updating poll.');
-        }
+            },
+        });
     };
 
     return (
@@ -40,6 +53,16 @@ const EditPoll = ({ userId, poll: initialPoll, onPollUpdated }) => {
             )}
             {message && <div>{message}</div>}
         </div>
+    );
+};
+
+const EditPoll = (props: { userId: string, poll: any, onPollUpdated: any }) => {
+    return (
+        <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading...</div>}>
+                <EditPollComponent {...props} />
+            </Suspense>
+        </ErrorBoundary>
     );
 };
 

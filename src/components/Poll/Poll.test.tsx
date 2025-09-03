@@ -1,16 +1,19 @@
+
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Poll from './Poll';
+import { RelayEnvironmentProvider } from 'react-relay';
+import { createMockEnvironment, MockPayloadGenerator } from 'relay-test-utils';
+import { useParams, useNavigate } from 'react-router-dom';
 
-// Mock react-router-dom at the top level
-import { useParams, useNavigate } from 'react-router-dom'; // Import the actual functions
+// Mock react-router-dom
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    useParams: vi.fn(), // Mock useParams
-    useNavigate: vi.fn(), // Mock useNavigate
+    useParams: vi.fn(),
+    useNavigate: vi.fn(),
   };
 });
 
@@ -21,29 +24,11 @@ vi.mock('./EditPoll/EditPoll', () => ({ default: ({ userId, poll }) => <div>Mock
 vi.mock('./PollSearch/PollSearch', () => ({ default: ({ onSearch }) => <input placeholder="Enter Poll ID" onChange={(e) => onSearch(e.target.value)} /> }));
 
 
-// Mock fetch globally
-global.fetch = vi.fn((url) => {
-  if (url.includes('/api/polls/test-poll-id')) {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({
-        id: 'test-poll-id',
-        title: 'Test Poll',
-        options: ['Option A', 'Option B'],
-      }),
-    });
-  }
-  if (url.includes('/api/poll/test-poll-id/permissions')) {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ canEdit: true }),
-    });
-  }
-  return Promise.reject(new Error('unknown fetch URL'));
-});
+describe('Poll component with Relay', () => {
+  let environment;
 
-describe('Poll component', () => {
   beforeEach(() => {
+    environment = createMockEnvironment();
     vi.clearAllMocks();
   });
 
@@ -52,19 +37,33 @@ describe('Poll component', () => {
     useNavigate.mockReturnValue(vi.fn());
 
     render(
-      <BrowserRouter>
-        <Poll userId="test-user-id" />
-      </BrowserRouter>
+      <RelayEnvironmentProvider environment={environment}>
+        <BrowserRouter>
+          <Poll userId="test-user-id" />
+        </BrowserRouter>
+      </RelayEnvironmentProvider>
     );
 
-    // Wait for the poll data to be fetched and rendered
+    environment.mock.resolveMostRecentOperation(operation =>
+      MockPayloadGenerator.generate(operation, {
+        Poll: () => ({
+          id: 'test-poll-id',
+          title: 'Test Poll',
+          options: ['Option A', 'Option B'],
+          permissions: {
+            canEdit: true,
+          },
+        }),
+      })
+    );
+
     await waitFor(() => {
       expect(screen.getByText(/Test Poll/i)).toBeInTheDocument();
     });
 
     expect(screen.getByRole('tab', { name: /Vote/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Results/i })).toBeInTheDocument();
-    expect(screen.getByRole('tab', { name: /Edit/i })).toBeInTheDocument(); // Assuming canEdit is true
+    expect(screen.getByRole('tab', { name: /Edit/i })).toBeInTheDocument();
   });
 
   test('renders PollSearch if no id is provided', async () => {
@@ -72,12 +71,13 @@ describe('Poll component', () => {
     useNavigate.mockReturnValue(vi.fn());
 
     render(
-      <BrowserRouter>
-        <Poll userId="test-user-id" />
-      </BrowserRouter>
+      <RelayEnvironmentProvider environment={environment}>
+        <BrowserRouter>
+          <Poll userId="test-user-id" />
+        </BrowserRouter>
+      </RelayEnvironmentProvider>
     );
 
-    // PollSearch component is mocked to render an input with placeholder "Enter Poll ID"
     expect(screen.getByPlaceholderText(/Enter Poll ID/i)).toBeInTheDocument();
   });
 });

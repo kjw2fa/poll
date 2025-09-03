@@ -14,26 +14,7 @@ vi.mock('react-router-dom', async (importOriginal) => {
   };
 });
 
-// Mock fetch
-global.fetch = vi.fn((url) => {
-  if (url.includes('/api/polls/test-poll-id')) {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({
-        id: 'test-poll-id',
-        title: 'Test Poll',
-        options: ['Option A', 'Option B'],
-      }),
-    });
-  }
-  if (url.includes('/api/poll/test-poll-id/vote')) {
-    return Promise.resolve({
-      ok: true,
-      json: () => Promise.resolve({ ratings: {} }),
-    });
-  }
-  return Promise.reject(new Error('unknown fetch URL'));
-});
+
 
 describe('Vote component', () => {
   beforeEach(() => {
@@ -41,24 +22,23 @@ describe('Vote component', () => {
     vi.clearAllMocks();
   });
 
-  test('renders poll title and options', async () => {
+  test('renders poll title and options', () => {
+    const mockPoll = {
+      id: 'test-poll-id',
+      title: 'Test Poll',
+      options: ['Option A', 'Option B'],
+      votes: [],
+    };
+
     render(
       <BrowserRouter>
-        <Vote userId="test-user-id" />
+        <Vote userId="test-user-id" poll={mockPoll} />
       </BrowserRouter>
     );
 
-    // Check if loading message is displayed initially
-    expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
-
-    // Wait for the poll data to be fetched and rendered
-    await waitFor(() => {
-      expect(screen.getByText(/Test Poll/i)).toBeInTheDocument();
-    });
-
+    expect(screen.getByText(/Test Poll/i)).toBeInTheDocument();
     expect(screen.getByText(/Option A/i)).toBeInTheDocument();
     expect(screen.getByText(/Option B/i)).toBeInTheDocument();
-    expect(screen.getByText(/Your Name/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Submit/i })).toBeInTheDocument();
   });
 

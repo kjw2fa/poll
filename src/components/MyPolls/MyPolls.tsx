@@ -1,31 +1,39 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
+import { useLazyLoadQuery, graphql } from 'react-relay';
+import { ErrorBoundary } from 'react-error-boundary';
+import { MyPollsQuery as MyPollsQueryType } from './__generated__/MyPollsQuery.graphql';
 
-const MyPolls = ({ userId }) => {
-    const [createdPolls, setCreatedPolls] = useState([]);
-    const [votedPolls, setVotedPolls] = useState([]);
-    const [loading, setLoading] = useState(true);
+const MyPollsQuery = graphql`
+  query MyPollsQuery($userId: ID!) {
+    myPolls(userId: $userId) {
+      createdPolls {
+        id
+        title
+        creator {
+          name
+        }
+      }
+      votedPolls {
+        id
+        title
+        creator {
+          name
+        }
+      }
+    }
+  }
+`;
 
-    useEffect(() => {
-        const fetchMyPolls = async () => {
-            if (!userId) return;
-            try {
-                const response = await fetch(`http://localhost:3001/api/user/${userId}/polls`);
-                const data = await response.json();
-                setCreatedPolls(data.createdPolls || []);
-                setVotedPolls(data.votedPolls || []);
-            } catch (error) {
-                console.error('Error fetching my polls:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMyPolls();
-    }, [userId]);
+const MyPollsComponent = ({ userId }) => {
+    const data = useLazyLoadQuery<MyPollsQueryType>(
+        MyPollsQuery,
+        { userId },
+    );
 
     if (!userId) return <div>Please log in to view your polls.</div>;
-    if (loading) return <div>Loading...</div>;
+
+    const { createdPolls, votedPolls } = data.myPolls;
 
     return (
         <div>
@@ -34,7 +42,7 @@ const MyPolls = ({ userId }) => {
                 <ul>
                     {createdPolls.map(poll => (
                         <li key={poll.id}>
-                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link>
+                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.name}
                         </li>
                     ))}
                 </ul>
@@ -44,12 +52,22 @@ const MyPolls = ({ userId }) => {
                 <ul>
                     {votedPolls.map(poll => (
                         <li key={poll.id}>
-                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link>
+                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.name}
                         </li>
                     ))}
                 </ul>
             )}
         </div>
+    );
+};
+
+const MyPolls = (props: { userId: string }) => {
+    return (
+        <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading...</div>}>
+                <MyPollsComponent {...props} />
+            </Suspense>
+        </ErrorBoundary>
     );
 };
 

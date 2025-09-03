@@ -13,28 +13,37 @@
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
+    "@types/react-relay": "^18.2.1",
     "autoprefixer": "^10.4.1",
+    "babel-plugin-macros": "^3.1.0",
+    "babel-plugin-relay": "^20.1.1",
     "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "collections": "^5.1.13",
+    "esbuild-jest": "^0.5.0",
+    "jest-raw-loader": "^1.0.1",
     "js-sdsl": "^4.4.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.541.0",
     "postcss": "^8.4.31",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
+    "react-error-boundary": "^6.0.0",
+    "react-relay": "^20.1.1",
     "react-router-dom": "^7.8.2",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0",
+    "vite-plugin-relay": "^2.0.0",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "test": "vitest",
-    "start": "vite preview"
+    "start": "vite preview",
+    "relay": "relay-compiler"
   },
   "eslintConfig": {
     "extends": [
@@ -54,6 +63,16 @@
       "last 1 safari version"
     ]
   },
+  "relay": {
+    "src": "./src",
+    "schema": "./backend/schema.graphql",
+    "language": "typescript",
+    "exclude": [
+      "**/node_modules/**",
+      "**/__mocks__/**",
+      "**/__generated__/**"
+    ]
+  },
   "devDependencies": {
     "@testing-library/user-event": "^14.6.1",
     "@types/bcrypt": "^6.0.0",
@@ -66,6 +85,8 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^5.0.1",
     "jsdom": "^26.1.0",
+    "relay-compiler": "^20.1.1",
+    "relay-test-utils": "^20.1.1",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.9.2",
     "vite": "^7.1.3",
