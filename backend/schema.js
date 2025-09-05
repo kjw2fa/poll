@@ -1,6 +1,11 @@
 
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+
 const { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLBoolean, GraphQLNonNull, GraphQLInputObjectType, GraphQLInt, GraphQLFloat } = require('graphql');
 const db = require('./database.js');
+
+const JWT_SECRET = 'your-secret-key';
 
 // User Type
 const UserType = new GraphQLObjectType({
@@ -410,7 +415,7 @@ const Mutation = new GraphQLObjectType({
             async resolve(parent, args) {
                 const hashedPassword = await bcrypt.hash(args.password, 10);
                 return new Promise((resolve, reject) => {
-                    db.run('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword], function(err) {
+                    db.run('INSERT INTO Users (name, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword], function(err) {
                         if (err) {
                             reject(err);
                         } else {
@@ -436,8 +441,8 @@ const Mutation = new GraphQLObjectType({
                         if (!match) {
                             reject(new Error('Invalid username or password.'));
                         }
-                        const token = jwt.sign({ userId: user.userId, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
-                        resolve({ token, userId: user.userId, username: user.username });
+                        const token = jwt.sign({ userId: user.id, username: user.name }, JWT_SECRET, { expiresIn: '1d' });
+                        resolve({ token, userId: user.id, username: user.name });
                     });
                 });
             }
