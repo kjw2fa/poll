@@ -9,7 +9,7 @@ const SignupMutation = graphql`
   mutation SignupMutation($username: String!, $email: String!, $password: String!) {
     signup(username: $username, email: $email, password: $password) {
       id
-      name
+      username
     }
   }
 `;

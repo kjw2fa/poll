@@ -50,7 +50,7 @@ let db = new sqlite3.Database(DBSOURCE, (err) => {
             });
         db.run(`CREATE TABLE Users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE,
+            username TEXT UNIQUE,
             email TEXT UNIQUE,
             password TEXT
             )`,

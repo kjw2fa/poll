@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<906f12c3d097a3c3dee19294d75079ee>>
+ * @generated SignedSource<<162b6c63213ef83b00955d691f7b9fd1>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type PollQuery$variables = {
 export type PollQuery$data = {
   readonly poll: {
     readonly creator: {
-      readonly name: string | null | undefined;
+      readonly username: string | null | undefined;
     } | null | undefined;
     readonly id: string | null | undefined;
     readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
@@ -80,7 +80,7 @@ v5 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "username",
   "storageKey": null
 },
 v6 = [
@@ -210,16 +210,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "fe2d1399045629d180b3874d624e6a1d",
+    "cacheID": "00bea32ee9d3a7eb233c3a0f78f99cab",
     "id": null,
     "metadata": {},
     "name": "PollQuery",
     "operationKind": "query",
-    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    options\n    creator {\n      name\n      id\n    }\n    permissions(userId: $userId) {\n      canEdit\n    }\n    votes(userId: $userId) {\n      option\n      rating\n    }\n  }\n}\n"
+    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    options\n    creator {\n      username\n      id\n    }\n    permissions(userId: $userId) {\n      canEdit\n    }\n    votes(userId: $userId) {\n      option\n      rating\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c452bec7611745e8fea35cf576bbe48d";
+(node as any).hash = "7e5612a339304c887b0e521d25bbac96";
 
 export default node;

@@ -11,14 +11,14 @@ const MyPollsQuery = graphql`
         id
         title
         creator {
-          name
+          username
         }
       }
       votedPolls {
         id
         title
         creator {
-          name
+          username
         }
       }
     }
@@ -42,7 +42,7 @@ const MyPollsComponent = ({ userId }) => {
                 <ul>
                     {createdPolls.map(poll => (
                         <li key={poll.id}>
-                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.name}
+                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.username}
                         </li>
                     ))}
                 </ul>
@@ -52,7 +52,7 @@ const MyPollsComponent = ({ userId }) => {
                 <ul>
                     {votedPolls.map(poll => (
                         <li key={poll.id}>
-                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.name}
+                            <Link to={`/poll/${poll.id}`}>{poll.title}</Link> by {poll.creator.username}
                         </li>
                     ))}
                 </ul>

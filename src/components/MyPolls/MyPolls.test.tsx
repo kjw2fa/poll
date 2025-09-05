@@ -34,8 +34,8 @@ describe('MyPolls component', () => {
   test('renders created and voted polls after fetching', async () => {
     mockUseLazyLoadQuery.mockReturnValue({
       myPolls: {
-        createdPolls: [{ id: 'c1', title: 'Created Poll 1', creator: { name: 'test-user' } }],
-        votedPolls: [{ id: 'v1', title: 'Voted Poll 1', creator: { name: 'test-user' } }],
+        createdPolls: [{ id: 'c1', title: 'Created Poll 1', creator: { username: 'test-user' } }],
+        votedPolls: [{ id: 'v1', title: 'Voted Poll 1', creator: { username: 'test-user' } }],
       },
     });
 

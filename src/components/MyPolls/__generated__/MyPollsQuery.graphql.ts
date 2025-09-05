@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<98cd9712524b56c20b2b1a83c028132a>>
+ * @generated SignedSource<<a2c52b94e2b0dadf140591c54d53e529>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,14 +16,14 @@ export type MyPollsQuery$data = {
   readonly myPolls: {
     readonly createdPolls: ReadonlyArray<{
       readonly creator: {
-        readonly name: string | null | undefined;
+        readonly username: string | null | undefined;
       } | null | undefined;
       readonly id: string | null | undefined;
       readonly title: string | null | undefined;
     } | null | undefined> | null | undefined;
     readonly votedPolls: ReadonlyArray<{
       readonly creator: {
-        readonly name: string | null | undefined;
+        readonly username: string | null | undefined;
       } | null | undefined;
       readonly id: string | null | undefined;
       readonly title: string | null | undefined;
@@ -68,7 +68,7 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "name",
+  "name": "username",
   "storageKey": null
 },
 v5 = [
@@ -186,16 +186,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b767327eeaed98ab48be0b97057dc8b2",
+    "cacheID": "4c74e5165399312d5352eaefb3141f9c",
     "id": null,
     "metadata": {},
     "name": "MyPollsQuery",
     "operationKind": "query",
-    "text": "query MyPollsQuery(\n  $userId: ID!\n) {\n  myPolls(userId: $userId) {\n    createdPolls {\n      id\n      title\n      creator {\n        name\n        id\n      }\n    }\n    votedPolls {\n      id\n      title\n      creator {\n        name\n        id\n      }\n    }\n  }\n}\n"
+    "text": "query MyPollsQuery(\n  $userId: ID!\n) {\n  myPolls(userId: $userId) {\n    createdPolls {\n      id\n      title\n      creator {\n        username\n        id\n      }\n    }\n    votedPolls {\n      id\n      title\n      creator {\n        username\n        id\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "11fbee9e1f2445de547081bcd840c919";
+(node as any).hash = "c0e670664ef3fff7b3b45afee92157ac";
 
 export default node;

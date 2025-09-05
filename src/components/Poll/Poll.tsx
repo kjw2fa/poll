@@ -16,7 +16,7 @@ const PollQuery = graphql`
       title
       options
       creator {
-        name
+        username
       }
       permissions(userId: $userId) {
         canEdit
@@ -55,7 +55,7 @@ const PollComponent = ({ userId }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            {poll && <h2>{poll.title} by {poll.creator.name}</h2>}
+            {poll && <h2>{poll.title} by {poll.creator.username}</h2>}
             <Tabs defaultValue="vote">
                 <TabsList>
                     <TabsTrigger value="vote">Vote</TabsTrigger>

@@ -12,7 +12,7 @@ const UserType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
         id: { type: GraphQLID },
-        name: { type: GraphQLString }
+        username: { type: GraphQLString }
     })
 });
 
@@ -211,7 +211,7 @@ const RootQuery = new GraphQLObjectType({
                             const pollTitle = pollRow.title;
                             const pollOptions = JSON.parse(pollRow.options);
 
-                            db.all('SELECT u.name, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [args.pollId], (err, rows) => {
+                            db.all('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [args.pollId], (err, rows) => {
                                 if (err) {
                                     reject(err);
                                 } else {
@@ -222,7 +222,7 @@ const RootQuery = new GraphQLObjectType({
 
                                     const votersSet = new Set();
                                     rows.forEach(row => {
-                                        if (row.name) votersSet.add(row.name);
+                                        if (row.username) votersSet.add(row.username);
                                         if (row.option && optionRatings[row.option]) {
                                             optionRatings[row.option].push(row.rating);
                                         }
@@ -330,11 +330,11 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT name FROM Users WHERE id = ?', [args.userId], (err, user) => {
+                    db.get('SELECT username FROM Users WHERE id = ?', [args.userId], (err, user) => {
                         if (err || !user) {
                             reject(new Error('User not found'));
                         } else {
-                            db.run('INSERT OR REPLACE INTO Votes (pollId, userId, userName) VALUES (?, ?, ?)', [args.pollId, args.userId, user.name], function (err) {
+                            db.run('INSERT OR REPLACE INTO Votes (pollId, userId, userName) VALUES (?, ?, ?)', [args.pollId, args.userId, user.username], function (err) {
                                 if (err) {
                                     reject(err);
                                 } else {
@@ -415,11 +415,11 @@ const Mutation = new GraphQLObjectType({
             async resolve(parent, args) {
                 const hashedPassword = await bcrypt.hash(args.password, 10);
                 return new Promise((resolve, reject) => {
-                    db.run('INSERT INTO Users (name, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword], function(err) {
+                    db.run('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword], function(err) {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve({ id: this.lastID, name: args.username });
+                            resolve({ id: this.lastID, username: args.username });
                         }
                     });
                 });
@@ -431,18 +431,27 @@ const Mutation = new GraphQLObjectType({
                 username: { type: new GraphQLNonNull(GraphQLString) },
                 password: { type: new GraphQLNonNull(GraphQLString) }
             },
-            async resolve(parent, args) {
+            resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT * FROM Users WHERE username = ?', [args.username], async (err, user) => {
-                        if (err || !user) {
-                            reject(new Error('Invalid username or password.'));
+                    db.get('SELECT * FROM Users WHERE username = ?', [args.username], (err, user) => {
+                        if (err) {
+                            return reject(err);
                         }
-                        const match = await bcrypt.compare(args.password, user.password);
-                        if (!match) {
-                            reject(new Error('Invalid username or password.'));
+                        if (!user) {
+                            return reject(new Error('Invalid username or password.'));
                         }
-                        const token = jwt.sign({ userId: user.id, username: user.name }, JWT_SECRET, { expiresIn: '1d' });
-                        resolve({ token, userId: user.id, username: user.name });
+
+                        bcrypt.compare(args.password, user.password, (err, match) => {
+                            if (err) {
+                                return reject(err);
+                            }
+                            if (!match) {
+                                return reject(new Error('Invalid username or password.'));
+                            }
+
+                            const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+                            resolve({ token, userId: user.id, username: user.username });
+                        });
                     });
                 });
             }

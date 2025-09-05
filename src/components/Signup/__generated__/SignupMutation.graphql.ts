@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c5b77392c6a9c80e8f2ed908f93ac55a>>
+ * @generated SignedSource<<4e9dcb5755ce64e1cd56d17e5d46e57a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type SignupMutation$variables = {
 export type SignupMutation$data = {
   readonly signup: {
     readonly id: string | null | undefined;
-    readonly name: string | null | undefined;
+    readonly username: string | null | undefined;
   } | null | undefined;
 };
 export type SignupMutation = {
@@ -77,7 +77,7 @@ v3 = [
         "alias": null,
         "args": null,
         "kind": "ScalarField",
-        "name": "name",
+        "name": "username",
         "storageKey": null
       }
     ],
@@ -110,16 +110,16 @@ return {
     "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "39a69309e36f596743ba1a5ea6fc904d",
+    "cacheID": "e6e7612fda144db851c13146202102bc",
     "id": null,
     "metadata": {},
     "name": "SignupMutation",
     "operationKind": "mutation",
-    "text": "mutation SignupMutation(\n  $username: String!\n  $email: String!\n  $password: String!\n) {\n  signup(username: $username, email: $email, password: $password) {\n    id\n    name\n  }\n}\n"
+    "text": "mutation SignupMutation(\n  $username: String!\n  $email: String!\n  $password: String!\n) {\n  signup(username: $username, email: $email, password: $password) {\n    id\n    username\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "85d602397649567166fd8a342f0ea614";
+(node as any).hash = "834ea386638e18a8d03fcce6fc278328";
 
 export default node;
