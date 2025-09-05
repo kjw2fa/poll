@@ -433,7 +433,7 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT * FROM Users WHERE username = ?', [args.username], (err, user) => {
+                    db.get('SELECT * FROM Users WHERE username = ? OR email = ?', [args.username, args.username], (err, user) => {
                         if (err) {
                             return reject(err);
                         }

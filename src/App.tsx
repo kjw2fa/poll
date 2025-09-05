@@ -29,6 +29,16 @@ function App() {
     setUserId(storedUserId || '');
   }, []);
 
+  const handleLogin = ({ token, userId, username }) => {
+    localStorage.setItem('token', token);
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('username', username);
+    setLoggedIn(true);
+    setUsername(username);
+    setUserId(userId);
+    navigate('/');
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
@@ -57,7 +67,7 @@ function App() {
             <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
             <Route path="/poll/:id/results" element={<PollResults />} />
             <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/mypolls" element={<MyPolls userId={userId} />} />
           </Routes>
         </main>
