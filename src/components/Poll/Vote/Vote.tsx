@@ -34,7 +34,7 @@ const Droppable = ({ id, children }) => {
     };
 
     return (
-        <td ref={setNodeRef} style={style}>
+        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2">
             {children}
         </td>
     );
@@ -122,7 +122,7 @@ const VoteComponent = ({ userId, poll }) => {
     const tableBody: any[] = [];
     ratingsToOptions.forEach((ratingValue, options) => {
         tableBody.push(<tr key={ratingValue}>
-            <td>{ratingValue}</td>
+            <td className="border border-gray-300 p-2">{ratingValue}</td>
             <Droppable id={ratingValue}>
                 {Array.from(options).map(draggableOption)}
             </Droppable>
@@ -136,12 +136,11 @@ const VoteComponent = ({ userId, poll }) => {
             <DndContext onDragEnd={handleDragEnd}>
                 <div className="vote-container flex gap-16">
                     <div className="ratings-container">
-                        <h3>Ratings</h3>
-                        <table>
+                        <table className="border-collapse border border-gray-300">
                             <thead>
                                 <tr>
-                                    <th>Rating</th>
-                                    <th>Options</th>
+                                    <th className="border border-gray-300 p-2">Rating</th>
+                                    <th className="border border-gray-300 p-2">Options</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -156,9 +155,9 @@ const VoteComponent = ({ userId, poll }) => {
                 </div>
             </DndContext>
             <div className="flex gap-4 mt-4">
-                <button onClick={handleSubmit}>Submit</button>
+                <button onClick={handleSubmit} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
                 <Link to={`/poll/${id}/results`}>
-                    <button>View Results</button>
+                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">View Results</button>
                 </Link>
             </div>
         </div>
