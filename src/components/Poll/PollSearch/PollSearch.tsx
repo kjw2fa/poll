@@ -25,7 +25,8 @@ const PollSearch = ({ onSearch }) => {
 
     return (
         <PageContainer>
-            <div className="poll-search">
+            <div className="poll-search flex flex-col gap-6">
+                <h1>Find a Poll</h1>
                 <Input
                     type="text"
                     value={pollId}
