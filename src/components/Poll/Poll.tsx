@@ -8,6 +8,7 @@ import PollSearch from './PollSearch/PollSearch.tsx';
 import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollQuery as PollQueryType } from './__generated__/PollQuery.graphql';
+import PageContainer from '../ui/PageContainer';
 
 const PollQuery = graphql`
   query PollQuery($id: ID!, $userId: ID!) {
@@ -38,11 +39,13 @@ const Poll = (props: { userId: string }) => {
     };
 
     return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                {id ? <PollComponent {...props} id={id} /> : <PollSearch onSearch={handleSearch} />}
-            </Suspense>
-        </ErrorBoundary>
+        <PageContainer>
+            <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                <Suspense fallback={<div>Loading...</div>}>
+                    {id ? <PollComponent {...props} id={id} /> : <PollSearch onSearch={handleSearch} />}
+                </Suspense>
+            </ErrorBoundary>
+        </PageContainer>
     );
 };
 

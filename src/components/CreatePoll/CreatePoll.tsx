@@ -3,6 +3,7 @@ import PollSettings from '../PollSettings/PollSettings.tsx';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { CreatePollMutation as CreatePollMutationType } from './__generated__/CreatePollMutation.graphql';
+import PageContainer from '../ui/PageContainer';
 
 const CreatePollMutation = graphql`
   mutation CreatePollMutation($title: String!, $options: [String]!, $userId: ID!) {
@@ -53,11 +54,13 @@ const CreatePollComponent = ({ userId }) => {
 
 const CreatePoll = (props: { userId: string }) => {
     return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                <CreatePollComponent {...props} />
-            </Suspense>
-        </ErrorBoundary>
+        <PageContainer>
+            <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <CreatePollComponent {...props} />
+                </Suspense>
+            </ErrorBoundary>
+        </PageContainer>
     );
 };
 

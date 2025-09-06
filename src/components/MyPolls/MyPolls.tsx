@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { MyPollsQuery as MyPollsQueryType } from './__generated__/MyPollsQuery.graphql';
+import PageContainer from '../ui/PageContainer';
 
 const MyPollsQuery = graphql`
   query MyPollsQuery($userId: ID!) {
@@ -63,11 +64,13 @@ const MyPollsComponent = ({ userId }) => {
 
 const MyPolls = (props: { userId: string }) => {
     return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                <MyPollsComponent {...props} />
-            </Suspense>
-        </ErrorBoundary>
+        <PageContainer>
+            <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <MyPollsComponent {...props} />
+                </Suspense>
+            </ErrorBoundary>
+        </PageContainer>
     );
 };
 

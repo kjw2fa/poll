@@ -4,6 +4,7 @@ import { SignupMutation as SignupMutationType } from './__generated__/SignupMuta
 import { Input } from "../ui/input.tsx";
 import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
+import PageContainer from '../ui/PageContainer';
 
 const SignupMutation = graphql`
   mutation SignupMutation($username: String!, $email: String!, $password: String!) {
@@ -38,35 +39,37 @@ const Signup = () => {
     };
 
     return (
-        <div className="grid w-full max-w-sm items-center gap-1.5">
-            <h2>Create Account</h2>
-            <Label htmlFor="username">Username</Label>
-            <Input
-                type="text"
-                id="username"
-                placeholder="Username"
-                value={signupUsername}
-                onChange={e => setSignupUsername(e.target.value)}
-            />
-            <Label htmlFor="email">Email</Label>
-            <Input
-                type="email"
-                id="email"
-                placeholder="Email"
-                value={signupEmail}
-                onChange={e => setSignupEmail(e.target.value)}
-            />
-            <Label htmlFor="password">Password</Label>
-            <Input
-                type="password"
-                id="password"
-                placeholder="Password"
-                value={signupPassword}
-                onChange={e => setSignupPassword(e.target.value)}
-            />
-            <Button onClick={handleSignup} disabled={isMutationInFlight}>Create Account</Button>
-            {signupMessage && <div>{signupMessage}</div>}
-        </div>
+        <PageContainer>
+            <div className="grid w-full max-w-sm items-center gap-1.5">
+                <h2>Create Account</h2>
+                <Label htmlFor="username">Username</Label>
+                <Input
+                    type="text"
+                    id="username"
+                    placeholder="Username"
+                    value={signupUsername}
+                    onChange={e => setSignupUsername(e.target.value)}
+                />
+                <Label htmlFor="email">Email</Label>
+                <Input
+                    type="email"
+                    id="email"
+                    placeholder="Email"
+                    value={signupEmail}
+                    onChange={e => setSignupEmail(e.target.value)}
+                />
+                <Label htmlFor="password">Password</Label>
+                <Input
+                    type="password"
+                    id="password"
+                    placeholder="Password"
+                    value={signupPassword}
+                    onChange={e => setSignupPassword(e.target.value)}
+                />
+                <Button onClick={handleSignup} disabled={isMutationInFlight}>Create Account</Button>
+                {signupMessage && <div>{signupMessage}</div>}
+            </div>
+        </PageContainer>
     );
 };
 

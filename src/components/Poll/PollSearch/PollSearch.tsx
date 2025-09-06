@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
+import PageContainer from '../../ui/PageContainer';
 
 const PollSearch = ({ onSearch }) => {
     const [pollId, setPollId] = useState('');
@@ -23,16 +24,18 @@ const PollSearch = ({ onSearch }) => {
     };
 
     return (
-        <div className="poll-search">
-            <Input
-                type="text"
-                value={pollId}
-                onChange={(e) => setPollId(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Enter Poll ID"
-            />
-            <Button onClick={handleSearch}>Search</Button>
-        </div>
+        <PageContainer>
+            <div className="poll-search">
+                <Input
+                    type="text"
+                    value={pollId}
+                    onChange={(e) => setPollId(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Enter Poll ID"
+                />
+                <Button onClick={handleSearch}>Search</Button>
+            </div>
+        </PageContainer>
     );
 };
 

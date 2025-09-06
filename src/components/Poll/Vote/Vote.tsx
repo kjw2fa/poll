@@ -4,6 +4,7 @@ import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__generated__/VoteSubmitVoteMutation.graphql';
+import PageContainer from '../../ui/PageContainer';
 
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
@@ -155,11 +156,13 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
 
 const Vote = (props: { userId: string, poll: any }) => {
     return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                <VoteComponent {...props} />
-            </Suspense>
-        </ErrorBoundary>
+        <PageContainer>
+            <ErrorBoundary fallback={<div>Something went wrong</div>}>
+                <Suspense fallback={<div>Loading...</div>}>
+                    <VoteComponent {...props} />
+                </Suspense>
+            </ErrorBoundary>
+        </PageContainer>
     );
 };
 
