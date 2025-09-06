@@ -29,10 +29,24 @@ const PollQuery = graphql`
   }
 `;
 
-const PollComponent = ({ userId }) => {
+const Poll = (props: { userId: string }) => {
     const { id } = useParams();
     const navigate = useNavigate();
 
+    const handleSearch = (pollId: string) => {
+        navigate(`/poll/${pollId}`);
+    };
+
+    return (
+        <ErrorBoundary fallback={<div>Something went wrong</div>}>
+            <Suspense fallback={<div>Loading...</div>}>
+                {id ? <PollComponent {...props} id={id} /> : <PollSearch onSearch={handleSearch} />}
+            </Suspense>
+        </ErrorBoundary>
+    );
+};
+
+const PollComponent = ({ userId, id }) => {
     const data = useLazyLoadQuery<PollQueryType>(
         PollQuery,
         { id, userId },
@@ -41,17 +55,9 @@ const PollComponent = ({ userId }) => {
     const poll = data.poll;
     const canEdit = poll?.permissions?.canEdit;
 
-    const handleSearch = (pollId: string) => {
-        navigate(`/poll/${pollId}`);
-    };
-
     const handlePollUpdated = (updatedPoll: any) => {
         // This will be handled by Relay's data management
     };
-
-    if (!id) {
-        return <PollSearch onSearch={handleSearch} />;
-    }
 
     return (
         <div className="flex flex-col gap-4">
@@ -75,16 +81,6 @@ const PollComponent = ({ userId }) => {
                 )}
             </Tabs>
         </div>
-    );
-};
-
-const Poll = (props: { userId: string }) => {
-    return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                <PollComponent {...props} />
-            </Suspense>
-        </ErrorBoundary>
     );
 };
 
