@@ -148,9 +148,6 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
             </DndContext>
             <div className="flex gap-4 mt-4">
                 <button onClick={handleSubmit} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
-                <Link to={`/poll/${id}/results`}>
-                    <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">View Results</button>
-                </Link>
             </div>
         </div>
     );
