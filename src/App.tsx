@@ -18,6 +18,8 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
   const [userId, setUserId] = useState('');
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,6 +38,7 @@ function App() {
     setLoggedIn(true);
     setUsername(username);
     setUserId(userId);
+    setIsLoginModalOpen(false);
     navigate('/');
   };
 
@@ -49,6 +52,20 @@ function App() {
     navigate('/');
   };
 
+  const handleSignup = () => {
+    setIsSignupModalOpen(false);
+  };
+
+  const onSwitchToSignup = () => {
+    setIsLoginModalOpen(false);
+    setIsSignupModalOpen(true);
+  };
+
+  const onSwitchToLogin = () => {
+    setIsSignupModalOpen(false);
+    setIsLoginModalOpen(true);
+  };
+
   return (
     <RelayEnvironmentProvider environment={RelayEnvironment}>
       <div className="App">
@@ -56,7 +73,11 @@ function App() {
           loggedIn={loggedIn}
           username={username}
           onLogout={handleLogout}
+          setIsLoginModalOpen={setIsLoginModalOpen}
+          setIsSignupModalOpen={setIsSignupModalOpen}
         />
+        <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={handleLogin} onSwitchToSignup={onSwitchToSignup} />
+        <Signup isOpen={isSignupModalOpen} onClose={() => setIsSignupModalOpen(false)} onSignupSuccess={handleSignup} onSwitchToLogin={onSwitchToLogin} />
         <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -66,8 +87,6 @@ function App() {
             <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
             <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
             <Route path="/poll/:id/results" element={<PollResults />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/login" element={<Login onLogin={handleLogin} />} />
             <Route path="/mypolls" element={<MyPolls userId={userId} />} />
           </Routes>
         </main>

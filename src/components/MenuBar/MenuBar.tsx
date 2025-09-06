@@ -8,7 +8,7 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 
-const MenuBar = ({ loggedIn, username, onLogout }) => {
+const MenuBar = ({ loggedIn, username, onLogout, setIsLoginModalOpen, setIsSignupModalOpen }) => {
     return (
         <div className="flex justify-between w-full px-4 py-2">
             <NavigationMenu>
@@ -52,14 +52,14 @@ const MenuBar = ({ loggedIn, username, onLogout }) => {
                     ) : (
                         <>
                             <NavigationMenuItem>
-                                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                                    <Link to="/signup">Sign Up</Link>
-                                </NavigationMenuLink>
+                                <button onClick={() => setIsSignupModalOpen(true)} className={navigationMenuTriggerStyle()}>
+                                    Sign Up
+                                </button>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
-                                <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-                                    <Link to="/login">Login</Link>
-                                </NavigationMenuLink>
+                                <button onClick={() => setIsLoginModalOpen(true)} className={navigationMenuTriggerStyle()}>
+                                    Login
+                                </button>
                             </NavigationMenuItem>
                         </>
                     )}

@@ -4,7 +4,13 @@ import { SignupMutation as SignupMutationType } from './__generated__/SignupMuta
 import { Input } from "../ui/input.tsx";
 import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
-import PageContainer from '../ui/PageContainer';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog.tsx";
 
 const SignupMutation = graphql`
   mutation SignupMutation($username: String!, $email: String!, $password: String!) {
@@ -15,7 +21,7 @@ const SignupMutation = graphql`
   }
 `;
 
-const Signup = () => {
+const Signup = ({ isOpen, onClose, onSignupSuccess, onSwitchToLogin }) => {
     const [signupUsername, setSignupUsername] = useState('');
     const [signupEmail, setSignupEmail] = useState('');
     const [signupPassword, setSignupPassword] = useState('');
@@ -31,6 +37,7 @@ const Signup = () => {
             },
             onCompleted: (response) => {
                 setSignupMessage('Signup successful!');
+                onSignupSuccess();
             },
             onError: (error) => {
                 setSignupMessage(error.message || 'Signup failed.');
@@ -39,37 +46,54 @@ const Signup = () => {
     };
 
     return (
-        <PageContainer>
-            <div className="grid w-full max-w-sm items-center gap-1.5">
-                <h2>Create Account</h2>
-                <Label htmlFor="username">Username</Label>
-                <Input
-                    type="text"
-                    id="username"
-                    placeholder="Username"
-                    value={signupUsername}
-                    onChange={e => setSignupUsername(e.target.value)}
-                />
-                <Label htmlFor="email">Email</Label>
-                <Input
-                    type="email"
-                    id="email"
-                    placeholder="Email"
-                    value={signupEmail}
-                    onChange={e => setSignupEmail(e.target.value)}
-                />
-                <Label htmlFor="password">Password</Label>
-                <Input
-                    type="password"
-                    id="password"
-                    placeholder="Password"
-                    value={signupPassword}
-                    onChange={e => setSignupPassword(e.target.value)}
-                />
-                <Button onClick={handleSignup} disabled={isMutationInFlight}>Create Account</Button>
-                {signupMessage && <div>{signupMessage}</div>}
-            </div>
-        </PageContainer>
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader className="text-center">
+                    <DialogTitle className="text-xl">Create Account</DialogTitle>
+                    <DialogDescription>Enter your details below to create an account.</DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4">
+                    <div className="grid gap-2">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                            type="text"
+                            id="username"
+                            placeholder="Username"
+                            value={signupUsername}
+                            onChange={e => setSignupUsername(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                            type="email"
+                            id="email"
+                            placeholder="Email"
+                            value={signupEmail}
+                            onChange={e => setSignupEmail(e.target.value)}
+                        />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label htmlFor="password">Password</Label>
+                        <Input
+                            type="password"
+                            id="password"
+                            placeholder="Password"
+                            value={signupPassword}
+                            onChange={e => setSignupPassword(e.target.value)}
+                        />
+                    </div>
+                    <Button onClick={handleSignup} disabled={isMutationInFlight} className="w-full">Create Account</Button>
+                    {signupMessage && <div>{signupMessage}</div>}
+                    <div className="text-center text-sm">
+                        Already have an account?{" "}
+                        <Button variant="link" onClick={onSwitchToLogin} type="button">
+                            Login
+                        </Button>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 };
 
