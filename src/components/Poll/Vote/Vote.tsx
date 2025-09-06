@@ -133,13 +133,8 @@ const VoteComponent = ({ userId, poll }) => {
     const ratedOptions = new Set([...ratingsToOptions].flatMap(entry => Array.from(entry[1])));
     return (
         <div className="vote">
-            <h2>{poll.title}</h2>
             <DndContext onDragEnd={handleDragEnd}>
-                <div className="vote-container">
-                    <div className="options-container">
-                        <h3>Options</h3>
-                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
-                    </div>
+                <div className="vote-container flex gap-16">
                     <div className="ratings-container">
                         <h3>Ratings</h3>
                         <table>
@@ -154,12 +149,18 @@ const VoteComponent = ({ userId, poll }) => {
                             </tbody>
                         </table>
                     </div>
+                    <div className="options-container">
+                        <h3>Options</h3>
+                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
+                    </div>
                 </div>
             </DndContext>
-            <button onClick={handleSubmit}>Submit</button>
-            <Link to={`/poll/${id}/results`}>
-                <button>View Results</button>
-            </Link>
+            <div className="flex gap-4 mt-4">
+                <button onClick={handleSubmit}>Submit</button>
+                <Link to={`/poll/${id}/results`}>
+                    <button>View Results</button>
+                </Link>
+            </div>
         </div>
     );
 };
