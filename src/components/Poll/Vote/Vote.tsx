@@ -41,7 +41,7 @@ const Droppable = ({ id, children }: { id: number, children: React.ReactNode }) 
 
 const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     const { id } = useParams<{ id: string }>();
-    const [ratingsToOptions, setRatingsToOptions] = useState(new Map<string, number>());
+    const [optionRatingMap, setOptionRatingMap] = useState(new Map<string, number>());
     const [commitMutation, isMutationInFlight] = useMutation<VoteSubmitVoteMutationType>(VoteSubmitVoteMutation);
 
     useEffect(() => {
@@ -50,7 +50,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
             poll.votes.forEach(({ option, rating }: { option: string, rating: number }) => {
                 previousRatings.set(option, rating);
             });
-            setRatingsToOptions(previousRatings);
+            setOptionRatingMap(previousRatings);
         }
     }, [poll]);
 
@@ -58,7 +58,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
         const { active, over } = event;
         const option = active.id as string;
 
-        setRatingsToOptions(prevRatings => {
+        setOptionRatingMap(prevRatings => {
             const newRatings = new Map(prevRatings);
 
             if (over) {
@@ -73,7 +73,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     };
 
     const handleSubmit = () => {
-        const ratingsArray = Array.from(ratingsToOptions.entries()).map(([option, rating]) => ({ option, rating }));
+        const ratingsArray = Array.from(optionRatingMap.entries()).map(([option, rating]) => ({ option, rating }));
 
         commitMutation({
             variables: {
@@ -94,12 +94,12 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
         return <div>Loading...</div>;
     }
 
-    const ratingsToOptionsDerived = new Map<number, Set<string>>();
+    const ratingOptionsMap = new Map<number, Set<string>>();
     for (let i = 1; i <= 10; i++) {
-        ratingsToOptionsDerived.set(i, new Set());
+        ratingOptionsMap.set(i, new Set());
     }
-    for (const [option, rating] of ratingsToOptions.entries()) {
-        const options = ratingsToOptionsDerived.get(rating);
+    for (const [option, rating] of optionRatingMap.entries()) {
+        const options = ratingOptionsMap.get(rating);
         if (options) {
             options.add(option);
         }
@@ -111,7 +111,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
         </Draggable>;
 
     const tableBody: React.ReactNode[] = [];
-    const sortedRatings = Array.from(ratingsToOptionsDerived.entries()).sort(([a], [b]) => b - a);
+    const sortedRatings = Array.from(ratingOptionsMap.entries()).sort(([a], [b]) => b - a);
     for (const [ratingValue, options] of sortedRatings) {
         tableBody.push(<tr key={ratingValue}>
             <td className="border border-gray-300 p-2">{ratingValue}</td>
@@ -122,7 +122,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     }
 
     const options = poll ? new Set<string>(poll.options) : new Set<string>();
-    const ratedOptions = new Set<string>(ratingsToOptions.keys());
+    const ratedOptions = new Set<string>(optionRatingMap.keys());
     return (
         <div className="vote">
             <DndContext onDragEnd={handleDragEnd}>
