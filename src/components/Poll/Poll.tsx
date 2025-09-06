@@ -72,7 +72,7 @@ const PollComponent = ({ userId, id }) => {
                     <Vote userId={userId} poll={poll} />
                 </TabsContent>
                 <TabsContent value="results">
-                    <PollResults />
+                    <PollResults pollId={id} />
                 </TabsContent>
                 {canEdit && (
                     <TabsContent value="edit">

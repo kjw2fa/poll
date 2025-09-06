@@ -1,7 +1,6 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
-import { OrderedMap } from "js-sdsl"; // Import OrderedMap
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__generated__/VoteSubmitVoteMutation.graphql';
@@ -14,7 +13,7 @@ const VoteSubmitVoteMutation = graphql`
   }
 `;
 
-const Draggable = ({ id, children }) => {
+const Draggable = ({ id, children }: { id: string, children: React.ReactNode }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
     const style = transform ? {
         transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
@@ -27,7 +26,7 @@ const Draggable = ({ id, children }) => {
     );
 };
 
-const Droppable = ({ id, children }) => {
+const Droppable = ({ id, children }: { id: number, children: React.ReactNode }) => {
     const { isOver, setNodeRef } = useDroppable({ id });
     const style = {
         backgroundColor: isOver ? '#f0f0f0' : undefined,
@@ -40,60 +39,41 @@ const Droppable = ({ id, children }) => {
     );
 };
 
-// Custom comparator for descending order
-const descendingComparator = (a, b) => b - a;
-
-const initialDescendingMap = (maxRating) => {
-    // OrderedMap takes an array of [key, value] pairs and a comparator
-    const initialData = [];
-    for (let i = 1; i <= maxRating; i++) {
-        initialData.push([i, new Set()]);
-    }
-    return new OrderedMap(initialData, descendingComparator);
-}
-
-const VoteComponent = ({ userId, poll }) => {
-    const { id } = useParams();
-    const [ratingsToOptions, setRatingsToOptions] = useState(initialDescendingMap(10));
+const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
+    const { id } = useParams<{ id: string }>();
+    const [ratingsToOptions, setRatingsToOptions] = useState(new Map<string, number>());
     const [commitMutation, isMutationInFlight] = useMutation<VoteSubmitVoteMutationType>(VoteSubmitVoteMutation);
 
     useEffect(() => {
         if (poll && poll.votes) {
-            const previousRatingsToOptions = initialDescendingMap(10);
-            poll.votes.forEach(({ option, rating }) => {
-                previousRatingsToOptions.getElementByKey(rating).value.add(option);
+            const previousRatings = new Map<string, number>();
+            poll.votes.forEach(({ option, rating }: { option: string, rating: number }) => {
+                previousRatings.set(option, rating);
             });
-            setRatingsToOptions(previousRatingsToOptions);
+            setRatingsToOptions(previousRatings);
         }
     }, [poll]);
 
     const handleDragEnd = (event: any) => {
         const { active, over } = event;
-        const option = active.id;
+        const option = active.id as string;
 
-        // Create a new OrderedMap instance for immutability
-        let newRatingsToOptions = new OrderedMap(ratingsToOptions.toArray(), descendingComparator);
+        setRatingsToOptions(prevRatings => {
+            const newRatings = new Map(prevRatings);
 
-        // Remove the option from any previous rating it was in.
-        newRatingsToOptions.forEach((key, value) => value.delete(option));
+            if (over) {
+                const newRatingValue = over.id as number;
+                newRatings.set(option, newRatingValue);
+            } else {
+                newRatings.delete(option);
+            }
 
-        // If it was dropped over a rating cell, add it to that rating's options.
-        if (over) {
-            const newRatingValue = over.id;
-            // Use getElementByKey to get the Set, then add
-            newRatingsToOptions.getElementByKey(newRatingValue).value.add(option);
-        }
-
-        setRatingsToOptions(newRatingsToOptions);
+            return newRatings;
+        });
     };
 
     const handleSubmit = () => {
-        const ratingsArray: any[] = [];
-        ratingsToOptions.forEach((ratingValue, options) => {
-            options.forEach(option => {
-                ratingsArray.push({ option, rating: ratingValue });
-            });
-        });
+        const ratingsArray = Array.from(ratingsToOptions.entries()).map(([option, rating]) => ({ option, rating }));
 
         commitMutation({
             variables: {
@@ -114,23 +94,35 @@ const VoteComponent = ({ userId, poll }) => {
         return <div>Loading...</div>;
     }
 
-    const draggableOption = (option: any) =>
-        <Draggable key={option} id={option} data={{ option }}>
+    const ratingsToOptionsDerived = new Map<number, Set<string>>();
+    for (let i = 1; i <= 10; i++) {
+        ratingsToOptionsDerived.set(i, new Set());
+    }
+    for (const [option, rating] of ratingsToOptions.entries()) {
+        const options = ratingsToOptionsDerived.get(rating);
+        if (options) {
+            options.add(option);
+        }
+    }
+
+    const draggableOption = (option: string) =>
+        <Draggable key={option} id={option}>
             <div className="option">{option}</div>
         </Draggable>;
 
-    const tableBody: any[] = [];
-    ratingsToOptions.forEach((ratingValue, options) => {
+    const tableBody: React.ReactNode[] = [];
+    const sortedRatings = Array.from(ratingsToOptionsDerived.entries()).sort(([a], [b]) => b - a);
+    for (const [ratingValue, options] of sortedRatings) {
         tableBody.push(<tr key={ratingValue}>
             <td className="border border-gray-300 p-2">{ratingValue}</td>
             <Droppable id={ratingValue}>
                 {Array.from(options).map(draggableOption)}
             </Droppable>
         </tr>)
-    });
+    }
 
-    const options = poll ? new Set(poll.options) : new Set();
-    const ratedOptions = new Set([...ratingsToOptions].flatMap(entry => Array.from(entry[1])));
+    const options = poll ? new Set<string>(poll.options) : new Set<string>();
+    const ratedOptions = new Set<string>(ratingsToOptions.keys());
     return (
         <div className="vote">
             <DndContext onDragEnd={handleDragEnd}>

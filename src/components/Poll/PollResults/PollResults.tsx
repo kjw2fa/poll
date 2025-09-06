@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { useParams } from 'react-router-dom';
 import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollResultsQuery as PollResultsQueryType } from './__generated__/PollResultsQuery.graphql';
@@ -22,11 +21,10 @@ const PollResultsQuery = graphql`
   }
 `;
 
-const PollResultsComponent = () => {
-    const { id } = useParams();
+const PollResultsComponent = ({ pollId }) => {
     const data = useLazyLoadQuery<PollResultsQueryType>(
         PollResultsQuery,
-        { pollId: id },
+        { pollId },
     );
 
     if (!data || !data.pollResults) {
@@ -78,11 +76,11 @@ const PollResultsComponent = () => {
     );
 };
 
-const PollResults = () => {
+const PollResults = ({ pollId }) => {
     return (
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
             <Suspense fallback={<div>Loading...</div>}>
-                <PollResultsComponent />
+                <PollResultsComponent pollId={pollId} />
             </Suspense>
         </ErrorBoundary>
     );
