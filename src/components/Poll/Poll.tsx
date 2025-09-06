@@ -61,9 +61,9 @@ const PollComponent = ({ userId, id }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            {poll && <h2>{poll.title} by {poll.creator.username}</h2>}
+            
             <Tabs defaultValue="vote">
-                <TabsList>
+                <TabsList className="flex justify-center p-2 rounded-md bg-gray-100 mx-auto">
                     <TabsTrigger value="vote">Vote</TabsTrigger>
                     <TabsTrigger value="results">Results</TabsTrigger>
                     {canEdit && <TabsTrigger value="edit">Edit</TabsTrigger>}

@@ -33,7 +33,7 @@ const Droppable = ({ id, children }: { id: number, children: React.ReactNode }) 
     };
 
     return (
-        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2">
+        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2 w-11/12">
             {children}
         </td>
     );
@@ -114,7 +114,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     const sortedRatings = Array.from(ratingOptionsMap.entries()).sort(([a], [b]) => b - a);
     for (const [ratingValue, options] of sortedRatings) {
         tableBody.push(<tr key={ratingValue}>
-            <td className="border border-gray-300 p-2">{ratingValue}</td>
+            <td className="border border-gray-300 p-2 w-1/12 text-center">{ratingValue}</td>
             <Droppable id={ratingValue}>
                 {Array.from(options).map(draggableOption)}
             </Droppable>
@@ -125,14 +125,18 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     const ratedOptions = new Set<string>(optionRatingMap.keys());
     return (
         <div className="vote">
+            <h2 className="text-center text-2xl font-bold mb-4">{poll.title}</h2>
             <DndContext onDragEnd={handleDragEnd}>
-                <div className="vote-container flex gap-16">
-                    <div className="ratings-container">
-                        <table className="border-collapse border border-gray-300">
+                <div className="flex justify-center gap-16 max-w-screen-md mx-auto">
+                    <div className="w-1/3 bg-blue-100 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Available Options</h3>
+                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
+                    </div>
+                    <div className="w-2/3">
+                        <table className="border-collapse border border-gray-300 w-full">
                             <thead>
                                 <tr>
-                                    <th className="border border-gray-300 p-2">Rating</th>
-                                    <th className="border border-gray-300 p-2">Options</th>
+                                    <th colSpan={2} className="border border-gray-300 p-2 text-center">Your Ratings</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -140,13 +144,9 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
                             </tbody>
                         </table>
                     </div>
-                    <div className="options-container">
-                        <h3>Options</h3>
-                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
-                    </div>
                 </div>
             </DndContext>
-            <div className="flex gap-4 mt-4">
+            <div className="flex justify-center mt-4">
                 <button onClick={handleSubmit} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
             </div>
         </div>
