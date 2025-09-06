@@ -59,7 +59,7 @@ const PollType = new GraphQLObjectType({
             args: { userId: { type: GraphQLID } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, args.userId], (err, row) => {
+                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(args.userId, 10)], (err, row) => {
                         if (err) {
                             reject(err);
                         } else {
@@ -76,7 +76,7 @@ const PollType = new GraphQLObjectType({
             args: { userId: { type: new GraphQLNonNull(GraphQLID) } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [parent.id, args.userId], (err, voteRow) => {
+                    db.get('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [parent.id, parseInt(args.userId, 10)], (err, voteRow) => {
                         if (err || !voteRow) {
                             resolve([]);
                         } else {
@@ -174,14 +174,14 @@ const RootQuery = new GraphQLObjectType({
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
                     const createdPollsPromise = new Promise((resolve, reject) => {
-                        db.all('SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.userId = ? AND PollPermissions.canEdit = 1', [args.userId], (err, rows) => {
+                        db.all('SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.userId = ? AND PollPermissions.canEdit = 1', [parseInt(args.userId, 10)], (err, rows) => {
                             if (err) reject(err);
                             else resolve(rows.map(row => ({ ...row, options: JSON.parse(row.options) })));
                         });
                     });
 
                     const votedPollsPromise = new Promise((resolve, reject) => {
-                        db.all('SELECT Polls.* FROM Polls JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id', [args.userId], (err, rows) => {
+                        db.all('SELECT Polls.* FROM Polls JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id', [parseInt(args.userId, 10)], (err, rows) => {
                             if (err) reject(err);
                             else resolve(rows.map(row => ({ ...row, options: JSON.parse(row.options) })));
                         });
@@ -300,7 +300,7 @@ const Mutation = new GraphQLObjectType({
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
                     const optionsJson = JSON.stringify(args.options);
-                    db.run('INSERT INTO Polls (title, options, creatorId) VALUES (?, ?, ?)', [args.title, optionsJson, args.userId], function (err) {
+                    db.run('INSERT INTO Polls (title, options, creatorId) VALUES (?, ?, ?)', [args.title, optionsJson, parseInt(args.userId, 10)], function (err) {
                         if (err) {
                             reject(err);
                         } else {
@@ -330,7 +330,7 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT username FROM Users WHERE id = ?', [args.userId], (err, user) => {
+                    db.get('SELECT username FROM Users WHERE id = ?', [parseInt(args.userId, 10)], (err, user) => {
                         if (err || !user) {
                             reject(new Error('User not found'));
                         } else {
@@ -378,7 +378,7 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [args.pollId, args.userId], (err, row) => {
+                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10)], (err, row) => {
                         if (err || !row || !row.canEdit) {
                             reject(new Error('No edit permission'));
                         } else {
