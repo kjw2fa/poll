@@ -152,7 +152,7 @@ const RootQuery = new GraphQLObjectType({
             args: { id: { type: GraphQLID } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT * FROM Polls WHERE id = ?', [args.id], (err, row) => {
+                    db.get('SELECT * FROM Polls WHERE id = ?', [parseInt(args.id, 10)], (err, row) => {
                         if (err) {
                             reject(err);
                         } else if (!row) {
@@ -419,7 +419,7 @@ const Mutation = new GraphQLObjectType({
                         if (err) {
                             reject(err);
                         } else {
-                            resolve({ id: this.lastID, username: args.username });
+                            resolve({ id: parseInt(this.lastID, 10), username: args.username });
                         }
                     });
                 });
@@ -450,7 +450,7 @@ const Mutation = new GraphQLObjectType({
                             }
 
                             const token = jwt.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
-                            resolve({ token, userId: user.id, username: user.username });
+                            resolve({ token, userId: parseInt(user.id, 10), username: user.username });
                         });
                     });
                 });
