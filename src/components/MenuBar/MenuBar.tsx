@@ -41,7 +41,7 @@ const MenuBar = ({ loggedIn, username, onLogout }) => {
                     {loggedIn ? (
                         <>
                             <NavigationMenuItem>
-                                <span className={navigationMenuTriggerStyle() + ' cursor-default'}>Welcome, {username}</span>
+                                <span className="cursor-default mr-1">Welcome, {username}</span>
                             </NavigationMenuItem>
                             <NavigationMenuItem>
                                 <button onClick={onLogout} className={navigationMenuTriggerStyle()}>
