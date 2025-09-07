@@ -69,12 +69,16 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
             </div>
             <div className="grid w-full items-center gap-1.5">
                 <Label>Options</Label>
-                {options.map((option, index) => (
-                    <div key={index} className="flex w-full items-center space-x-2">
-                        <Input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
-                        <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
-                    </div>
-                ))}
+                {options.length === 0 ? (
+                    <p className="text-muted-foreground">No options added yet. Add some options above.</p>
+                ) : (
+                    options.map((option, index) => (
+                        <div key={index} className="flex w-full items-center space-x-2">
+                            <Input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
+                            <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
+                        </div>
+                    ))
+                )}
             </div>
             <Button type="submit">{isEditing ? 'Save Changes' : 'Create Poll'}</Button>
         </form>
