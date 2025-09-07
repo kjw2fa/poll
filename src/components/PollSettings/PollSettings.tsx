@@ -56,21 +56,21 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
 
     return (
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-            <div className="grid w-full max-w-sm items-center gap-1.5">
+            <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="title">Title</Label>
                 <Input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
             </div>
-            <div className="grid w-full max-w-sm items-center gap-1.5">
+            <div className="grid w-full items-center gap-1.5">
                 <Label htmlFor="new-option">Add Option</Label>
-                <div className="flex w-full max-w-sm items-center space-x-2">
-                    <Input type="text" id="new-option" value={newOption} onChange={handleNewOptionChange} onKeyDown={handleKeyDown} />
+                <div className="flex w-full items-center space-x-2">
+                    <Input type="text" id="new-option" value={newOption} onChange={handleNewOptionChange} onKeyDown={handleKeyDown} className="w-full" />
                     <Button type="button" onClick={handleAddNewOption}>Add Option</Button>
                 </div>
             </div>
-            <div className="grid w-full max-w-sm items-center gap-1.5">
+            <div className="grid w-full items-center gap-1.5">
                 <Label>Options</Label>
                 {options.map((option, index) => (
-                    <div key={index} className="flex w-full max-w-sm items-center space-x-2">
+                    <div key={index} className="flex w-full items-center space-x-2">
                         <Input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
                         <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
                     </div>
