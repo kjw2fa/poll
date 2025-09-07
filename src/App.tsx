@@ -14,6 +14,8 @@ import Login from './components/Login/Login.tsx';
 import MyPolls from './components/MyPolls/MyPolls.tsx';
 import './index.css';
 
+import { Toaster } from 'sonner';
+
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState('');
@@ -69,6 +71,7 @@ function App() {
   return (
     <RelayEnvironmentProvider environment={RelayEnvironment}>
       <div className="App">
+        <Toaster />
         <MenuBar
           loggedIn={loggedIn}
           username={username}

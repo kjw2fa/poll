@@ -36,8 +36,10 @@ const Signup = ({ isOpen, onClose, onSignupSuccess, onSwitchToLogin }) => {
                 password: signupPassword,
             },
             onCompleted: (response) => {
-                setSignupMessage('Signup successful!');
-                onSignupSuccess();
+                if (response.signup) {
+                    setSignupMessage('Signup successful!');
+                    onSignupSuccess();
+                }
             },
             onError: (error) => {
                 setSignupMessage(error.message || 'Signup failed.');
@@ -45,8 +47,15 @@ const Signup = ({ isOpen, onClose, onSignupSuccess, onSwitchToLogin }) => {
         });
     };
 
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            setSignupMessage('');
+        }
+        onClose();
+    };
+
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader className="text-center">
                     <DialogTitle className="text-xl">Create Account</DialogTitle>

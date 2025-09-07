@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
+import { toast } from 'sonner';
 import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__generated__/VoteSubmitVoteMutation.graphql';
 import PageContainer from '../../ui/PageContainer';
 
@@ -34,7 +35,7 @@ const Droppable = ({ id, children }: { id: number, children: React.ReactNode }) 
     };
 
     return (
-        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2 w-11/12">
+        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2">
             {children}
         </td>
     );
@@ -83,10 +84,10 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
                 ratings: ratingsArray,
             },
             onCompleted: () => {
-                alert('Votes submitted successfully!');
+                toast.success('Votes submitted successfully!');
             },
             onError: (error) => {
-                console.error('Error submitting vote:', error);
+                toast.error(error.message || 'Error submitting vote.');
             },
         });
     };
@@ -115,7 +116,7 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     const sortedRatings = Array.from(ratingOptionsMap.entries()).sort(([a], [b]) => b - a);
     for (const [ratingValue, options] of sortedRatings) {
         tableBody.push(<tr key={ratingValue}>
-            <td className="border border-gray-300 p-2 w-1/12 text-center">{ratingValue}</td>
+            <td className="border border-gray-300 p-2 w-16 text-center">{ratingValue}</td>
             <Droppable id={ratingValue}>
                 {Array.from(options).map(draggableOption)}
             </Droppable>

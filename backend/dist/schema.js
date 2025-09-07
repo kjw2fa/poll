@@ -419,7 +419,15 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     return new Promise((resolve, reject) => {
                         database_1.default.run('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword], function (err) {
                             if (err) {
-                                reject(err);
+                                if (err.message.includes('UNIQUE constraint failed: Users.username')) {
+                                    reject(new Error('Username already exists.'));
+                                }
+                                else if (err.message.includes('UNIQUE constraint failed: Users.email')) {
+                                    reject(new Error('Email already exists.'));
+                                }
+                                else {
+                                    reject(err);
+                                }
                             }
                             else {
                                 resolve({ id: this.lastID, username: args.username, email: args.email });
