@@ -4,15 +4,12 @@ import { Input } from "../../ui/input.tsx";
 import { Button } from "../../ui/button.tsx";
 import PageContainer from '../../ui/PageContainer';
 
-const PollSearch = ({ onSearch }) => {
+const PollSearch = () => {
     const [pollId, setPollId] = useState('');
     const navigate = useNavigate();
 
     const handleSearch = () => {
         if (pollId.trim() !== '') {
-            if (onSearch) {
-                onSearch(pollId);
-            }
             navigate(`/poll/${pollId}`);
         }
     };

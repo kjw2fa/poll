@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a2c52b94e2b0dadf140591c54d53e529>>
+ * @generated SignedSource<<248b510fa34e5dd0ebb90f196c5dccc6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,17 +15,19 @@ export type MyPollsQuery$variables = {
 export type MyPollsQuery$data = {
   readonly myPolls: {
     readonly createdPolls: ReadonlyArray<{
-      readonly creator: {
-        readonly username: string | null | undefined;
-      } | null | undefined;
       readonly id: string | null | undefined;
+      readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+      readonly permissions: {
+        readonly canEdit: boolean | null | undefined;
+      } | null | undefined;
       readonly title: string | null | undefined;
     } | null | undefined> | null | undefined;
     readonly votedPolls: ReadonlyArray<{
-      readonly creator: {
-        readonly username: string | null | undefined;
-      } | null | undefined;
       readonly id: string | null | undefined;
+      readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+      readonly permissions: {
+        readonly canEdit: boolean | null | undefined;
+      } | null | undefined;
       readonly title: string | null | undefined;
     } | null | undefined> | null | undefined;
   } | null | undefined;
@@ -50,56 +52,76 @@ v1 = [
     "variableName": "userId"
   }
 ],
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "id",
-  "storageKey": null
-},
-v3 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "title",
-  "storageKey": null
-},
-v4 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "username",
-  "storageKey": null
-},
-v5 = [
-  (v2/*: any*/),
-  (v3/*: any*/),
+v2 = [
   {
     "alias": null,
     "args": null,
-    "concreteType": "User",
+    "kind": "ScalarField",
+    "name": "id",
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "title",
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "options",
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": (v1/*: any*/),
+    "concreteType": "Permissions",
     "kind": "LinkedField",
-    "name": "creator",
+    "name": "permissions",
     "plural": false,
     "selections": [
-      (v4/*: any*/)
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "canEdit",
+        "storageKey": null
+      }
     ],
     "storageKey": null
   }
 ],
-v6 = [
-  (v2/*: any*/),
-  (v3/*: any*/),
+v3 = [
   {
     "alias": null,
-    "args": null,
-    "concreteType": "User",
+    "args": (v1/*: any*/),
+    "concreteType": "MyPolls",
     "kind": "LinkedField",
-    "name": "creator",
+    "name": "myPolls",
     "plural": false,
     "selections": [
-      (v4/*: any*/),
-      (v2/*: any*/)
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "createdPolls",
+        "plural": true,
+        "selections": (v2/*: any*/),
+        "storageKey": null
+      },
+      {
+        "alias": null,
+        "args": null,
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "votedPolls",
+        "plural": true,
+        "selections": (v2/*: any*/),
+        "storageKey": null
+      }
     ],
     "storageKey": null
   }
@@ -110,39 +132,7 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "MyPollsQuery",
-    "selections": [
-      {
-        "alias": null,
-        "args": (v1/*: any*/),
-        "concreteType": "MyPolls",
-        "kind": "LinkedField",
-        "name": "myPolls",
-        "plural": false,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Poll",
-            "kind": "LinkedField",
-            "name": "createdPolls",
-            "plural": true,
-            "selections": (v5/*: any*/),
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Poll",
-            "kind": "LinkedField",
-            "name": "votedPolls",
-            "plural": true,
-            "selections": (v5/*: any*/),
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ],
+    "selections": (v3/*: any*/),
     "type": "RootQueryType",
     "abstractKey": null
   },
@@ -151,51 +141,19 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "MyPollsQuery",
-    "selections": [
-      {
-        "alias": null,
-        "args": (v1/*: any*/),
-        "concreteType": "MyPolls",
-        "kind": "LinkedField",
-        "name": "myPolls",
-        "plural": false,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Poll",
-            "kind": "LinkedField",
-            "name": "createdPolls",
-            "plural": true,
-            "selections": (v6/*: any*/),
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "Poll",
-            "kind": "LinkedField",
-            "name": "votedPolls",
-            "plural": true,
-            "selections": (v6/*: any*/),
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ]
+    "selections": (v3/*: any*/)
   },
   "params": {
-    "cacheID": "4c74e5165399312d5352eaefb3141f9c",
+    "cacheID": "eaa83a3be0dfea3f22f56afa24599c13",
     "id": null,
     "metadata": {},
     "name": "MyPollsQuery",
     "operationKind": "query",
-    "text": "query MyPollsQuery(\n  $userId: ID!\n) {\n  myPolls(userId: $userId) {\n    createdPolls {\n      id\n      title\n      creator {\n        username\n        id\n      }\n    }\n    votedPolls {\n      id\n      title\n      creator {\n        username\n        id\n      }\n    }\n  }\n}\n"
+    "text": "query MyPollsQuery(\n  $userId: ID!\n) {\n  myPolls(userId: $userId) {\n    createdPolls {\n      id\n      title\n      options\n      permissions(userId: $userId) {\n        canEdit\n      }\n    }\n    votedPolls {\n      id\n      title\n      options\n      permissions(userId: $userId) {\n        canEdit\n      }\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "c0e670664ef3fff7b3b45afee92157ac";
+(node as any).hash = "1aadc92dcdfdbc0fcc19670108c3a9d1";
 
 export default node;

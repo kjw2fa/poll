@@ -1,6 +1,6 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { useParams, useNavigate, Routes, Route, useLocation } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs.tsx";
 import Vote from './Vote/Vote.tsx';
 import PollResults from './PollResults/PollResults.tsx';
 import EditPoll from './EditPoll/EditPoll.tsx';
@@ -32,17 +32,12 @@ const PollQuery = graphql`
 
 const Poll = (props: { userId: string }) => {
     const { id } = useParams();
-    const navigate = useNavigate();
-
-    const handleSearch = (pollId: string) => {
-        navigate(`/poll/${pollId}/vote`);
-    };
 
     return (
         <PageContainer>
             <ErrorBoundary fallback={<div>Something went wrong</div>}>
                 <Suspense fallback={<div>Loading...</div>}>
-                    {id ? <PollComponent {...props} id={id} /> : <PollSearch onSearch={handleSearch} />}
+                    {id ? <PollComponent {...props} id={id} /> : <PollSearch />}
                 </Suspense>
             </ErrorBoundary>
         </PageContainer>
@@ -59,6 +54,12 @@ const PollComponent = ({ userId, id }) => {
 
     const poll = data.poll;
     const canEdit = poll?.permissions?.canEdit;
+
+    useEffect(() => {
+        if (poll && !location.pathname.endsWith('vote') && !location.pathname.endsWith('results') && !location.pathname.endsWith('edit')) {
+            navigate(`/poll/${id}/vote`);
+        }
+    }, [poll, id, navigate, location.pathname]);
 
     const handlePollUpdated = (updatedPoll: any) => {
         // This will be handled by Relay's data management

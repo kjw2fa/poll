@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLBoolean, GraphQLNonNull, GraphQLInputObjectType, GraphQLInt, GraphQLFloat } from 'graphql';
+import { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLBoolean, GraphQLNonNull, GraphQLInputObjectType, GraphQLInt, GraphQLFloat, GraphQLEnumType } from 'graphql';
 import db from './database';
+import { PermissionType, TargetType } from './enums';
 
 export const JWT_SECRET = 'your-secret-key';
 
@@ -35,9 +36,28 @@ interface VoteDetail {
 
 interface PollPermission {
     pollId: number;
-    userId: number;
-    canEdit: boolean;
+    permission_type: PermissionType;
+    target_type: TargetType;
+    target_id: number;
 }
+
+// Enum Types
+const PermissionTypeEnum = new GraphQLEnumType({
+    name: 'PermissionType',
+    values: {
+        VIEW: { value: PermissionType.VIEW },
+        VOTE: { value: PermissionType.VOTE },
+        EDIT: { value: PermissionType.EDIT },
+    },
+});
+
+const TargetTypeEnum = new GraphQLEnumType({
+    name: 'TargetType',
+    values: {
+        USER: { value: TargetType.USER },
+        PUBLIC: { value: TargetType.PUBLIC },
+    },
+});
 
 // User Type
 const UserType = new GraphQLObjectType({
@@ -49,10 +69,12 @@ const UserType = new GraphQLObjectType({
 });
 
 // Permissions Type
-const PermissionsType = new GraphQLObjectType({
-    name: 'Permissions',
+const PollPermissionsType = new GraphQLObjectType({
+    name: 'PollPermissions',
     fields: () => ({
-        canEdit: { type: GraphQLBoolean }
+        permission_type: { type: PermissionTypeEnum },
+        target_type: { type: TargetTypeEnum },
+        target_id: { type: GraphQLID },
     })
 });
 
@@ -86,40 +108,15 @@ const PollType = new GraphQLObjectType({
                 });
             }
         },
-        canEdit: { // New field
-            type: GraphQLBoolean,
-            resolve(parent: Poll, args: any, context: any): Promise<boolean> {
-                return new Promise((resolve, reject) => {
-                    console.log('canEdit resolver: parent.id =', parent.id, ', context.userId =', context.userId);
-                    if (!context.userId) {
-                        console.log('canEdit resolver: context.userId is missing');
-                        resolve(false);
-                        return;
-                    }
-                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(context.userId, 10)], (err: Error | null, row: PollPermission) => {
-                        if (err) {
-                            console.error('canEdit resolver DB error:', err);
-                            reject(err);
-                        } else {
-                            console.log('canEdit resolver DB result:', row);
-                            resolve(row ? !!row.canEdit : false);
-                        }
-                    });
-                });
-            }
-        },
         permissions: {
-            type: PermissionsType,
-            args: { userId: { type: GraphQLID } },
-            resolve(parent: Poll, args: { userId: string }): Promise<{ canEdit: boolean }> {
+            type: new GraphQLList(PollPermissionsType),
+            resolve(parent: Poll, args: any): Promise<PollPermission[]> {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(args.userId, 10)], (err: Error | null, row: PollPermission) => {
+                    db.all('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id], (err: Error | null, rows: PollPermission[]) => {
                         if (err) {
                             reject(err);
                         } else {
-                            resolve({
-                                canEdit: row ? !!row.canEdit : false
-                            });
+                            resolve(rows);
                         }
                     });
                 });
@@ -228,7 +225,7 @@ const RootQuery = new GraphQLObjectType({
             resolve(parent: any, args: { userId: string }): Promise<{ createdPolls: Poll[], votedPolls: Poll[] }> {
                 return new Promise((resolve, reject) => {
                     const createdPollsPromise: Promise<Poll[]> = new Promise((resolve, reject) => {
-                        db.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.userId = ? AND PollPermissions.canEdit = 1', [parseInt(args.userId, 10)], (err: Error | null, rows: any[]) => {
+                        db.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ? AND PollPermissions.permission_type = ?', [parseInt(args.userId, 10), PermissionType.EDIT], (err: Error | null, rows: any[]) => {
                             if (err) reject(err);
                             else resolve(rows.map(row => ({ ...row, options: JSON.parse(row.options), creator: { username: row.creatorUsername } })));
                         });
@@ -318,6 +315,25 @@ const RootQuery = new GraphQLObjectType({
                     });
                 });
             }
+        },
+        searchPolls: {
+            type: new GraphQLList(PollType),
+            args: { searchTerm: { type: new GraphQLNonNull(GraphQLString) } },
+            resolve(parent: any, args: { searchTerm: string }): Promise<Poll[]> {
+                return new Promise((resolve, reject) => {
+                    db.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.title LIKE ?', [`%${args.searchTerm}%`], (err: Error | null, rows: any[]) => {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(rows.map(row => ({
+                                ...row,
+                                options: JSON.parse(row.options),
+                                creator: { username: row.creatorUsername }
+                            })));
+                        }
+                    });
+                });
+            }
         }
     }
 });
@@ -359,7 +375,7 @@ const Mutation = new GraphQLObjectType({
                             reject(err);
                         } else {
                             const pollId = this.lastID;
-                            db.run('INSERT INTO PollPermissions (pollId, userId, canEdit) VALUES (?, ?, ?)', [pollId, parseInt(args.userId, 10), true], function (this: any, err2: Error | null) {
+                            db.run('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.EDIT, TargetType.USER, parseInt(args.userId, 10)], function (this: any, err2: Error | null) {
                                 if (err2) {
                                     reject(err2);
                                 } else {
@@ -432,8 +448,8 @@ const Mutation = new GraphQLObjectType({
             },
             resolve(parent: any, args: { pollId: string, userId: string, title: string, options: string[] }): Promise<Poll> {
                 return new Promise((resolve, reject) => {
-                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10)], (err: Error | null, row: PollPermission) => {
-                        if (err || !row || !row.canEdit) {
+                    db.get('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10), PermissionType.EDIT], (err: Error | null, row: PollPermission) => {
+                        if (err || !row) {
                             reject(new Error('No edit permission'));
                         } else {
                             const optionsJson = JSON.stringify(args.options);

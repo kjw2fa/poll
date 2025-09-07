@@ -1,17 +1,9 @@
 import React, { Suspense } from 'react';
 import { useLazyLoadQuery, graphql } from 'react-relay';
-import { Link } from 'react-router-dom';
 import { MyPollsQuery as MyPollsQueryType } from './__generated__/MyPollsQuery.graphql';
 import PageContainer from '../ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '../ui/card';
-import { Button } from '../ui/button';
+import PollCard from '../Poll/PollCard/PollCard';
 
 const MyPollsQuery = graphql`
   query MyPollsQuery($userId: ID!) {
@@ -20,13 +12,17 @@ const MyPollsQuery = graphql`
         id
         title
         options
-        canEdit
+        permissions(userId: $userId) {
+          canEdit
+        }
       }
       votedPolls {
         id
         title
         options
-        canEdit
+        permissions(userId: $userId) {
+          canEdit
+        }
       }
     }
   }
@@ -50,25 +46,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {createdPolls.length > 0 ? (
               createdPolls.map(poll => (
-                <Card key={poll.id}>
-                  <CardHeader>
-                    <CardTitle>{poll.title}</CardTitle>
-                    <CardDescription>{poll.options?.length} options</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex justify-between">
-                    <Link to={`/poll/${poll.id}/vote`}>
-                      <Button variant="outline">Vote</Button>
-                    </Link>
-                    <Link to={`/poll/${poll.id}/results`}>
-                      <Button variant="outline">Results</Button>
-                    </Link>
-                    {poll.canEdit && (
-                      <Link to={`/poll/${poll.id}/edit`}>
-                        <Button>Edit</Button>
-                      </Link>
-                    )}
-                  </CardContent>
-                </Card>
+                <PollCard key={poll.id} poll={poll} />
               ))
             ) : (
               <p>No polls created yet.</p>
@@ -79,20 +57,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {votedPolls.length > 0 ? (
               votedPolls.map(poll => (
-                <Card key={poll.id}>
-                  <CardHeader>
-                    <CardTitle>{poll.title}</CardTitle>
-                    <CardDescription>{poll.options?.length} options</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex justify-between">
-                    <Link to={`/poll/${poll.id}/vote`}>
-                      <Button variant="outline">Vote</Button>
-                    </Link>
-                    <Link to={`/poll/${poll.id}/results`}>
-                      <Button>Results</Button>
-                    </Link>
-                  </CardContent>
-                </Card>
+                <PollCard key={poll.id} poll={poll} />
               ))
             ) : (
               <p>No polls voted on yet.</p>

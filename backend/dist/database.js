@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const path_1 = __importDefault(require("path"));
 const sqlite3_1 = __importDefault(require("sqlite3"));
+const enums_1 = require("./enums");
 const DBSOURCE = path_1.default.join(__dirname, '../db.sqlite'); // Always use project root
 let db = new sqlite3_1.default.Database(DBSOURCE, (err) => {
     if (err) {
@@ -60,11 +61,19 @@ let db = new sqlite3_1.default.Database(DBSOURCE, (err) => {
                 // Table already created
             }
         });
+        db.run(`DROP TABLE IF EXISTS PollPermissions`, (err) => {
+            if (err) {
+                console.error(err.message);
+            }
+        });
         db.run(`CREATE TABLE PollPermissions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             pollId INTEGER,
-            userId INTEGER,
-            canEdit BOOLEAN,
-            PRIMARY KEY (pollId, userId)
+            permission_type TEXT CHECK(permission_type IN (${Object.values(enums_1.PermissionType).map(t => `'${t}'`).join(', ')})),
+            target_type TEXT CHECK(target_type IN (${Object.values(enums_1.TargetType).map(t => `'${t}'`).join(', ')})),
+            target_id INTEGER,
+            FOREIGN KEY (pollId) REFERENCES Polls(id),
+            FOREIGN KEY (target_id) REFERENCES Users(id)
             )`, (err) => {
             if (err) {
                 // Table already created

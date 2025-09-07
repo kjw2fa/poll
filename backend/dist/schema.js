@@ -17,7 +17,24 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const graphql_1 = require("graphql");
 const database_1 = __importDefault(require("./database"));
+const enums_1 = require("./enums");
 exports.JWT_SECRET = 'your-secret-key';
+// Enum Types
+const PermissionTypeEnum = new graphql_1.GraphQLEnumType({
+    name: 'PermissionType',
+    values: {
+        VIEW: { value: enums_1.PermissionType.VIEW },
+        VOTE: { value: enums_1.PermissionType.VOTE },
+        EDIT: { value: enums_1.PermissionType.EDIT },
+    },
+});
+const TargetTypeEnum = new graphql_1.GraphQLEnumType({
+    name: 'TargetType',
+    values: {
+        USER: { value: enums_1.TargetType.USER },
+        PUBLIC: { value: enums_1.TargetType.PUBLIC },
+    },
+});
 // User Type
 const UserType = new graphql_1.GraphQLObjectType({
     name: 'User',
@@ -27,10 +44,12 @@ const UserType = new graphql_1.GraphQLObjectType({
     })
 });
 // Permissions Type
-const PermissionsType = new graphql_1.GraphQLObjectType({
-    name: 'Permissions',
+const PollPermissionsType = new graphql_1.GraphQLObjectType({
+    name: 'PollPermissions',
     fields: () => ({
-        canEdit: { type: graphql_1.GraphQLBoolean }
+        permission_type: { type: PermissionTypeEnum },
+        target_type: { type: TargetTypeEnum },
+        target_id: { type: graphql_1.GraphQLID },
     })
 });
 // Vote Type
@@ -63,42 +82,16 @@ const PollType = new graphql_1.GraphQLObjectType({
                 });
             }
         },
-        canEdit: {
-            type: graphql_1.GraphQLBoolean,
-            resolve(parent, args, context) {
-                return new Promise((resolve, reject) => {
-                    console.log('canEdit resolver: parent.id =', parent.id, ', context.userId =', context.userId);
-                    if (!context.userId) {
-                        console.log('canEdit resolver: context.userId is missing');
-                        resolve(false);
-                        return;
-                    }
-                    database_1.default.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(context.userId, 10)], (err, row) => {
-                        if (err) {
-                            console.error('canEdit resolver DB error:', err);
-                            reject(err);
-                        }
-                        else {
-                            console.log('canEdit resolver DB result:', row);
-                            resolve(row ? !!row.canEdit : false);
-                        }
-                    });
-                });
-            }
-        },
         permissions: {
-            type: PermissionsType,
-            args: { userId: { type: graphql_1.GraphQLID } },
+            type: new graphql_1.GraphQLList(PollPermissionsType),
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(args.userId, 10)], (err, row) => {
+                    database_1.default.all('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id], (err, rows) => {
                         if (err) {
                             reject(err);
                         }
                         else {
-                            resolve({
-                                canEdit: row ? !!row.canEdit : false
-                            });
+                            resolve(rows);
                         }
                     });
                 });
@@ -200,7 +193,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
                     const createdPollsPromise = new Promise((resolve, reject) => {
-                        database_1.default.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.userId = ? AND PollPermissions.canEdit = 1', [parseInt(args.userId, 10)], (err, rows) => {
+                        database_1.default.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ? AND PollPermissions.permission_type = ?', [parseInt(args.userId, 10), enums_1.PermissionType.EDIT], (err, rows) => {
                             if (err)
                                 reject(err);
                             else
@@ -290,6 +283,22 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                     });
                 });
             }
+        },
+        searchPolls: {
+            type: new graphql_1.GraphQLList(PollType),
+            args: { searchTerm: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) } },
+            resolve(parent, args) {
+                return new Promise((resolve, reject) => {
+                    database_1.default.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.title LIKE ?', [`%${args.searchTerm}%`], (err, rows) => {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }))));
+                        }
+                    });
+                });
+            }
         }
     }
 });
@@ -329,7 +338,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                         }
                         else {
                             const pollId = this.lastID;
-                            database_1.default.run('INSERT INTO PollPermissions (pollId, userId, canEdit) VALUES (?, ?, ?)', [pollId, parseInt(args.userId, 10), true], function (err2) {
+                            database_1.default.run('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, parseInt(args.userId, 10)], function (err2) {
                                 if (err2) {
                                     reject(err2);
                                 }
@@ -404,8 +413,8 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10)], (err, row) => {
-                        if (err || !row || !row.canEdit) {
+                    database_1.default.get('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10), enums_1.PermissionType.EDIT], (err, row) => {
+                        if (err || !row) {
                             reject(new Error('No edit permission'));
                         }
                         else {
