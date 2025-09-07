@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Routes, Route, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs.tsx";
 import Vote from './Vote/Vote.tsx';
 import PollResults from './PollResults/PollResults.tsx';
@@ -35,7 +35,7 @@ const Poll = (props: { userId: string }) => {
     const navigate = useNavigate();
 
     const handleSearch = (pollId: string) => {
-        navigate(`/poll/${pollId}`);
+        navigate(`/poll/${pollId}/vote`);
     };
 
     return (
@@ -54,6 +54,8 @@ const PollComponent = ({ userId, id }) => {
         PollQuery,
         { id, userId },
     );
+    const navigate = useNavigate();
+    const location = useLocation();
 
     const poll = data.poll;
     const canEdit = poll?.permissions?.canEdit;
@@ -62,27 +64,23 @@ const PollComponent = ({ userId, id }) => {
         // This will be handled by Relay's data management
     };
 
+    const activeTab = location.pathname.split('/').pop();
+
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold mb-6 text-center">{poll.title}</h1>
-            <Tabs defaultValue="vote">
+            <Tabs value={activeTab} onValueChange={(value) => navigate(`/poll/${id}/${value}`)}>
                 <TabsList className="w-full p-2 rounded-md bg-gray-100">
                     <TabsTrigger value="vote">Vote</TabsTrigger>
                     <TabsTrigger value="results">Results</TabsTrigger>
                     {canEdit && <TabsTrigger value="edit">Edit</TabsTrigger>}
                 </TabsList>
-                <TabsContent value="vote">
-                    <Vote userId={userId} poll={poll} />
-                </TabsContent>
-                <TabsContent value="results">
-                    <PollResults pollId={id} />
-                </TabsContent>
-                {canEdit && (
-                    <TabsContent value="edit">
-                        <EditPoll userId={userId} poll={poll} onPollUpdated={handlePollUpdated} />
-                    </TabsContent>
-                )}
             </Tabs>
+            <Routes>
+                <Route path="vote" element={<Vote userId={userId} poll={poll} />} />
+                <Route path="results" element={<PollResults pollId={id} />} />
+                {canEdit && <Route path="edit" element={<EditPoll userId={userId} poll={poll} onPollUpdated={handlePollUpdated} />} />}
+            </Routes>
         </div>
     );
 };

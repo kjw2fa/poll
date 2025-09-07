@@ -95,10 +95,8 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/create" element={<CreatePoll userId={userId} />} />
             <Route path="/poll" element={<Poll userId={userId} />} />
-            <Route path="/poll/:id" element={<Poll userId={userId} />} />
+            <Route path="/poll/:id/*" element={<Poll userId={userId} />} />
             <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
-            <Route path="/poll/:id/edit" element={<EditPoll userId={userId} />} />
-            <Route path="/poll/:id/results" element={<PollResults />} />
             <Route path="/mypolls" element={<MyPolls userId={userId} />} />
           </Routes>
         </main>

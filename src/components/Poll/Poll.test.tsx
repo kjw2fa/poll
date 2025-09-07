@@ -1,28 +1,16 @@
 
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
+import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import Poll from './Poll';
 import { RelayEnvironmentProvider } from 'react-relay';
 import { createMockEnvironment, MockPayloadGenerator } from 'relay-test-utils';
-import { useParams, useNavigate } from 'react-router-dom';
-
-// Mock react-router-dom
-vi.mock('react-router-dom', async (importOriginal) => {
-  const actual = await importOriginal();
-  return {
-    ...actual,
-    useParams: vi.fn(),
-    useNavigate: vi.fn(),
-  };
-});
 
 // Mock child components
 vi.mock('./Vote/Vote', () => ({ default: ({ userId }) => <div>Mock Vote Component for {userId}</div> }));
 vi.mock('./PollResults/PollResults', () => ({ default: () => <div>Mock PollResults Component</div> }));
 vi.mock('./EditPoll/EditPoll', () => ({ default: ({ userId, poll }) => <div>Mock EditPoll Component for {userId} - {poll?.title}</div> }));
 vi.mock('./PollSearch/PollSearch', () => ({ default: ({ onSearch }) => <input placeholder="Enter Poll ID" onChange={(e) => onSearch(e.target.value)} /> }));
-
 
 describe('Poll component with Relay', () => {
   let environment;
@@ -33,14 +21,13 @@ describe('Poll component with Relay', () => {
   });
 
   test('renders poll title and tabs', async () => {
-    useParams.mockReturnValue({ id: 'test-poll-id' });
-    useNavigate.mockReturnValue(vi.fn());
-
     render(
       <RelayEnvironmentProvider environment={environment}>
-        <BrowserRouter>
-          <Poll userId="test-user-id" />
-        </BrowserRouter>
+        <MemoryRouter initialEntries={['/poll/test-poll-id/vote']}>
+          <Routes>
+            <Route path="/poll/:id/*" element={<Poll userId="test-user-id" />} />
+          </Routes>
+        </MemoryRouter>
       </RelayEnvironmentProvider>
     );
 
@@ -67,14 +54,11 @@ describe('Poll component with Relay', () => {
   });
 
   test('renders PollSearch if no id is provided', async () => {
-    useParams.mockReturnValue({}); // No ID
-    useNavigate.mockReturnValue(vi.fn());
-
     render(
       <RelayEnvironmentProvider environment={environment}>
-        <BrowserRouter>
-          <Poll userId="test-user-id" />
-        </BrowserRouter>
+        <MemoryRouter initialEntries={['/poll']}>
+            <Poll userId="test-user-id" />
+        </MemoryRouter>
       </RelayEnvironmentProvider>
     );
 

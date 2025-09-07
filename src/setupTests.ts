@@ -1,7 +1,19 @@
-// jest-dom adds custom jest matchers for asserting on DOM nodes.
-// allows you to do things like:
-// expect(element).toHaveTextContent(/react/i)
-// learn more: https://github.com/testing-library/jest-dom
 import '@testing-library/jest-dom';
 
-vi.mock('.graphql', () => ({}));
+const jest = {
+    fn: () => { },
+    mock: () => { },
+};
+
+vi.mock('relay-test-utils', () => ({
+    createMockEnvironment: () => ({
+        mock: {
+            resolveMostRecentOperation: vi.fn(),
+        },
+    }),
+    MockPayloadGenerator: {
+        generate: vi.fn(),
+    },
+}));
+
+vi.mock('(craco-alias)', () => ({}));

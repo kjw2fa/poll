@@ -56,7 +56,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
                     <CardDescription>{poll.options?.length} options</CardDescription>
                   </CardHeader>
                   <CardContent className="flex justify-between">
-                    <Link to={`/poll/${poll.id}`}>
+                    <Link to={`/poll/${poll.id}/vote`}>
                       <Button variant="outline">Vote</Button>
                     </Link>
                     <Link to={`/poll/${poll.id}/results`}>
@@ -85,7 +85,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
                     <CardDescription>{poll.options?.length} options</CardDescription>
                   </CardHeader>
                   <CardContent className="flex justify-between">
-                    <Link to={`/poll/${poll.id}`}>
+                    <Link to={`/poll/${poll.id}/vote`}>
                       <Button variant="outline">Vote</Button>
                     </Link>
                     <Link to={`/poll/${poll.id}/results`}>
