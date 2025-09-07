@@ -127,7 +127,6 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
     const ratedOptions = new Set<string>(optionRatingMap.keys());
     return (
         <div className="vote">
-            <h2 className="text-center text-2xl font-bold mb-4">{poll.title}</h2>
             <DndContext onDragEnd={handleDragEnd}>
                 <div className="flex justify-center gap-16 max-w-screen-md mx-auto">
                     <div className="w-1/3 bg-blue-100 p-4 rounded-lg">

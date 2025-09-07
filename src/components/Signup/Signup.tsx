@@ -57,8 +57,8 @@ const Signup = ({ isOpen, onClose, onSignupSuccess, onSwitchToLogin }) => {
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader className="text-center">
-                    <DialogTitle className="text-xl">Create Account</DialogTitle>
+                <DialogHeader className="text-center mb-6">
+                    <DialogTitle className="text-3xl font-bold">Create Account</DialogTitle>
                     <DialogDescription>Enter your details below to create an account.</DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4">

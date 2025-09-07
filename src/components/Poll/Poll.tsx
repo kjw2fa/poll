@@ -64,7 +64,7 @@ const PollComponent = ({ userId, id }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            
+            <h1 className="text-3xl font-bold mb-6 text-center">{poll.title}</h1>
             <Tabs defaultValue="vote">
                 <TabsList className="flex justify-center p-2 rounded-md bg-gray-100 mx-auto">
                     <TabsTrigger value="vote">Vote</TabsTrigger>

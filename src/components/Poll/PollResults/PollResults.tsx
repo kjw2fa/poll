@@ -35,7 +35,7 @@ const PollResultsComponent = ({ pollId }) => {
 
     return (
         <div className="poll-results">
-            <h2>Results for: {pollResults.pollTitle}</h2>
+            <h1 className="text-3xl font-bold mb-6 text-center">Results for: {pollResults.pollTitle}</h1>
 
             <h3>Winning Option(s):</h3>
             {pollResults.results.length > 0 ? (

@@ -46,6 +46,7 @@ const EditPollComponent = ({ userId, poll: initialPoll, onPollUpdated }) => {
 
     return (
         <div>
+            <h1 className="text-3xl font-bold mb-6 text-center">Edit Poll</h1>
             {poll ? (
                 <PollSettings poll={poll} onSave={handleSave} isEditing={true} />
             ) : (

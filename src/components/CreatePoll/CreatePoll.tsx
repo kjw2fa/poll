@@ -38,7 +38,7 @@ const CreatePollComponent = ({ userId }) => {
 
     return (
         <div className="flex flex-col gap-4">
-            <h2>Create a New Poll</h2>
+            <h1 className="text-3xl font-bold mb-6">Create a New Poll</h1>
             {!createdPollId ? (
                 <PollSettings onSave={handleSave} isEditing={false} />
             ) : (
