@@ -38,7 +38,7 @@ const Signup = ({ isOpen, onClose, onSignupSuccess, onSwitchToLogin }) => {
             onCompleted: (response) => {
                 if (response.signup) {
                     setSignupMessage('Signup successful!');
-                    onSignupSuccess();
+                    onSignupSuccess({ userId: response.signup.id, username: response.signup.username });
                 }
             },
             onError: (error) => {

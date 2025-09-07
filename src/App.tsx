@@ -14,7 +14,9 @@ import Login from './components/Login/Login.tsx';
 import MyPolls from './components/MyPolls/MyPolls.tsx';
 import './index.css';
 
-import { Toaster } from 'sonner';
+
+
+import { Toaster, toast } from 'sonner';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -54,8 +56,15 @@ function App() {
     navigate('/');
   };
 
-  const handleSignup = () => {
+  const handleSignup = ({ userId, username }) => {
     setIsSignupModalOpen(false);
+    toast.success("Account successfully created!");
+    localStorage.setItem('userId', userId);
+    localStorage.setItem('username', username);
+    setLoggedIn(true);
+    setUsername(username);
+    setUserId(userId);
+    navigate('/');
   };
 
   const onSwitchToSignup = () => {
