@@ -3,6 +3,8 @@ import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollResultsQuery as PollResultsQueryType } from './__generated__/PollResultsQuery.graphql';
 
+import { Award } from 'lucide-react';
+
 const PollResultsQuery = graphql`
   query PollResultsQuery($pollId: ID!) {
     pollResults(pollId: $pollId) {
@@ -33,34 +35,41 @@ const PollResultsComponent = ({ pollId }) => {
 
     const { pollResults } = data;
 
-    return (
-        <div className="poll-results">
-            <h3>Winning Option(s):</h3>
-            {pollResults.results.length > 0 ? (
-                <ul>
-                    {pollResults.results.map((result, index) => (
-                        <li key={index}>
-                            {result.option} (Average Rating: {result.averageRating.toFixed(2)})
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>No clear winning option yet.</p>
-            )}
+    // Create a set of winning option names
+    const winningOptionNames = new Set(pollResults.results.map(r => r.option));
 
-            <h3>Total Votes: {pollResults.totalVotes}</h3>
-            <h3>Voters:</h3>
-            {pollResults.voters.length > 0 ? (
-                <ul>
-                    {pollResults.voters.map((voter, index) => (
-                        <li key={index}>
-                            <strong>{voter}</strong>
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <p>No named votes cast yet.</p>
-            )}
+    return (
+        <div className="poll-results flex flex-col items-center">
+            <div className="mb-6 text-center">
+                <h2 className="text-2xl font-semibold mb-2">Winning {pollResults.results.length === 1 ? 'Option' : 'Options'}</h2>
+                {pollResults.results.length > 0 ? (
+                    <ul>
+                        {pollResults.results.map((result, index) => (
+                            <li key={index} className="flex items-center gap-2 justify-center">
+                                <Award className="text-yellow-500" />
+                                {result.option}
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No clear winning option yet.</p>
+                )}
+            </div>
+
+            <div className="mb-6 text-center">
+                <h2 className="text-2xl font-semibold mb-2">Voters ({pollResults.totalVotes})</h2>
+                {pollResults.voters.length > 0 ? (
+                    <ul>
+                        {pollResults.voters.map((voter, index) => (
+                            <li key={index}>
+                                <strong>{voter}</strong>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p>No named votes cast yet.</p>
+                )}
+            </div>
         </div>
     );
 };
