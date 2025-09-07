@@ -12,11 +12,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.JWT_SECRET = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const graphql_1 = require("graphql");
 const database_1 = __importDefault(require("./database"));
-const JWT_SECRET = 'your-secret-key';
+exports.JWT_SECRET = 'your-secret-key';
 // User Type
 const UserType = new graphql_1.GraphQLObjectType({
     name: 'User',
@@ -57,6 +58,29 @@ const PollType = new graphql_1.GraphQLObjectType({
                         }
                         else {
                             resolve(row);
+                        }
+                    });
+                });
+            }
+        },
+        canEdit: {
+            type: graphql_1.GraphQLBoolean,
+            resolve(parent, args, context) {
+                return new Promise((resolve, reject) => {
+                    console.log('canEdit resolver: parent.id =', parent.id, ', context.userId =', context.userId);
+                    if (!context.userId) {
+                        console.log('canEdit resolver: context.userId is missing');
+                        resolve(false);
+                        return;
+                    }
+                    database_1.default.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(context.userId, 10)], (err, row) => {
+                        if (err) {
+                            console.error('canEdit resolver DB error:', err);
+                            reject(err);
+                        }
+                        else {
+                            console.log('canEdit resolver DB result:', row);
+                            resolve(row ? !!row.canEdit : false);
                         }
                     });
                 });
@@ -459,7 +483,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                             if (!match) {
                                 return reject(new Error('Invalid username or password.'));
                             }
-                            const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, JWT_SECRET, { expiresIn: '1d' });
+                            const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, exports.JWT_SECRET, { expiresIn: '1d' });
                             resolve({ token, userId: user.id, username: user.username });
                         });
                     });

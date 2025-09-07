@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import { GraphQLObjectType, GraphQLID, GraphQLString, GraphQLList, GraphQLSchema, GraphQLBoolean, GraphQLNonNull, GraphQLInputObjectType, GraphQLInt, GraphQLFloat } from 'graphql';
 import db from './database';
 
-const JWT_SECRET = 'your-secret-key';
+export const JWT_SECRET = 'your-secret-key';
 
 interface User {
     id: number;
@@ -81,6 +81,28 @@ const PollType = new GraphQLObjectType({
                             reject(err);
                         } else {
                             resolve(row);
+                        }
+                    });
+                });
+            }
+        },
+        canEdit: { // New field
+            type: GraphQLBoolean,
+            resolve(parent: Poll, args: any, context: any): Promise<boolean> {
+                return new Promise((resolve, reject) => {
+                    console.log('canEdit resolver: parent.id =', parent.id, ', context.userId =', context.userId);
+                    if (!context.userId) {
+                        console.log('canEdit resolver: context.userId is missing');
+                        resolve(false);
+                        return;
+                    }
+                    db.get('SELECT canEdit FROM PollPermissions WHERE pollId = ? AND userId = ?', [parent.id, parseInt(context.userId, 10)], (err: Error | null, row: PollPermission) => {
+                        if (err) {
+                            console.error('canEdit resolver DB error:', err);
+                            reject(err);
+                        } else {
+                            console.log('canEdit resolver DB result:', row);
+                            resolve(row ? !!row.canEdit : false);
                         }
                     });
                 });
