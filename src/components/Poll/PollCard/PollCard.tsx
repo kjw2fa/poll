@@ -19,7 +19,7 @@ const PollCard = ({ poll }) => {
   const visibleOptions = pollOptions.slice(0, numberOfOptionsToShow);
 
   return (
-    <Card key={poll.id}>
+    <Card key={poll.id} className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{poll.title}</CardTitle>
         <CardDescription>TODO: Add poll description</CardDescription>
@@ -49,7 +49,8 @@ const PollCard = ({ poll }) => {
           </Tooltip>
         )}
       </CardContent>
-      <CardFooter>
+      <div className="flex-grow" /> {/*This pushes the footer to the bottom */}
+      <CardFooter >
         <Link to={`/poll/${poll.id}/vote`}>
           <Button variant="outline">Vote</Button>
         </Link>
