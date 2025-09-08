@@ -17,6 +17,7 @@ import './index.css';
 
 
 import { Toaster, toast } from 'sonner';
+import { TooltipProvider } from './components/ui/tooltip';
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -79,28 +80,30 @@ function App() {
 
   return (
     <RelayEnvironmentProvider environment={RelayEnvironment}>
-      <div className="App">
-        <Toaster />
-        <MenuBar
-          loggedIn={loggedIn}
-          username={username}
-          onLogout={handleLogout}
-          setIsLoginModalOpen={setIsLoginModalOpen}
-          setIsSignupModalOpen={setIsSignupModalOpen}
-        />
-        <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={handleLogin} onSwitchToSignup={onSwitchToSignup} />
-        <Signup isOpen={isSignupModalOpen} onClose={() => setIsSignupModalOpen(false)} onSignupSuccess={handleSignup} onSwitchToLogin={onSwitchToLogin} />
-        <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/create" element={<CreatePoll userId={userId} />} />
-            <Route path="/poll" element={<Poll userId={userId} />} />
-            <Route path="/poll/:id/*" element={<Poll userId={userId} />} />
-            <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
-            <Route path="/mypolls" element={<MyPolls userId={userId} />} />
-          </Routes>
-        </main>
-      </div>
+      <TooltipProvider>
+        <div className="App">
+          <Toaster />
+          <MenuBar
+            loggedIn={loggedIn}
+            username={username}
+            onLogout={handleLogout}
+            setIsLoginModalOpen={setIsLoginModalOpen}
+            setIsSignupModalOpen={setIsSignupModalOpen}
+          />
+          <Login isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLogin={handleLogin} onSwitchToSignup={onSwitchToSignup} />
+          <Signup isOpen={isSignupModalOpen} onClose={() => setIsSignupModalOpen(false)} onSignupSuccess={handleSignup} onSwitchToLogin={onSwitchToLogin} />
+          <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/create" element={<CreatePoll userId={userId} />} />
+              <Route path="/poll" element={<Poll userId={userId} />} />
+              <Route path="/poll/:id/*" element={<Poll userId={userId} />} />
+              <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
+              <Route path="/mypolls" element={<MyPolls userId={userId} />} />
+            </Routes>
+          </main>
+        </div>
+      </TooltipProvider>
     </RelayEnvironmentProvider>
   );
 }
