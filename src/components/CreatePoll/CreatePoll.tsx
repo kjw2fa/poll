@@ -4,11 +4,18 @@ import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { CreatePollMutation as CreatePollMutationType } from './__generated__/CreatePollMutation.graphql';
 import PageContainer from '../ui/PageContainer';
+import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
 
 const CreatePollMutation = graphql`
   mutation CreatePollMutation($title: String!, $options: [String]!, $userId: ID!) {
     createPoll(title: $title, options: $options, userId: $userId) {
-      id
+        pollEdge {
+            cursor
+            node {
+                id
+                ...PollCard_poll
+            }
+        }
     }
   }
 `;
@@ -25,13 +32,27 @@ const CreatePollComponent = ({ userId }) => {
                 userId,
             },
             onCompleted: (response) => {
-                const pollId = response.createPoll.id;
+                const pollId = response.createPoll.pollEdge.node.id;
                 const pollUrl = `${window.location.origin}/poll/${pollId}`;
                 setCreatedPollId(pollId);
                 setCreatedPollUrl(pollUrl);
             },
             onError: (error) => {
                 console.error('Error creating poll:', error);
+            },
+            updater: (store: RecordSourceSelectorProxy) => {
+                const payload = store.getRootField('createPoll');
+                const newEdge = payload.getLinkedRecord('pollEdge');
+                if (!newEdge) {
+                    return;
+                }
+                const myPolls = store.get(ROOT_ID)?.getLinkedRecord('myPolls', { userId });
+                if (myPolls) {
+                    const conn = ConnectionHandler.getConnection(myPolls, 'MyPolls_createdPolls');
+                    if (conn) {
+                        ConnectionHandler.insertEdgeAfter(conn, newEdge);
+                    }
+                }
             },
         });
     };

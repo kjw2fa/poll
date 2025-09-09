@@ -10,20 +10,33 @@ type LoginResponse {
 }
 
 type Mutation {
-  createPoll(title: String!, options: [String]!, userId: ID!): Poll
+  createPoll(title: String!, options: [String]!, userId: ID!): CreatePollPayload
   submitVote(pollId: ID!, userId: ID!, ratings: [RatingInput!]!): Poll
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [String]!): Poll
   signup(username: String!, email: String!, password: String!): User
   login(username: String!, password: String!): LoginResponse
 }
 
-type MyPolls {
-  createdPolls: [Poll]
-  votedPolls: [Poll]
+type CreatePollPayload {
+  pollEdge: PollEdge
 }
 
-type Permissions {
-  canEdit: Boolean
+type MyPolls {
+  createdPolls(first: Int, after: String, last: Int, before: String): PollConnection
+  votedPolls(first: Int, after: String, last: Int, before: String): PollConnection
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type PollPermissions {
+  permission_type: String
+  target_type: String
+  target_id: ID
 }
 
 type Poll {
@@ -31,9 +44,20 @@ type Poll {
   title: String
   options: [String]
   creator: User
-  permissions(userId: ID): Permissions
+  permissions: [PollPermissions]
   votes(userId: ID!): [Vote]
 }
+
+type PollConnection {
+  edges: [PollEdge]
+  pageInfo: PageInfo!
+}
+
+type PollEdge {
+  cursor: String!
+  node: Poll
+}
+
 
 type PollResult {
   pollTitle: String
@@ -59,6 +83,7 @@ type User {
   id: ID
   username: String
 }
+
 
 type Vote {
   option: String

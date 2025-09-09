@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<97f224a0c7b88404453b5f2d7c33a715>>
+ * @generated SignedSource<<0bbfe302ce776ef5e6f068ee6b85948d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+import { FragmentRefs } from "relay-runtime";
 export type CreatePollMutation$variables = {
   options: ReadonlyArray<string | null | undefined>;
   title: string;
@@ -16,7 +17,13 @@ export type CreatePollMutation$variables = {
 };
 export type CreatePollMutation$data = {
   readonly createPoll: {
-    readonly id: string | null | undefined;
+    readonly pollEdge: {
+      readonly cursor: string;
+      readonly node: {
+        readonly id: string | null | undefined;
+        readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
+      } | null | undefined;
+    } | null | undefined;
   } | null | undefined;
 };
 export type CreatePollMutation = {
@@ -42,40 +49,35 @@ v2 = {
 },
 v3 = [
   {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "options",
-        "variableName": "options"
-      },
-      {
-        "kind": "Variable",
-        "name": "title",
-        "variableName": "title"
-      },
-      {
-        "kind": "Variable",
-        "name": "userId",
-        "variableName": "userId"
-      }
-    ],
-    "concreteType": "Poll",
-    "kind": "LinkedField",
-    "name": "createPoll",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
+    "kind": "Variable",
+    "name": "options",
+    "variableName": "options"
+  },
+  {
+    "kind": "Variable",
+    "name": "title",
+    "variableName": "title"
+  },
+  {
+    "kind": "Variable",
+    "name": "userId",
+    "variableName": "userId"
   }
-];
+],
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "cursor",
+  "storageKey": null
+},
+v5 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -86,7 +88,48 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "CreatePollMutation",
-    "selections": (v3/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v3/*: any*/),
+        "concreteType": "CreatePollPayload",
+        "kind": "LinkedField",
+        "name": "createPoll",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollEdge",
+            "kind": "LinkedField",
+            "name": "pollEdge",
+            "plural": false,
+            "selections": [
+              (v4/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Poll",
+                "kind": "LinkedField",
+                "name": "node",
+                "plural": false,
+                "selections": [
+                  (v5/*: any*/),
+                  {
+                    "args": null,
+                    "kind": "FragmentSpread",
+                    "name": "PollCard_poll"
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
@@ -99,19 +142,94 @@ return {
     ],
     "kind": "Operation",
     "name": "CreatePollMutation",
-    "selections": (v3/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v3/*: any*/),
+        "concreteType": "CreatePollPayload",
+        "kind": "LinkedField",
+        "name": "createPoll",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollEdge",
+            "kind": "LinkedField",
+            "name": "pollEdge",
+            "plural": false,
+            "selections": [
+              (v4/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Poll",
+                "kind": "LinkedField",
+                "name": "node",
+                "plural": false,
+                "selections": [
+                  (v5/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "title",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "options",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "concreteType": "PollPermissions",
+                    "kind": "LinkedField",
+                    "name": "permissions",
+                    "plural": true,
+                    "selections": [
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "permission_type",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "target_id",
+                        "storageKey": null
+                      }
+                    ],
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "84c9d7145487eb2599c8219f88bd5d35",
+    "cacheID": "58b5ab24402aa9f1a3e7e3710e51942d",
     "id": null,
     "metadata": {},
     "name": "CreatePollMutation",
     "operationKind": "mutation",
-    "text": "mutation CreatePollMutation(\n  $title: String!\n  $options: [String]!\n  $userId: ID!\n) {\n  createPoll(title: $title, options: $options, userId: $userId) {\n    id\n  }\n}\n"
+    "text": "mutation CreatePollMutation(\n  $title: String!\n  $options: [String]!\n  $userId: ID!\n) {\n  createPoll(title: $title, options: $options, userId: $userId) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "343352b26fc2b5fc8fcc097d69bdd2ea";
+(node as any).hash = "6c240da5869747b550fd471d382c5b90";
 
 export default node;

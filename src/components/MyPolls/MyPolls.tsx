@@ -6,22 +6,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import PollCard from '../Poll/PollCard/PollCard';
 
 const MyPollsQuery = graphql`
-  query MyPollsQuery($userId: ID!) {
+  query MyPollsQuery($userId: ID!, $count: Int = 10, $cursor: String) {
     myPolls(userId: $userId) {
-      createdPolls {
-        id
-        title
-        options
-        permissions(userId: $userId) {
-          canEdit
+      createdPolls(first: $count, after: $cursor) @connection(key: "MyPolls_createdPolls") {
+        edges {
+          node {
+            id
+            ...PollCard_poll
+          }
         }
       }
-      votedPolls {
-        id
-        title
-        options
-        permissions(userId: $userId) {
-          canEdit
+      votedPolls(first: $count, after: $cursor) @connection(key: "MyPolls_votedPolls") {
+        edges {
+          node {
+            id
+            ...PollCard_poll
+          }
         }
       }
     }
@@ -31,8 +31,8 @@ const MyPollsQuery = graphql`
 const MyPollsComponent = ({ userId }: { userId: string }) => {
   const data = useLazyLoadQuery<MyPollsQueryType>(MyPollsQuery, { userId });
 
-  const createdPolls = data.myPolls?.createdPolls || [];
-  const votedPolls = data.myPolls?.votedPolls || [];
+  const createdPolls = data.myPolls?.createdPolls?.edges?.map(edge => edge.node) || [];
+  const votedPolls = data.myPolls?.votedPolls?.edges?.map(edge => edge.node) || [];
 
   return (
     <div className="container mx-auto p-4">
@@ -46,7 +46,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {createdPolls.length > 0 ? (
               createdPolls.map(poll => (
-                <PollCard key={poll.id} poll={poll} />
+                <PollCard key={poll.id} poll={poll} userId={userId} />
               ))
             ) : (
               <p>No polls created yet.</p>
@@ -57,7 +57,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {votedPolls.length > 0 ? (
               votedPolls.map(poll => (
-                <PollCard key={poll.id} poll={poll} />
+                <PollCard key={poll.id} poll={poll} userId={userId} />
               ))
             ) : (
               <p>No polls voted on yet.</p>

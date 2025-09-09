@@ -19,6 +19,62 @@ const graphql_1 = require("graphql");
 const database_1 = __importDefault(require("./database"));
 const enums_1 = require("./enums");
 exports.JWT_SECRET = 'your-secret-key';
+// Helper functions for cursor pagination
+const toCursor = (id) => Buffer.from(String(id)).toString('base64');
+const fromCursor = (cursor) => Buffer.from(cursor, 'base64').toString('ascii');
+function paginationResolver(baseQuery, queryParams, { first, after, last, before }) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let query = baseQuery;
+        const params = [...queryParams];
+        if (after) {
+            query += ` AND Polls.id > ?`;
+            params.push(fromCursor(after));
+        }
+        if (before) {
+            query += ` AND Polls.id < ?`;
+            params.push(fromCursor(before));
+        }
+        let limit = first || last || 10;
+        if (first) {
+            query += ` ORDER BY Polls.id ASC LIMIT ?`;
+            params.push(limit + 1);
+        }
+        else if (last) {
+            query += ` ORDER BY Polls.id DESC LIMIT ?`;
+            params.push(limit + 1);
+        }
+        return new Promise((resolve, reject) => {
+            database_1.default.all(query, params, (err, rows) => {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    let edges = rows.map(row => ({
+                        cursor: toCursor(row.id),
+                        node: Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } })
+                    }));
+                    const hasNextPage = first ? edges.length > limit : false;
+                    const hasPreviousPage = last ? edges.length > limit : false;
+                    if (first && edges.length > limit) {
+                        edges = edges.slice(0, limit);
+                    }
+                    if (last && edges.length > limit) {
+                        edges = edges.slice(0, limit).reverse();
+                    }
+                    resolve({
+                        edges,
+                        pageInfo: {
+                            hasNextPage,
+                            hasPreviousPage,
+                            startCursor: edges.length > 0 ? edges[0].cursor : null,
+                            endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+                        }
+                    });
+                }
+            });
+        });
+    });
+}
 // Enum Types
 const PermissionTypeEnum = new graphql_1.GraphQLEnumType({
     name: 'PermissionType',
@@ -122,12 +178,61 @@ const PollType = new graphql_1.GraphQLObjectType({
         }
     })
 });
+const PageInfoType = new graphql_1.GraphQLObjectType({
+    name: 'PageInfo',
+    fields: () => ({
+        hasNextPage: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
+        hasPreviousPage: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
+        startCursor: { type: graphql_1.GraphQLString },
+        endCursor: { type: graphql_1.GraphQLString },
+    }),
+});
+const PollEdgeType = new graphql_1.GraphQLObjectType({
+    name: 'PollEdge',
+    fields: () => ({
+        cursor: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
+        node: { type: PollType },
+    }),
+});
+const PollConnectionType = new graphql_1.GraphQLObjectType({
+    name: 'PollConnection',
+    fields: () => ({
+        edges: { type: new graphql_1.GraphQLList(PollEdgeType) },
+        pageInfo: { type: new graphql_1.GraphQLNonNull(PageInfoType) },
+    }),
+});
 // MyPolls Type
 const MyPollsType = new graphql_1.GraphQLObjectType({
     name: 'MyPolls',
     fields: () => ({
-        createdPolls: { type: new graphql_1.GraphQLList(PollType) },
-        votedPolls: { type: new graphql_1.GraphQLList(PollType) }
+        createdPolls: {
+            type: PollConnectionType,
+            args: {
+                first: { type: graphql_1.GraphQLInt },
+                after: { type: graphql_1.GraphQLString },
+                last: { type: graphql_1.GraphQLInt },
+                before: { type: graphql_1.GraphQLString },
+            },
+            resolve: (parent, args) => {
+                const { userId } = parent;
+                const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.creatorId = ?';
+                return paginationResolver(baseQuery, [userId], args);
+            }
+        },
+        votedPolls: {
+            type: PollConnectionType,
+            args: {
+                first: { type: graphql_1.GraphQLInt },
+                after: { type: graphql_1.GraphQLString },
+                last: { type: graphql_1.GraphQLInt },
+                before: { type: graphql_1.GraphQLString },
+            },
+            resolve: (parent, args) => {
+                const { userId } = parent;
+                const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
+                return paginationResolver(baseQuery, [userId], args);
+            }
+        }
     })
 });
 // WinningOption Type
@@ -191,31 +296,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             type: MyPollsType,
             args: { userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
-                return new Promise((resolve, reject) => {
-                    const createdPollsPromise = new Promise((resolve, reject) => {
-                        database_1.default.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ? AND PollPermissions.permission_type = ?', [parseInt(args.userId, 10), enums_1.PermissionType.EDIT], (err, rows) => {
-                            if (err)
-                                reject(err);
-                            else
-                                resolve(rows.map(row => (Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }))));
-                        });
-                    });
-                    const votedPollsPromise = new Promise((resolve, reject) => {
-                        database_1.default.all('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id', [parseInt(args.userId, 10)], (err, rows) => {
-                            if (err)
-                                reject(err);
-                            else
-                                resolve(rows.map(row => (Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }))));
-                        });
-                    });
-                    Promise.all([createdPollsPromise, votedPollsPromise])
-                        .then(([createdPolls, votedPolls]) => {
-                        resolve({ createdPolls, votedPolls });
-                    })
-                        .catch(err => {
-                        reject(err);
-                    });
-                });
+                return { userId: args.userId };
             }
         },
         pollResults: {
@@ -318,12 +399,18 @@ const LoginResponseType = new graphql_1.GraphQLObjectType({
         username: { type: graphql_1.GraphQLString }
     })
 });
+const CreatePollPayload = new graphql_1.GraphQLObjectType({
+    name: 'CreatePollPayload',
+    fields: () => ({
+        pollEdge: { type: PollEdgeType },
+    }),
+});
 // Mutations
 const Mutation = new graphql_1.GraphQLObjectType({
     name: 'Mutation',
     fields: {
         createPoll: {
-            type: PollType,
+            type: CreatePollPayload,
             args: {
                 title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
                 options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) },
@@ -343,11 +430,19 @@ const Mutation = new graphql_1.GraphQLObjectType({
                                     reject(err2);
                                 }
                                 else {
-                                    resolve({
-                                        id: pollId,
-                                        title: args.title,
-                                        options: args.options.toString(),
-                                        creatorId: parseInt(args.userId, 10)
+                                    database_1.default.get('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId], (err3, row) => {
+                                        if (err3) {
+                                            reject(err3);
+                                        }
+                                        else {
+                                            const newPoll = Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } });
+                                            resolve({
+                                                pollEdge: {
+                                                    cursor: toCursor(pollId),
+                                                    node: newPoll,
+                                                }
+                                            });
+                                        }
                                     });
                                 }
                             });

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<162b6c63213ef83b00955d691f7b9fd1>>
+ * @generated SignedSource<<b2ab6f3d18fdf94d205d16352c9f4232>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,9 +20,10 @@ export type PollQuery$data = {
     } | null | undefined;
     readonly id: string | null | undefined;
     readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
-    readonly permissions: {
-      readonly canEdit: boolean | null | undefined;
-    } | null | undefined;
+    readonly permissions: ReadonlyArray<{
+      readonly permission_type: string | null | undefined;
+      readonly target_id: string | null | undefined;
+    } | null | undefined> | null | undefined;
     readonly title: string | null | undefined;
     readonly votes: ReadonlyArray<{
       readonly option: string | null | undefined;
@@ -83,34 +84,40 @@ v5 = {
   "name": "username",
   "storageKey": null
 },
-v6 = [
-  {
-    "kind": "Variable",
-    "name": "userId",
-    "variableName": "userId"
-  }
-],
-v7 = {
+v6 = {
   "alias": null,
-  "args": (v6/*: any*/),
-  "concreteType": "Permissions",
+  "args": null,
+  "concreteType": "PollPermissions",
   "kind": "LinkedField",
   "name": "permissions",
-  "plural": false,
+  "plural": true,
   "selections": [
     {
       "alias": null,
       "args": null,
       "kind": "ScalarField",
-      "name": "canEdit",
+      "name": "permission_type",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "target_id",
       "storageKey": null
     }
   ],
   "storageKey": null
 },
-v8 = {
+v7 = {
   "alias": null,
-  "args": (v6/*: any*/),
+  "args": [
+    {
+      "kind": "Variable",
+      "name": "userId",
+      "variableName": "userId"
+    }
+  ],
   "concreteType": "Vote",
   "kind": "LinkedField",
   "name": "votes",
@@ -163,8 +170,8 @@ return {
             ],
             "storageKey": null
           },
-          (v7/*: any*/),
-          (v8/*: any*/)
+          (v6/*: any*/),
+          (v7/*: any*/)
         ],
         "storageKey": null
       }
@@ -202,24 +209,24 @@ return {
             ],
             "storageKey": null
           },
-          (v7/*: any*/),
-          (v8/*: any*/)
+          (v6/*: any*/),
+          (v7/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "00bea32ee9d3a7eb233c3a0f78f99cab",
+    "cacheID": "3793cad825bb72929d69f1fe6eeb594a",
     "id": null,
     "metadata": {},
     "name": "PollQuery",
     "operationKind": "query",
-    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    options\n    creator {\n      username\n      id\n    }\n    permissions(userId: $userId) {\n      canEdit\n    }\n    votes(userId: $userId) {\n      option\n      rating\n    }\n  }\n}\n"
+    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    options\n    creator {\n      username\n      id\n    }\n    permissions {\n      permission_type\n      target_id\n    }\n    votes(userId: $userId) {\n      option\n      rating\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7e5612a339304c887b0e521d25bbac96";
+(node as any).hash = "1c0c9eb1eda5623e492927de9f5fc690";
 
 export default node;

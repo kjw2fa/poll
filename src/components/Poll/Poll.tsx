@@ -19,8 +19,9 @@ const PollQuery = graphql`
       creator {
         username
       }
-      permissions(userId: $userId) {
-        canEdit
+      permissions {
+        permission_type
+        target_id
       }
       votes(userId: $userId) {
         option
@@ -53,7 +54,7 @@ const PollComponent = ({ userId, id }) => {
     const location = useLocation();
 
     const poll = data.poll;
-    const canEdit = poll?.permissions?.canEdit;
+    const canEdit = poll?.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
 
     useEffect(() => {
         if (poll && !location.pathname.endsWith('vote') && !location.pathname.endsWith('results') && !location.pathname.endsWith('edit')) {
