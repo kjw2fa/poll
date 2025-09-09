@@ -19,6 +19,13 @@ const graphql_1 = require("graphql");
 const database_1 = __importDefault(require("./database"));
 const enums_1 = require("./enums");
 exports.JWT_SECRET = 'your-secret-key';
+// Helper functions for global IDs
+const toGlobalId = (type, id) => Buffer.from(`${type}:${id}`).toString('base64');
+const fromGlobalId = (globalId) => {
+    const decoded = Buffer.from(globalId, 'base64').toString('ascii');
+    const [type, id] = decoded.split(':');
+    return { type, id };
+};
 // Helper functions for cursor pagination
 const toCursor = (id) => Buffer.from(String(id)).toString('base64');
 const fromCursor = (cursor) => Buffer.from(cursor, 'base64').toString('ascii');
@@ -28,11 +35,11 @@ function paginationResolver(baseQuery, queryParams, { first, after, last, before
         const params = [...queryParams];
         if (after) {
             query += ` AND Polls.id > ?`;
-            params.push(fromCursor(after));
+            params.push(parseInt(fromCursor(after), 10));
         }
         if (before) {
             query += ` AND Polls.id < ?`;
-            params.push(fromCursor(before));
+            params.push(parseInt(fromCursor(before), 10));
         }
         let limit = first || last || 10;
         if (first) {
@@ -51,7 +58,7 @@ function paginationResolver(baseQuery, queryParams, { first, after, last, before
                 else {
                     let edges = rows.map(row => ({
                         cursor: toCursor(row.id),
-                        node: Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } })
+                        node: Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } })
                     }));
                     const hasNextPage = first ? edges.length > limit : false;
                     const hasPreviousPage = last ? edges.length > limit : false;
@@ -95,7 +102,7 @@ const TargetTypeEnum = new graphql_1.GraphQLEnumType({
 const UserType = new graphql_1.GraphQLObjectType({
     name: 'User',
     fields: () => ({
-        id: { type: graphql_1.GraphQLID },
+        id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
         username: { type: graphql_1.GraphQLString }
     })
 });
@@ -120,19 +127,20 @@ const VoteType = new graphql_1.GraphQLObjectType({
 const PollType = new graphql_1.GraphQLObjectType({
     name: 'Poll',
     fields: () => ({
-        id: { type: graphql_1.GraphQLID },
+        id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
         title: { type: graphql_1.GraphQLString },
         options: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
         creator: {
             type: UserType,
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT Users.* FROM Users JOIN Polls ON Users.id = Polls.creatorId WHERE Polls.id = ?', [parent.id], (err, row) => {
+                    const { id } = fromGlobalId(parent.id);
+                    database_1.default.get('SELECT Users.* FROM Users JOIN Polls ON Users.id = Polls.creatorId WHERE Polls.id = ?', [id], (err, row) => {
                         if (err) {
                             reject(err);
                         }
                         else {
-                            resolve(row);
+                            resolve(Object.assign(Object.assign({}, row), { id: toGlobalId('User', row.id) }));
                         }
                     });
                 });
@@ -142,12 +150,13 @@ const PollType = new graphql_1.GraphQLObjectType({
             type: new graphql_1.GraphQLList(PollPermissionsType),
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.all('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id], (err, rows) => {
+                    const { id } = fromGlobalId(parent.id);
+                    database_1.default.all('SELECT * FROM PollPermissions WHERE pollId = ?', [id], (err, rows) => {
                         if (err) {
                             reject(err);
                         }
                         else {
-                            resolve(rows);
+                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { target_id: toGlobalId('User', row.target_id) }))));
                         }
                     });
                 });
@@ -158,12 +167,14 @@ const PollType = new graphql_1.GraphQLObjectType({
             args: { userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [parent.id, parseInt(args.userId, 10)], (err, voteRow) => {
+                    const { id: pollId } = fromGlobalId(parent.id);
+                    const { id: userId } = fromGlobalId(args.userId);
+                    database_1.default.get('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [pollId, userId], (err, voteRow) => {
                         if (err || !voteRow) {
                             resolve([]);
                         }
                         else {
-                            database_1.default.all('SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?', [parent.id, voteRow.voteId], (err2, details) => {
+                            database_1.default.all('SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteRow.voteId], (err2, details) => {
                                 if (err2) {
                                     reject(err2);
                                 }
@@ -214,7 +225,7 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
                 before: { type: graphql_1.GraphQLString },
             },
             resolve: (parent, args) => {
-                const { userId } = parent;
+                const { id: userId } = fromGlobalId(parent.userId);
                 const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.creatorId = ?';
                 return paginationResolver(baseQuery, [userId], args);
             }
@@ -228,7 +239,7 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
                 before: { type: graphql_1.GraphQLString },
             },
             resolve: (parent, args) => {
-                const { userId } = parent;
+                const { id: userId } = fromGlobalId(parent.userId);
                 const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
                 return paginationResolver(baseQuery, [userId], args);
             }
@@ -267,7 +278,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                             reject(err);
                         }
                         else {
-                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }))));
+                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } }))));
                         }
                     });
                 });
@@ -275,10 +286,11 @@ const RootQuery = new graphql_1.GraphQLObjectType({
         },
         poll: {
             type: PollType,
-            args: { id: { type: graphql_1.GraphQLID } },
+            args: { id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [parseInt(args.id, 10)], (err, row) => {
+                    const { id } = fromGlobalId(args.id);
+                    database_1.default.get('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [id], (err, row) => {
                         if (err) {
                             reject(err);
                         }
@@ -286,7 +298,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                             resolve(null);
                         }
                         else {
-                            resolve(Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }));
+                            resolve(Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } }));
                         }
                     });
                 });
@@ -304,7 +316,8 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             args: { pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT title, options FROM Polls WHERE id = ?', [args.pollId], (err, pollRow) => {
+                    const { id: pollId } = fromGlobalId(args.pollId);
+                    database_1.default.get('SELECT title, options FROM Polls WHERE id = ?', [pollId], (err, pollRow) => {
                         if (err) {
                             reject(err);
                         }
@@ -314,7 +327,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                         else {
                             const pollTitle = pollRow.title;
                             const pollOptions = JSON.parse(pollRow.options);
-                            database_1.default.all('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [args.pollId], (err, rows) => {
+                            database_1.default.all('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId], (err, rows) => {
                                 if (err) {
                                     reject(err);
                                 }
@@ -375,7 +388,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                             reject(err);
                         }
                         else {
-                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } }))));
+                            resolve(rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } }))));
                         }
                     });
                 });
@@ -418,14 +431,15 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
+                    const { id: userId } = fromGlobalId(args.userId);
                     const optionsJson = JSON.stringify(args.options);
-                    database_1.default.run('INSERT INTO Polls (title, options, creatorId) VALUES (?, ?, ?)', [args.title, optionsJson, parseInt(args.userId, 10)], function (err) {
+                    database_1.default.run('INSERT INTO Polls (title, options, creatorId) VALUES (?, ?, ?)', [args.title, optionsJson, parseInt(userId, 10)], function (err) {
                         if (err) {
                             reject(err);
                         }
                         else {
                             const pollId = this.lastID;
-                            database_1.default.run('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, parseInt(args.userId, 10)], function (err2) {
+                            database_1.default.run('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, parseInt(userId, 10)], function (err2) {
                                 if (err2) {
                                     reject(err2);
                                 }
@@ -435,7 +449,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                                             reject(err3);
                                         }
                                         else {
-                                            const newPoll = Object.assign(Object.assign({}, row), { options: JSON.parse(row.options), creator: { username: row.creatorUsername } });
+                                            const newPoll = Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } });
                                             resolve({
                                                 pollEdge: {
                                                     cursor: toCursor(pollId),
@@ -460,33 +474,35 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT username FROM Users WHERE id = ?', [parseInt(args.userId, 10)], (err, user) => {
+                    const { id: pollId } = fromGlobalId(args.pollId);
+                    const { id: userId } = fromGlobalId(args.userId);
+                    database_1.default.get('SELECT username FROM Users WHERE id = ?', [userId], (err, user) => {
                         if (err || !user) {
                             reject(new Error('User not found'));
                         }
                         else {
-                            database_1.default.run('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [args.pollId, args.userId], function (err) {
+                            database_1.default.run('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId], function (err) {
                                 if (err) {
                                     reject(err);
                                 }
                                 else {
                                     const voteId = this.lastID;
-                                    database_1.default.run('DELETE FROM VoteDetails WHERE pollId = ? AND voteId = ?', [args.pollId, voteId], function (err2) {
+                                    database_1.default.run('DELETE FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteId], function (err2) {
                                         if (err2) {
                                             reject(err2);
                                         }
                                         else {
                                             const stmt = database_1.default.prepare('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)');
                                             args.ratings.forEach(({ option, rating }) => {
-                                                stmt.run([args.pollId, voteId, option, rating]);
+                                                stmt.run([pollId, voteId, option, rating]);
                                             });
                                             stmt.finalize();
-                                            database_1.default.get('SELECT * FROM Polls WHERE id = ?', [args.pollId], (err, row) => {
+                                            database_1.default.get('SELECT * FROM Polls WHERE id = ?', [pollId], (err, row) => {
                                                 if (err) {
                                                     reject(err);
                                                 }
                                                 else {
-                                                    resolve(Object.assign(Object.assign({}, row), { options: JSON.parse(row.options) }));
+                                                    resolve(Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options) }));
                                                 }
                                             });
                                         }
@@ -508,23 +524,25 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return new Promise((resolve, reject) => {
-                    database_1.default.get('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [parseInt(args.pollId, 10), parseInt(args.userId, 10), enums_1.PermissionType.EDIT], (err, row) => {
+                    const { id: pollId } = fromGlobalId(args.pollId);
+                    const { id: userId } = fromGlobalId(args.userId);
+                    database_1.default.get('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, enums_1.PermissionType.EDIT], (err, row) => {
                         if (err || !row) {
                             reject(new Error('No edit permission'));
                         }
                         else {
                             const optionsJson = JSON.stringify(args.options);
-                            database_1.default.run('UPDATE Polls SET title = ?, options = ? WHERE id = ?', [args.title, optionsJson, args.pollId], function (err2) {
+                            database_1.default.run('UPDATE Polls SET title = ?, options = ? WHERE id = ?', [args.title, optionsJson, pollId], function (err2) {
                                 if (err2) {
                                     reject(err2);
                                 }
                                 else {
-                                    database_1.default.get('SELECT * FROM Polls WHERE id = ?', [args.pollId], (err3, updatedPoll) => {
+                                    database_1.default.get('SELECT * FROM Polls WHERE id = ?', [pollId], (err3, updatedPoll) => {
                                         if (err3) {
                                             reject(err3);
                                         }
                                         else {
-                                            resolve(Object.assign(Object.assign({}, updatedPoll), { options: JSON.parse(updatedPoll.options) }));
+                                            resolve(Object.assign(Object.assign({}, updatedPoll), { id: toGlobalId('Poll', updatedPoll.id), options: JSON.parse(updatedPoll.options) }));
                                         }
                                     });
                                 }
@@ -558,7 +576,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                                 }
                             }
                             else {
-                                resolve({ id: this.lastID, username: args.username, email: args.email });
+                                resolve({ id: toGlobalId('User', this.lastID), username: args.username, email: args.email });
                             }
                         });
                     });
@@ -588,7 +606,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                                 return reject(new Error('Invalid username or password.'));
                             }
                             const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, exports.JWT_SECRET, { expiresIn: '1d' });
-                            resolve({ token, userId: user.id, username: user.username });
+                            resolve({ token, userId: toGlobalId('User', user.id), username: user.username });
                         });
                     });
                 });
