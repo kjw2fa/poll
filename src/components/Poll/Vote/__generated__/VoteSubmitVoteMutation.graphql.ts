@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<84e76d1042d946b6a61cbeca8960776d>>
+ * @generated SignedSource<<38d7bbde51f311380fc5a141ed7197d9>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+import { FragmentRefs } from "relay-runtime";
 export type RatingInput = {
   option: string;
   rating: number;
@@ -21,6 +22,7 @@ export type VoteSubmitVoteMutation$variables = {
 export type VoteSubmitVoteMutation$data = {
   readonly submitVote: {
     readonly id: string | null | undefined;
+    readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
   } | null | undefined;
 };
 export type VoteSubmitVoteMutation = {
@@ -46,40 +48,28 @@ v2 = {
 },
 v3 = [
   {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "pollId",
-        "variableName": "pollId"
-      },
-      {
-        "kind": "Variable",
-        "name": "ratings",
-        "variableName": "ratings"
-      },
-      {
-        "kind": "Variable",
-        "name": "userId",
-        "variableName": "userId"
-      }
-    ],
-    "concreteType": "Poll",
-    "kind": "LinkedField",
-    "name": "submitVote",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
+    "kind": "Variable",
+    "name": "pollId",
+    "variableName": "pollId"
+  },
+  {
+    "kind": "Variable",
+    "name": "ratings",
+    "variableName": "ratings"
+  },
+  {
+    "kind": "Variable",
+    "name": "userId",
+    "variableName": "userId"
   }
-];
+],
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
 return {
   "fragment": {
     "argumentDefinitions": [
@@ -90,7 +80,25 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "VoteSubmitVoteMutation",
-    "selections": (v3/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v3/*: any*/),
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "submitVote",
+        "plural": false,
+        "selections": [
+          (v4/*: any*/),
+          {
+            "args": null,
+            "kind": "FragmentSpread",
+            "name": "PollCard_poll"
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
@@ -103,19 +111,71 @@ return {
     ],
     "kind": "Operation",
     "name": "VoteSubmitVoteMutation",
-    "selections": (v3/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v3/*: any*/),
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "submitVote",
+        "plural": false,
+        "selections": [
+          (v4/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "title",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "options",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollPermissions",
+            "kind": "LinkedField",
+            "name": "permissions",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "permission_type",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "target_id",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "18acac21502ec1c7941c74166f495e90",
+    "cacheID": "b34f940595e0a0c9714d487968cba988",
     "id": null,
     "metadata": {},
     "name": "VoteSubmitVoteMutation",
     "operationKind": "mutation",
-    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [RatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    id\n  }\n}\n"
+    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [RatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    id\n    ...PollCard_poll\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "0fdbdd2bffc0d5b536a80750e31a39af";
+(node as any).hash = "e339321153a4e05fd65d9ad187f79398";
 
 export default node;
