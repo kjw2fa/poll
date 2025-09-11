@@ -4,6 +4,7 @@ import PollSettings from '../../PollSettings/PollSettings.tsx';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { EditPollMutation as EditPollMutationType } from './__generated__/EditPollMutation.graphql';
+import { toast } from 'sonner';
 
 const EditPollMutation = graphql`
   mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [String]!) {
@@ -17,7 +18,6 @@ const EditPollMutation = graphql`
 
 const EditPollComponent = ({ userId, poll: initialPoll, onPollUpdated }) => {
     const [poll, setPoll] = useState(initialPoll);
-    const [message, setMessage] = useState('');
     const { id } = useParams();
     const [commitMutation, isMutationInFlight] = useMutation<EditPollMutationType>(EditPollMutation);
 
@@ -33,13 +33,13 @@ const EditPollComponent = ({ userId, poll: initialPoll, onPollUpdated }) => {
                 ...pollData,
             },
             onCompleted: (response) => {
-                setMessage('Poll updated!');
+                toast.success('Poll updated!');
                 if (onPollUpdated) {
                     onPollUpdated({ ...poll, ...pollData });
                 }
             },
             onError: (error) => {
-                setMessage('Failed to update poll.');
+                toast.error('Failed to update poll.');
             },
         });
     };
@@ -52,7 +52,6 @@ const EditPollComponent = ({ userId, poll: initialPoll, onPollUpdated }) => {
             ) : (
                 <p>Loading poll...</p>
             )}
-            {message && <div>{message}</div>}
         </div>
     );
 };
