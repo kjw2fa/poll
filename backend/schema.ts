@@ -91,7 +91,7 @@ interface User {
 interface Poll {
     id: string;
     title: string;
-    options: string;
+    options: string[];
     creatorId: number;
 }
 
