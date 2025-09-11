@@ -418,6 +418,12 @@ const CreatePollPayload = new graphql_1.GraphQLObjectType({
         pollEdge: { type: PollEdgeType },
     }),
 });
+const SubmitVotePayload = new graphql_1.GraphQLObjectType({
+    name: 'SubmitVotePayload',
+    fields: () => ({
+        pollEdge: { type: PollEdgeType },
+    }),
+});
 // Mutations
 const Mutation = new graphql_1.GraphQLObjectType({
     name: 'Mutation',
@@ -466,7 +472,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
             }
         },
         submitVote: {
-            type: PollType,
+            type: SubmitVotePayload,
             args: {
                 pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
                 userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
@@ -502,7 +508,13 @@ const Mutation = new graphql_1.GraphQLObjectType({
                                                     reject(err);
                                                 }
                                                 else {
-                                                    resolve(Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options) }));
+                                                    const votedPoll = Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options) });
+                                                    resolve({
+                                                        pollEdge: {
+                                                            cursor: toCursor(row.id),
+                                                            node: votedPoll,
+                                                        }
+                                                    });
                                                 }
                                             });
                                         }

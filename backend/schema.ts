@@ -477,6 +477,13 @@ const CreatePollPayload = new GraphQLObjectType({
     }),
 });
 
+const SubmitVotePayload = new GraphQLObjectType({
+    name: 'SubmitVotePayload',
+    fields: () => ({
+        pollEdge: { type: PollEdgeType },
+    }),
+});
+
 // Mutations
 const Mutation = new GraphQLObjectType({
     name: 'Mutation',
@@ -527,13 +534,13 @@ const Mutation = new GraphQLObjectType({
             }
         },
         submitVote: {
-            type: PollType,
+            type: SubmitVotePayload,
             args: {
                 pollId: { type: new GraphQLNonNull(GraphQLID) },
                 userId: { type: new GraphQLNonNull(GraphQLID) },
                 ratings: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(RatingInput))) }
             },
-            resolve(parent: any, args: { pollId: string, userId: string, ratings: { option: string, rating: number }[] }): Promise<Poll> {
+            resolve(parent: any, args: { pollId: string, userId: string, ratings: { option: string, rating: number }[] }): Promise<any> {
                 return new Promise((resolve, reject) => {
                     const { id: pollId } = fromGlobalId(args.pollId);
                     const { id: userId } = fromGlobalId(args.userId);
@@ -559,10 +566,16 @@ const Mutation = new GraphQLObjectType({
                                                 if (err) {
                                                     reject(err);
                                                 } else {
-                                                    resolve({
+                                                    const votedPoll = {
                                                         ...row,
                                                         id: toGlobalId('Poll', row.id),
                                                         options: JSON.parse(row.options)
+                                                    };
+                                                    resolve({
+                                                        pollEdge: {
+                                                            cursor: toCursor(row.id),
+                                                            node: votedPoll,
+                                                        }
                                                     });
                                                 }
                                             });

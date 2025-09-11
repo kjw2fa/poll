@@ -11,13 +11,17 @@ type LoginResponse {
 
 type Mutation {
   createPoll(title: String!, options: [String]!, userId: ID!): CreatePollPayload
-  submitVote(pollId: ID!, userId: ID!, ratings: [RatingInput!]!): Poll
+  submitVote(pollId: ID!, userId: ID!, ratings: [RatingInput!]!): SubmitVotePayload
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [String]!): Poll
   signup(username: String!, email: String!, password: String!): User
   login(username: String!, password: String!): LoginResponse
 }
 
 type CreatePollPayload {
+  pollEdge: PollEdge
+}
+
+type SubmitVotePayload {
   pollEdge: PollEdge
 }
 

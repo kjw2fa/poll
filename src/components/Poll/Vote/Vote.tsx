@@ -11,8 +11,13 @@ import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-run
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
     submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {
-      id
-      ...PollCard_poll
+        pollEdge {
+            cursor
+            node {
+                id
+                ...PollCard_poll
+            }
+        }
     }
   }
 `;
@@ -93,24 +98,15 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
             },
             updater: (store: RecordSourceSelectorProxy) => {
                 const payload = store.getRootField('submitVote');
-                if (!payload) {
+                const newEdge = payload.getLinkedRecord('pollEdge');
+                if (!newEdge) {
                     return;
                 }
-
                 const myPolls = store.get(ROOT_ID)?.getLinkedRecord('myPolls', { userId });
                 if (myPolls) {
-                    const votedPollsConnection = ConnectionHandler.getConnection(myPolls, 'MyPolls_votedPolls');
-                    if (votedPollsConnection) {
-                        const edges = votedPollsConnection.getLinkedRecords('edges');
-                        if (edges) {
-                            const pollExists = edges.some(edge => edge?.getLinkedRecord('node')?.getValue('id') === payload.getValue('id'));
-                            if (pollExists) {
-                                return;
-                            }
-                        }
-
-                        const newEdge = ConnectionHandler.createEdge(store, votedPollsConnection, payload, 'PollEdge');
-                        ConnectionHandler.insertEdgeAfter(votedPollsConnection, newEdge);
+                    const conn = ConnectionHandler.getConnection(myPolls, 'MyPolls_votedPolls');
+                    if (conn) {
+                        ConnectionHandler.insertEdgeAfter(conn, newEdge);
                     }
                 }
             },
