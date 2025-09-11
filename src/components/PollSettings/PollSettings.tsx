@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Input } from "../ui/input.tsx";
 import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
+import { toast } from 'sonner';
 
 const PollSettings = ({ poll, onSave, isEditing }) => {
     const [title, setTitle] = useState('');
@@ -48,7 +49,7 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
     const handleSubmit = (event) => {
         event.preventDefault();
         if (options.length < 2) {
-            alert('A poll must have at least two options.');
+            toast.error('A poll must have at least two options.');
             return;
         }
         onSave({ title, options });
