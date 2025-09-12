@@ -16,9 +16,6 @@ const PollQuery = graphql`
       id
       title
       options
-      creator {
-        username
-      }
       permissions {
         permission_type
         target_id

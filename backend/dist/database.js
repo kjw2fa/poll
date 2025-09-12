@@ -17,6 +17,8 @@ const dbPromise = new Promise((resolve, reject) => {
         else {
             console.log('Connected to the SQLite database.');
             console.log('Dropping and recreating tables...');
+            const permissionTypes = Object.values(enums_1.PermissionType).map(t => `'${t}'`).join(', ');
+            const targetTypes = Object.values(enums_1.TargetType).map(t => `'${t}'`).join(', ');
             db.serialize(() => {
                 // Drop existing tables for a clean slate
                 db.run(`DROP TABLE IF EXISTS PollOptions`);
@@ -29,8 +31,7 @@ const dbPromise = new Promise((resolve, reject) => {
                 // Create new tables
                 db.run(`CREATE TABLE IF NOT EXISTS Polls (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT,
-                    creatorId INTEGER
+                    title TEXT
                     )`, (err) => {
                     if (err) {
                         console.error(err.message);
@@ -80,8 +81,8 @@ const dbPromise = new Promise((resolve, reject) => {
                 db.run(`CREATE TABLE IF NOT EXISTS PollPermissions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     pollId INTEGER,
-                    permission_type TEXT CHECK(permission_type IN (${Object.values(enums_1.PermissionType).map(t => `'${t}'`).join(', ')})),
-                    target_type TEXT CHECK(target_type IN (${Object.values(enums_1.TargetType).map(t => `'${t}'`).join(', ')})),
+                    permission_type TEXT CHECK(permission_type IN (${permissionTypes})),
+                    target_type TEXT CHECK(target_type IN (${targetTypes})),
                     target_id INTEGER,
                     FOREIGN KEY (pollId) REFERENCES Polls(id),
                     FOREIGN KEY (target_id) REFERENCES Users(id)

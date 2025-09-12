@@ -136,14 +136,6 @@ const PollType = new graphql_1.GraphQLObjectType({
                 });
             }
         },
-        creator: {
-            type: UserType,
-            resolve: (parent) => ({
-                id: toGlobalId('User', parent.creatorId),
-                username: parent.creatorUsername,
-                email: '' // Not available in PollRow
-            })
-        },
         permissions: {
             type: new graphql_1.GraphQLList(PollPermissionsType),
             resolve(parent, args) {
@@ -213,8 +205,8 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
             resolve: (parent, args) => {
                 const { id: userIdStr } = fromGlobalId(parent.userId);
                 const userId = parseInt(userIdStr, 10);
-                const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.creatorId = ?';
-                return paginationResolver(baseQuery, [userId], args);
+                const baseQuery = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ? AND PollPermissions.permission_type = ?';
+                return paginationResolver(baseQuery, [userId, enums_1.PermissionType.EDIT], args);
             }
         },
         votedPolls: {
@@ -228,7 +220,7 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
             resolve: (parent, args) => {
                 const { id: userIdStr } = fromGlobalId(parent.userId);
                 const userId = parseInt(userIdStr, 10);
-                const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
+                const baseQuery = 'SELECT Polls.* FROM Polls JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
                 return paginationResolver(baseQuery, [userId], args);
             }
         }
@@ -261,7 +253,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             type: new graphql_1.GraphQLList(PollType),
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id', []);
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls', []);
                     return rows;
                 });
             }
@@ -273,7 +265,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                 return __awaiter(this, void 0, void 0, function* () {
                     const { id: pollIdStr } = fromGlobalId(args.id);
                     const pollId = parseInt(pollIdStr, 10);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return row !== null && row !== void 0 ? row : null;
                 });
             }
@@ -347,7 +339,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             args: { searchTerm: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) } },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.title LIKE ?', [`%${args.searchTerm}%`]);
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls WHERE title LIKE ?', [`%${args.searchTerm}%`]);
                     return rows;
                 });
             }
@@ -397,13 +389,13 @@ const Mutation = new graphql_1.GraphQLObjectType({
                 return __awaiter(this, void 0, void 0, function* () {
                     const { id: userIdStr } = fromGlobalId(args.userId);
                     const userId = parseInt(userIdStr, 10);
-                    const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title, creatorId) VALUES (?, ?)', [args.title, userId]);
+                    const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title) VALUES (?)', [args.title]);
                     const pollId = result.lastID;
                     for (const option of args.options) {
                         yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
                     }
                     yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, userId]);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return {
                         pollEdge: {
                             cursor: toCursor(pollId),
@@ -436,7 +428,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     args.ratings.forEach(({ option, rating }) => {
                         (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
                     });
-                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return {
                         pollEdge: {
                             cursor: toCursor(pollId),
@@ -483,7 +475,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                             yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
                         }
                     }
-                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null;
                 });
             }
