@@ -36,10 +36,14 @@ const Login = ({ isOpen, onClose, onLogin, onSwitchToSignup }) => {
         password,
       },
       onCompleted: (response) => {
-        const { token, userId, username } = response.login;
-        setMessage('Login successful!');
-        if (onLogin) onLogin({ token, userId, username });
-        onClose();
+        if (response.login) {
+          const { token, userId, username } = response.login;
+          setMessage('Login successful!');
+          if (onLogin) onLogin({ token, userId, username });
+          onClose();
+        } else {
+          setMessage('Login failed. Please check your username and password.');
+        }
       },
       onError: (error) => {
         setMessage(error.message || 'Login failed.');
