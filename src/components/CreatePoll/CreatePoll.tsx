@@ -66,7 +66,7 @@ const CreatePollComponent = ({ userId }) => {
                 <div className="poll-created-success flex flex-col gap-2">
                     <h3>Poll Created Successfully!</h3>
                     <p>Poll ID: {createdPollId}</p>
-                    <p>Shareable URL: <a href={createdPollUrl} target="_blank" rel="noopener noreferrer">{createdPollUrl}</a></p>
+                    <p>Shareable URL: <a href={createdPollUrl}>{createdPollUrl}</a></p>
                 </div>
             )}
         </div>
