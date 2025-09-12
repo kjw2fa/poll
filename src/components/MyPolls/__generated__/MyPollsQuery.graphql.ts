@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6996f3be1bf9c1039d5f053f9c6552b7>>
+ * @generated SignedSource<<6a1149e9cd4801a3c7b27c4d911aa9bb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type MyPollsQuery$data = {
     readonly createdPolls: {
       readonly edges: ReadonlyArray<{
         readonly node: {
-          readonly id: string | null | undefined;
+          readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
         } | null | undefined;
       } | null | undefined> | null | undefined;
@@ -28,7 +28,7 @@ export type MyPollsQuery$data = {
     readonly votedPolls: {
       readonly edges: ReadonlyArray<{
         readonly node: {
-          readonly id: string | null | undefined;
+          readonly id: string;
           readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
         } | null | undefined;
       } | null | undefined> | null | undefined;

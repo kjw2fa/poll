@@ -16,6 +16,10 @@ const VoteSubmitVoteMutation = graphql`
             node {
                 id
                 ...PollCard_poll
+                votes(userId: $userId) {
+                    option
+                    rating
+                }
             }
         }
     }

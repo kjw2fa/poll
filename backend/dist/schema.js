@@ -53,7 +53,7 @@ function paginationResolver(baseQuery, queryParams, { first, after, last, before
         const rows = yield (0, db_utils_1.dbAll)(query, params);
         let edges = rows.map(row => ({
             cursor: toCursor(row.id),
-            node: Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } })
+            node: row
         }));
         const hasNextPage = first ? edges.length > limit : false;
         const hasPreviousPage = last ? edges.length > limit : false;
@@ -119,26 +119,37 @@ const VoteType = new graphql_1.GraphQLObjectType({
 const PollType = new graphql_1.GraphQLObjectType({
     name: 'Poll',
     fields: () => ({
-        id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-        title: { type: graphql_1.GraphQLString },
-        options: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
-        creator: {
-            type: UserType,
-            resolve(parent, args) {
+        id: {
+            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
+            resolve: (parent) => toGlobalId('Poll', parent.id)
+        },
+        title: {
+            type: graphql_1.GraphQLString,
+            resolve: (parent) => parent.title
+        },
+        options: {
+            type: new graphql_1.GraphQLList(graphql_1.GraphQLString),
+            resolve(parent) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id } = fromGlobalId(parent.id);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT Users.* FROM Users JOIN Polls ON Users.id = Polls.creatorId WHERE Polls.id = ?', [id]);
-                    return Object.assign(Object.assign({}, row), { id: toGlobalId('User', row.id) });
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
+                    return rows.map(row => row.optionText);
                 });
             }
+        },
+        creator: {
+            type: UserType,
+            resolve: (parent) => ({
+                id: toGlobalId('User', parent.creatorId),
+                username: parent.creatorUsername,
+                email: '' // Not available in PollRow
+            })
         },
         permissions: {
             type: new graphql_1.GraphQLList(PollPermissionsType),
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id } = fromGlobalId(parent.id);
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM PollPermissions WHERE pollId = ?', [id]);
-                    return rows.map(row => (Object.assign(Object.assign({}, row), { target_id: toGlobalId('User', row.target_id) })));
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id]);
+                    return rows;
                 });
             }
         },
@@ -147,14 +158,18 @@ const PollType = new graphql_1.GraphQLObjectType({
             args: { userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollId } = fromGlobalId(parent.id);
-                    const { id: userId } = fromGlobalId(args.userId);
+                    const pollId = parent.id;
+                    const { id: userIdStr } = fromGlobalId(args.userId);
+                    const userId = parseInt(userIdStr, 10);
                     const voteRow = yield (0, db_utils_1.dbGet)('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [pollId, userId]);
                     if (!voteRow) {
                         return [];
                     }
                     const details = yield (0, db_utils_1.dbAll)('SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteRow.voteId]);
-                    return details;
+                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const pollOptions = pollOptionsRows.map(r => r.optionText);
+                    const filteredDetails = details.filter(detail => pollOptions.includes(detail.option));
+                    return filteredDetails;
                 });
             }
         }
@@ -196,7 +211,8 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
                 before: { type: graphql_1.GraphQLString },
             },
             resolve: (parent, args) => {
-                const { id: userId } = fromGlobalId(parent.userId);
+                const { id: userIdStr } = fromGlobalId(parent.userId);
+                const userId = parseInt(userIdStr, 10);
                 const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.creatorId = ?';
                 return paginationResolver(baseQuery, [userId], args);
             }
@@ -210,7 +226,8 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
                 before: { type: graphql_1.GraphQLString },
             },
             resolve: (parent, args) => {
-                const { id: userId } = fromGlobalId(parent.userId);
+                const { id: userIdStr } = fromGlobalId(parent.userId);
+                const userId = parseInt(userIdStr, 10);
                 const baseQuery = 'SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
                 return paginationResolver(baseQuery, [userId], args);
             }
@@ -245,7 +262,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
                     const rows = yield (0, db_utils_1.dbAll)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id', []);
-                    return rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } })));
+                    return rows;
                 });
             }
         },
@@ -254,12 +271,10 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             args: { id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id } = fromGlobalId(args.id);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [id]);
-                    if (!row) {
-                        return null;
-                    }
-                    return Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } });
+                    const { id: pollIdStr } = fromGlobalId(args.id);
+                    const pollId = parseInt(pollIdStr, 10);
+                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    return row !== null && row !== void 0 ? row : null;
                 });
             }
         },
@@ -275,13 +290,15 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             args: { pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollId } = fromGlobalId(args.pollId);
-                    const pollRow = yield (0, db_utils_1.dbGet)('SELECT title, options FROM Polls WHERE id = ?', [pollId]);
+                    const { id: pollIdStr } = fromGlobalId(args.pollId);
+                    const pollId = parseInt(pollIdStr, 10);
+                    const pollRow = yield (0, db_utils_1.dbGet)('SELECT title FROM Polls WHERE id = ?', [pollId]);
                     if (!pollRow) {
                         throw new Error('Poll not found');
                     }
                     const pollTitle = pollRow.title;
-                    const pollOptions = JSON.parse(pollRow.options);
+                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const pollOptions = pollOptionsRows.map(r => r.optionText);
                     const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId]);
                     const optionRatings = {};
                     pollOptions.forEach((option) => {
@@ -331,7 +348,7 @@ const RootQuery = new graphql_1.GraphQLObjectType({
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
                     const rows = yield (0, db_utils_1.dbAll)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.title LIKE ?', [`%${args.searchTerm}%`]);
-                    return rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } })));
+                    return rows;
                 });
             }
         }
@@ -378,17 +395,19 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: userId } = fromGlobalId(args.userId);
-                    const optionsJson = JSON.stringify(args.options);
-                    const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title, options, creatorId) VALUES (?, ?, ?)', [args.title, optionsJson, parseInt(userId, 10)]);
+                    const { id: userIdStr } = fromGlobalId(args.userId);
+                    const userId = parseInt(userIdStr, 10);
+                    const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title, creatorId) VALUES (?, ?)', [args.title, userId]);
                     const pollId = result.lastID;
-                    yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, parseInt(userId, 10)]);
+                    for (const option of args.options) {
+                        yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                    }
+                    yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, userId]);
                     const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
-                    const newPoll = Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options), creator: { id: toGlobalId('User', row.creatorId), username: row.creatorUsername } });
                     return {
                         pollEdge: {
                             cursor: toCursor(pollId),
-                            node: newPoll,
+                            node: row,
                         }
                     };
                 });
@@ -403,8 +422,10 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollId } = fromGlobalId(args.pollId);
-                    const { id: userId } = fromGlobalId(args.userId);
+                    const { id: pollIdStr } = fromGlobalId(args.pollId);
+                    const pollId = parseInt(pollIdStr, 10);
+                    const { id: userIdStr } = fromGlobalId(args.userId);
+                    const userId = parseInt(userIdStr, 10);
                     const user = yield (0, db_utils_1.dbGet)('SELECT username FROM Users WHERE id = ?', [userId]);
                     if (!user) {
                         throw new Error('User not found');
@@ -415,12 +436,11 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     args.ratings.forEach(({ option, rating }) => {
                         (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
                     });
-                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    const votedPoll = Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id), options: JSON.parse(row.options) });
+                    const row = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
                     return {
                         pollEdge: {
-                            cursor: toCursor(row.id),
-                            node: votedPoll,
+                            cursor: toCursor(pollId),
+                            node: row,
                         }
                     };
                 });
@@ -436,16 +456,35 @@ const Mutation = new graphql_1.GraphQLObjectType({
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollId } = fromGlobalId(args.pollId);
-                    const { id: userId } = fromGlobalId(args.userId);
+                    const { id: pollIdStr } = fromGlobalId(args.pollId);
+                    const pollId = parseInt(pollIdStr, 10);
+                    const { id: userIdStr } = fromGlobalId(args.userId);
+                    const userId = parseInt(userIdStr, 10);
                     const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, enums_1.PermissionType.EDIT]);
                     if (!permission) {
                         throw new Error('No edit permission');
                     }
-                    const optionsJson = JSON.stringify(args.options);
-                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ?, options = ? WHERE id = ?', [args.title, optionsJson, pollId]);
-                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return Object.assign(Object.assign({}, updatedPoll), { id: toGlobalId('Poll', updatedPoll.id), options: JSON.parse(updatedPoll.options) });
+                    // Update title
+                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
+                    // Get current options
+                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const currentOptions = currentOptionsRows.map(r => r.optionText);
+                    // Find removed and added options
+                    const removedOptions = currentOptions.filter(o => !args.options.includes(o));
+                    const addedOptions = args.options.filter(o => !currentOptions.includes(o));
+                    if (removedOptions.length > 0) {
+                        const placeholders = removedOptions.map(() => '?').join(',');
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
+                        // Also delete votes for removed options
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
+                    }
+                    if (addedOptions.length > 0) {
+                        for (const option of addedOptions) {
+                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                        }
+                    }
+                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT Polls.*, Users.username as creatorUsername FROM Polls JOIN Users ON Polls.creatorId = Users.id WHERE Polls.id = ?', [pollId]);
+                    return updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null;
                 });
             }
         },

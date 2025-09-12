@@ -3,6 +3,10 @@ schema {
   mutation: Mutation
 }
 
+type CreatePollPayload {
+  pollEdge: PollEdge
+}
+
 type LoginResponse {
   token: String
   userId: ID
@@ -17,14 +21,6 @@ type Mutation {
   login(username: String!, password: String!): LoginResponse
 }
 
-type CreatePollPayload {
-  pollEdge: PollEdge
-}
-
-type SubmitVotePayload {
-  pollEdge: PollEdge
-}
-
 type MyPolls {
   createdPolls(first: Int, after: String, last: Int, before: String): PollConnection
   votedPolls(first: Int, after: String, last: Int, before: String): PollConnection
@@ -37,14 +33,14 @@ type PageInfo {
   endCursor: String
 }
 
-type PollPermissions {
-  permission_type: String
-  target_type: String
-  target_id: ID
+enum PermissionType {
+  VIEW
+  VOTE
+  EDIT
 }
 
 type Poll {
-  id: ID
+  id: ID!
   title: String
   options: [String]
   creator: User
@@ -62,6 +58,11 @@ type PollEdge {
   node: Poll
 }
 
+type PollPermissions {
+  permission_type: PermissionType
+  target_type: TargetType
+  target_id: ID
+}
 
 type PollResult {
   pollTitle: String
@@ -78,16 +79,25 @@ input RatingInput {
 
 type RootQueryType {
   polls: [Poll]
-  poll(id: ID): Poll
+  poll(id: ID!): Poll
   myPolls(userId: ID!): MyPolls
   pollResults(pollId: ID!): PollResult
+  searchPolls(searchTerm: String!): [Poll]
+}
+
+type SubmitVotePayload {
+  pollEdge: PollEdge
+}
+
+enum TargetType {
+  USER
+  PUBLIC
 }
 
 type User {
-  id: ID
+  id: ID!
   username: String
 }
-
 
 type Vote {
   option: String

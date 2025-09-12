@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<b2ab6f3d18fdf94d205d16352c9f4232>>
+ * @generated SignedSource<<46678f2cc91265f22fa9999555072285>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 export type PollQuery$variables = {
   id: string;
   userId: string;
@@ -18,10 +19,10 @@ export type PollQuery$data = {
     readonly creator: {
       readonly username: string | null | undefined;
     } | null | undefined;
-    readonly id: string | null | undefined;
+    readonly id: string;
     readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
     readonly permissions: ReadonlyArray<{
-      readonly permission_type: string | null | undefined;
+      readonly permission_type: PermissionType | null | undefined;
       readonly target_id: string | null | undefined;
     } | null | undefined> | null | undefined;
     readonly title: string | null | undefined;

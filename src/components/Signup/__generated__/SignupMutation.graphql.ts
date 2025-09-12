@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<4e9dcb5755ce64e1cd56d17e5d46e57a>>
+ * @generated SignedSource<<5af911af1a05f38e614124abdde3c0d2>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -16,7 +16,7 @@ export type SignupMutation$variables = {
 };
 export type SignupMutation$data = {
   readonly signup: {
-    readonly id: string | null | undefined;
+    readonly id: string;
     readonly username: string | null | undefined;
   } | null | undefined;
 };

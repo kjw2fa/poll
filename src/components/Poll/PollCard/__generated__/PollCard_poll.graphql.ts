@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<9ea49b33907df8b30af2dae999004719>>
+ * @generated SignedSource<<3f900932ad6ef335615941a4f4dac887>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,12 +9,13 @@
 // @ts-nocheck
 
 import { ReaderFragment } from 'relay-runtime';
+export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 import { FragmentRefs } from "relay-runtime";
 export type PollCard_poll$data = {
-  readonly id: string | null | undefined;
+  readonly id: string;
   readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
   readonly permissions: ReadonlyArray<{
-    readonly permission_type: string | null | undefined;
+    readonly permission_type: PermissionType | null | undefined;
     readonly target_id: string | null | undefined;
   } | null | undefined> | null | undefined;
   readonly title: string | null | undefined;

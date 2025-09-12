@@ -1,31 +1,34 @@
-import db from './database';
+import dbPromise from './database';
 import { RunResult } from 'sqlite3';
 
-export function dbGet(sql: string, params: any[]): Promise<any> {
+export async function dbGet<T>(sql: string, params: any[]): Promise<T | undefined> {
+    const db = await dbPromise;
     return new Promise((resolve, reject) => {
         db.get(sql, params, (err, row) => {
             if (err) {
                 reject(err);
             } else {
-                resolve(row);
+                resolve(row as T);
             }
         });
     });
 }
 
-export function dbAll(sql: string, params: any[]): Promise<any[]> {
+export async function dbAll<T>(sql: string, params: any[]): Promise<T[]> {
+    const db = await dbPromise;
     return new Promise((resolve, reject) => {
         db.all(sql, params, (err, rows) => {
             if (err) {
                 reject(err);
             } else {
-                resolve(rows);
+                resolve(rows as T[]);
             }
         });
     });
 }
 
-export function dbRun(sql: string, params: any[]): Promise<RunResult> {
+export async function dbRun(sql: string, params: any[]): Promise<RunResult> {
+    const db = await dbPromise;
     return new Promise((resolve, reject) => {
         db.run(sql, params, function(err) {
             if (err) {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<17a96c1a1513ff8ca81085902b22f4e4>>
+ * @generated SignedSource<<a74ff06ebf0a0085ba0d59d75a4d8c95>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -17,7 +17,7 @@ export type EditPollMutation$variables = {
 };
 export type EditPollMutation$data = {
   readonly editPoll: {
-    readonly id: string | null | undefined;
+    readonly id: string;
     readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
     readonly title: string | null | undefined;
   } | null | undefined;

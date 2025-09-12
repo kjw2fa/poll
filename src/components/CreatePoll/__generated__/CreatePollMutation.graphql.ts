@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0bbfe302ce776ef5e6f068ee6b85948d>>
+ * @generated SignedSource<<ad18549c18d2f49cbcdc10e0d188d58d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,7 +20,7 @@ export type CreatePollMutation$data = {
     readonly pollEdge: {
       readonly cursor: string;
       readonly node: {
-        readonly id: string | null | undefined;
+        readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
       } | null | undefined;
     } | null | undefined;
