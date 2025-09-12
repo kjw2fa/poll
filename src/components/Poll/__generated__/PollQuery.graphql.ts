@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<beb322dc8908f7bfa54cf3fb79680796>>
+ * @generated SignedSource<<5d8efd3bcaa1c3d45ed9f870b616c836>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,6 +9,7 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
+import { FragmentRefs } from "relay-runtime";
 export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 export type PollQuery$variables = {
   id: string;
@@ -17,16 +18,12 @@ export type PollQuery$variables = {
 export type PollQuery$data = {
   readonly poll: {
     readonly id: string;
-    readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
     readonly permissions: ReadonlyArray<{
       readonly permission_type: PermissionType | null | undefined;
       readonly target_id: string | null | undefined;
     } | null | undefined> | null | undefined;
     readonly title: string | null | undefined;
-    readonly votes: ReadonlyArray<{
-      readonly option: string | null | undefined;
-      readonly rating: number | null | undefined;
-    } | null | undefined> | null | undefined;
+    readonly " $fragmentSpreads": FragmentRefs<"EditPoll_poll" | "Vote_poll">;
   } | null | undefined;
 };
 export type PollQuery = {
@@ -49,98 +46,55 @@ var v0 = [
 ],
 v1 = [
   {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "id",
-        "variableName": "id"
-      }
-    ],
-    "concreteType": "Poll",
-    "kind": "LinkedField",
-    "name": "poll",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "title",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "options",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "PollPermissions",
-        "kind": "LinkedField",
-        "name": "permissions",
-        "plural": true,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "permission_type",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "target_id",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": [
-          {
-            "kind": "Variable",
-            "name": "userId",
-            "variableName": "userId"
-          }
-        ],
-        "concreteType": "Vote",
-        "kind": "LinkedField",
-        "name": "votes",
-        "plural": true,
-        "selections": [
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "option",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "rating",
-            "storageKey": null
-          }
-        ],
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
+    "kind": "Variable",
+    "name": "id",
+    "variableName": "id"
+  }
+],
+v2 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+},
+v3 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "title",
+  "storageKey": null
+},
+v4 = {
+  "alias": null,
+  "args": null,
+  "concreteType": "PollPermissions",
+  "kind": "LinkedField",
+  "name": "permissions",
+  "plural": true,
+  "selections": [
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "permission_type",
+      "storageKey": null
+    },
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "target_id",
+      "storageKey": null
+    }
+  ],
+  "storageKey": null
+},
+v5 = [
+  {
+    "kind": "Variable",
+    "name": "userId",
+    "variableName": "userId"
   }
 ];
 return {
@@ -149,7 +103,32 @@ return {
     "kind": "Fragment",
     "metadata": null,
     "name": "PollQuery",
-    "selections": (v1/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "poll",
+        "plural": false,
+        "selections": [
+          (v2/*: any*/),
+          (v3/*: any*/),
+          (v4/*: any*/),
+          {
+            "args": (v5/*: any*/),
+            "kind": "FragmentSpread",
+            "name": "Vote_poll"
+          },
+          {
+            "args": null,
+            "kind": "FragmentSpread",
+            "name": "EditPoll_poll"
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "RootQueryType",
     "abstractKey": null
   },
@@ -158,19 +137,66 @@ return {
     "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "PollQuery",
-    "selections": (v1/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "Poll",
+        "kind": "LinkedField",
+        "name": "poll",
+        "plural": false,
+        "selections": [
+          (v2/*: any*/),
+          (v3/*: any*/),
+          (v4/*: any*/),
+          {
+            "alias": null,
+            "args": null,
+            "kind": "ScalarField",
+            "name": "options",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": (v5/*: any*/),
+            "concreteType": "Vote",
+            "kind": "LinkedField",
+            "name": "votes",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "option",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "rating",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "1a3aaea8635bc22610a5e9dc0279e9ba",
+    "cacheID": "cadf0be9a7a65d25309b4fbaed84f95b",
     "id": null,
     "metadata": {},
     "name": "PollQuery",
     "operationKind": "query",
-    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    options\n    permissions {\n      permission_type\n      target_id\n    }\n    votes(userId: $userId) {\n      option\n      rating\n    }\n  }\n}\n"
+    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    permissions {\n      permission_type\n      target_id\n    }\n    ...Vote_poll_1xxw8p\n    ...EditPoll_poll\n  }\n}\n\nfragment EditPoll_poll on Poll {\n  id\n  title\n  options\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9bbd014283e993203e8155058e58989a";
+(node as any).hash = "7d0f00be91aac2fe5f21b619844dafc0";
 
 export default node;

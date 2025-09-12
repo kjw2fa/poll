@@ -15,15 +15,12 @@ const PollQuery = graphql`
     poll(id: $id) {
       id
       title
-      options
       permissions {
         permission_type
         target_id
       }
-      votes(userId: $userId) {
-        option
-        rating
-      }
+      ...Vote_poll @arguments(userId: $userId)
+      ...EditPoll_poll
     }
   }
 `;

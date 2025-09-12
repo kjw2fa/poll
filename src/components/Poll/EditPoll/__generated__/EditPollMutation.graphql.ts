@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a74ff06ebf0a0085ba0d59d75a4d8c95>>
+ * @generated SignedSource<<48b80f8744bc23a32ef211af9dd86bab>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,7 +10,7 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 export type EditPollMutation$variables = {
-  options: ReadonlyArray<string | null | undefined>;
+  options: ReadonlyArray<string>;
   pollId: string;
   title: string;
   userId: string;
@@ -131,16 +131,16 @@ return {
     "selections": (v4/*: any*/)
   },
   "params": {
-    "cacheID": "e6ce1f7d524944757eb0f1ce548d9d33",
+    "cacheID": "d37106b24dc61645150b328f88106259",
     "id": null,
     "metadata": {},
     "name": "EditPollMutation",
     "operationKind": "mutation",
-    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [String]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options\n  }\n}\n"
+    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [String!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "83ae677de8db5ab754ae417758090e41";
+(node as any).hash = "15e3c6f888f83569901aead26cbdb814";
 
 export default node;

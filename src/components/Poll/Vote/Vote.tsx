@@ -1,12 +1,12 @@
-import React, { useState, useEffect, Suspense } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { DndContext, useDraggable, useDroppable } from '@dnd-kit/core';
-import { useMutation, graphql } from 'react-relay';
-import { ErrorBoundary } from 'react-error-boundary';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { DndContext } from '@dnd-kit/core';
+import { useMutation, graphql, useFragment } from 'react-relay';
 import { toast } from 'sonner';
 import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__generated__/VoteSubmitVoteMutation.graphql';
-import PageContainer from '../../ui/PageContainer';
+import { Vote_poll$key } from './__generated__/Vote_poll.graphql';
 import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
+import { Draggable, Droppable } from '../../ui/dnd';
 
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
@@ -26,34 +26,19 @@ const VoteSubmitVoteMutation = graphql`
   }
 `;
 
-const Draggable = ({ id, children }: { id: string, children: React.ReactNode }) => {
-    const { attributes, listeners, setNodeRef, transform } = useDraggable({ id });
-    const style = transform ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    } : {};
+const Vote_poll = graphql`
+  fragment Vote_poll on Poll @argumentDefinitions(userId: {type: "ID!"}) {
+    options
+    votes(userId: $userId) {
+      option
+      rating
+    }
+  }
+`;
 
-    return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-            {children}
-        </div>
-    );
-};
-
-const Droppable = ({ id, children }: { id: number, children: React.ReactNode }) => {
-    const { isOver, setNodeRef } = useDroppable({ id });
-    const style = {
-        backgroundColor: isOver ? '#f0f0f0' : undefined,
-    };
-
-    return (
-        <td ref={setNodeRef} style={style} className="border border-gray-300 p-2">
-            {children}
-        </td>
-    );
-};
-
-const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
+const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key }) => {
     const { id } = useParams<{ id: string }>();
+    const poll = useFragment(Vote_poll, pollProp);
     const [optionRatingMap, setOptionRatingMap] = useState(new Map<string, number>());
     const [commitMutation, isMutationInFlight] = useMutation<VoteSubmitVoteMutationType>(VoteSubmitVoteMutation);
 
@@ -176,18 +161,6 @@ const VoteComponent = ({ userId, poll }: { userId: string, poll: any }) => {
                 <button onClick={handleSubmit} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Submit</button>
             </div>
         </div>
-    );
-};
-
-const Vote = (props: { userId: string, poll: any }) => {
-    return (
-        <PageContainer>
-            <ErrorBoundary fallback={<div>Something went wrong</div>}>
-                <Suspense fallback={<div>Loading...</div>}>
-                    <VoteComponent {...props} />
-                </Suspense>
-            </ErrorBoundary>
-        </PageContainer>
     );
 };
 
