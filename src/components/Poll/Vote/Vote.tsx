@@ -7,6 +7,7 @@ import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__genera
 import { Vote_poll$key } from './__generated__/Vote_poll.graphql';
 import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
 import { Draggable, Droppable } from '../../ui/dnd';
+import { Badge } from '../../ui/badge';
 
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
@@ -108,7 +109,7 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
 
     const draggableOption = (option: string) =>
         <Draggable key={option} id={option}>
-            <div className="option">{option}</div>
+            <Badge variant="outline">{option}</Badge>
         </Draggable>;
 
     const tableBody: React.ReactNode[] = [];
