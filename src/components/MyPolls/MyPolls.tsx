@@ -39,7 +39,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
       <h1 className="text-3xl font-bold mb-6">My Polls</h1>
       <Tabs defaultValue="created" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="created">Created Polls</TabsTrigger>
+          <TabsTrigger value="created">Owned Polls</TabsTrigger>
           <TabsTrigger value="voted">Voted Polls</TabsTrigger>
         </TabsList>
         <TabsContent value="created">
