@@ -85,6 +85,9 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
             onError: (error) => {
                 toast.error(error.message || 'Error submitting vote.');
             },
+            updater: (store) => {
+                store.invalidateStore();
+            }
         });
     };
 
