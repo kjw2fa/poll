@@ -85,20 +85,6 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
             onError: (error) => {
                 toast.error(error.message || 'Error submitting vote.');
             },
-            updater: (store: RecordSourceSelectorProxy) => {
-                const payload = store.getRootField('submitVote');
-                const newEdge = payload.getLinkedRecord('pollEdge');
-                if (!newEdge) {
-                    return;
-                }
-                const myPolls = store.get(ROOT_ID)?.getLinkedRecord('myPolls', { userId });
-                if (myPolls) {
-                    const conn = ConnectionHandler.getConnection(myPolls, 'MyPolls_votedPolls');
-                    if (conn) {
-                        ConnectionHandler.insertEdgeAfter(conn, newEdge);
-                    }
-                }
-            },
         });
     };
 

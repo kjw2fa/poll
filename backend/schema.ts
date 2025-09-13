@@ -186,7 +186,15 @@ const PollPermissionsType = new GraphQLObjectType({
     fields: () => ({
         permission_type: { type: PermissionTypeEnum },
         target_type: { type: TargetTypeEnum },
-        target_id: { type: GraphQLID },
+        target_id: {
+            type: GraphQLID,
+            resolve: (parent: PollPermissionRow) => {
+                if (parent.target_type === TargetType.USER) {
+                    return toGlobalId('User', parent.target_id);
+                }
+                return null;
+            }
+        },
     })
 });
 
@@ -516,12 +524,19 @@ const Mutation = new GraphQLObjectType({
                 if (!user) {
                     throw new Error('User not found');
                 }
+
+                // Find old voteId and delete old VoteDetails
+                const oldVote = await dbGet<VoteRow>('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ?', [pollId, userId]);
+                if (oldVote) {
+                    await dbRun('DELETE FROM VoteDetails WHERE voteId = ?', [oldVote.voteId]);
+                }
+
                 const result = await dbRun('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId]);
                 const voteId = result.lastID;
-                await dbRun('DELETE FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteId]);
-                args.ratings.forEach(({ option, rating }) => {
-                    dbRun('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
-                });
+
+                for (const { option, rating } of args.ratings) {
+                    await dbRun('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
+                }
                 const row = await dbGet<PollRow>('SELECT * FROM Polls WHERE id = ?', [pollId]);
                 return {
                     pollEdge: {

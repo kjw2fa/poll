@@ -104,7 +104,15 @@ const PollPermissionsType = new graphql_1.GraphQLObjectType({
     fields: () => ({
         permission_type: { type: PermissionTypeEnum },
         target_type: { type: TargetTypeEnum },
-        target_id: { type: graphql_1.GraphQLID },
+        target_id: {
+            type: graphql_1.GraphQLID,
+            resolve: (parent) => {
+                if (parent.target_type === enums_1.TargetType.USER) {
+                    return toGlobalId('User', parent.target_id);
+                }
+                return null;
+            }
+        },
     })
 });
 // Vote Type
@@ -422,12 +430,16 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     if (!user) {
                         throw new Error('User not found');
                     }
+                    // Find old voteId and delete old VoteDetails
+                    const oldVote = yield (0, db_utils_1.dbGet)('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ?', [pollId, userId]);
+                    if (oldVote) {
+                        yield (0, db_utils_1.dbRun)('DELETE FROM VoteDetails WHERE voteId = ?', [oldVote.voteId]);
+                    }
                     const result = yield (0, db_utils_1.dbRun)('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId]);
                     const voteId = result.lastID;
-                    yield (0, db_utils_1.dbRun)('DELETE FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteId]);
-                    args.ratings.forEach(({ option, rating }) => {
-                        (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
-                    });
+                    for (const { option, rating } of args.ratings) {
+                        yield (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
+                    }
                     const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return {
                         pollEdge: {
