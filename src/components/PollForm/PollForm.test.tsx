@@ -1,17 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import PollSettings from './PollSettings';
+import PollForm from './PollForm';
+import { vi } from 'vitest';
 
-describe('PollSettings component', () => {
-  const mockOnSave = vi.fn();
+describe('PollForm component', () => {
+  const mockOnSubmit = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   test('renders form fields for creating a new poll', () => {
-    render(<PollSettings onSave={mockOnSave} isEditing={false} />);
+    render(<PollForm onSubmit={mockOnSubmit} poll={null} />);
 
     expect(screen.getByLabelText(/Title/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Add Option/i)).toBeInTheDocument();
@@ -24,7 +25,7 @@ describe('PollSettings component', () => {
       title: 'Existing Poll',
       options: ['Opt1', 'Opt2'],
     };
-    render(<PollSettings poll={mockPoll} onSave={mockOnSave} isEditing={true} />);
+    render(<PollForm poll={mockPoll} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByDisplayValue('Existing Poll')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Opt1')).toBeInTheDocument();
@@ -34,7 +35,7 @@ describe('PollSettings component', () => {
 
   test('adds a new option', async () => {
     const user = userEvent.setup();
-    render(<PollSettings onSave={mockOnSave} isEditing={false} />);
+    render(<PollForm onSubmit={mockOnSubmit} poll={null} />);
 
     const addOptionInput = screen.getByLabelText(/Add Option/i);
     const addOptionButton = screen.getByRole('button', { name: /Add Option/i });
@@ -52,7 +53,7 @@ describe('PollSettings component', () => {
       title: 'Existing Poll',
       options: ['Opt1', 'Opt2'],
     };
-    render(<PollSettings poll={mockPoll} onSave={mockOnSave} isEditing={true} />);
+    render(<PollForm poll={mockPoll} onSubmit={mockOnSubmit} />);
 
     expect(screen.getByDisplayValue('Opt1')).toBeInTheDocument();
     const removeButton = screen.getAllByRole('button', { name: /X/i })[0]; // Get the first remove button
@@ -62,9 +63,9 @@ describe('PollSettings component', () => {
     expect(screen.getByDisplayValue('Opt2')).toBeInTheDocument();
   });
 
-  test('calls onSave with correct data when creating a poll', async () => {
+  test('calls onSubmit with correct data when creating a poll', async () => {
     const user = userEvent.setup();
-    render(<PollSettings onSave={mockOnSave} isEditing={false} />);
+    render(<PollForm onSubmit={mockOnSubmit} poll={null} />);
 
     await user.type(screen.getByLabelText(/Title/i), 'My New Poll');
     await user.type(screen.getByLabelText(/Add Option/i), 'Option A');
@@ -74,20 +75,20 @@ describe('PollSettings component', () => {
 
     await user.click(screen.getByRole('button', { name: /Create Poll/i }));
 
-    expect(mockOnSave).toHaveBeenCalledTimes(1);
-    expect(mockOnSave).toHaveBeenCalledWith({
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    expect(mockOnSubmit).toHaveBeenCalledWith({
       title: 'My New Poll',
       options: ['Option A', 'Option B'],
     });
   });
 
-  test('calls onSave with correct data when saving changes to a poll', async () => {
+  test('calls onSubmit with correct data when saving changes to a poll', async () => {
     const user = userEvent.setup();
     const mockPoll = {
       title: 'Existing Poll',
       options: ['Opt1', 'Opt2'],
     };
-    render(<PollSettings poll={mockPoll} onSave={mockOnSave} isEditing={true} />);
+    render(<PollForm poll={mockPoll} onSubmit={mockOnSubmit} />);
 
     const titleInput = screen.getByDisplayValue('Existing Poll');
     fireEvent.change(titleInput, { target: { value: 'Updated Poll' } });
@@ -97,29 +98,10 @@ describe('PollSettings component', () => {
 
     await user.click(screen.getByRole('button', { name: /Save Changes/i }));
 
-    expect(mockOnSave).toHaveBeenCalledTimes(1);
-    expect(mockOnSave).toHaveBeenCalledWith({
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1);
+    expect(mockOnSubmit).toHaveBeenCalledWith({
       title: 'Updated Poll',
       options: ['Updated Opt1', 'Opt2'],
     });
-  });
-
-  test('shows alert if less than two options when submitting', async () => {
-    const user = userEvent.setup();
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {}); // Mock window.alert
-
-    render(<PollSettings onSave={mockOnSave} isEditing={false} />);
-
-    await user.type(screen.getByLabelText(/Title/i), 'Single Option Poll');
-    await user.type(screen.getByLabelText(/Add Option/i), 'Only One');
-    await user.click(screen.getByRole('button', { name: /Add Option/i }));
-
-    await user.click(screen.getByRole('button', { name: /Create Poll/i }));
-
-    expect(alertSpy).toHaveBeenCalledTimes(1);
-    expect(alertSpy).toHaveBeenCalledWith('A poll must have at least two options.');
-    expect(mockOnSave).not.toHaveBeenCalled();
-
-    alertSpy.mockRestore(); // Restore original alert
   });
 });

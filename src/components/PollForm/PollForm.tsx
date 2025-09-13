@@ -1,22 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Input } from "../ui/input.tsx";
-import { Button } from "../ui/button.tsx";
-import { Label } from "../ui/label.tsx";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
+import { Label } from "../ui/label";
 import { toast } from 'sonner';
 
-const PollSettings = ({ poll, onSave, isEditing }) => {
+export type PollFormData = {
+  id?: string;
+  title: string;
+  options: string[];
+};
+
+type PollFormProps = {
+  poll: PollFormData | null;
+  onSubmit: (data: Omit<PollFormData, 'id'>) => void;
+};
+
+const PollForm = ({ poll, onSubmit }: PollFormProps) => {
     const [title, setTitle] = useState('');
-    const [options, setOptions] = useState([]);
+    const [options, setOptions] = useState<string[]>([]);
     const [newOption, setNewOption] = useState('');
 
     useEffect(() => {
-        if (isEditing && poll) {
+        if (poll) {
             setTitle(poll.title);
-            setOptions(poll.options);
+            setOptions(poll.options.filter((o): o is string => o !== null && o !== undefined));
         }
-    }, [isEditing, poll]);
+    }, [poll]);
 
-    const handleNewOptionChange = (event) => {
+    const handleNewOptionChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setNewOption(event.target.value);
     };
 
@@ -27,32 +38,32 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
         }
     };
 
-    const handleKeyDown = (event) => {
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
         if (event.key === 'Enter') {
             event.preventDefault();
             handleAddNewOption();
         }
     };
 
-    const handleOptionChange = (index, event) => {
+    const handleOptionChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const newOptions = [...options];
         newOptions[index] = event.target.value;
         setOptions(newOptions);
     };
 
-    const handleRemoveOption = (index) => {
+    const handleRemoveOption = (index: number) => {
         const newOptions = [...options];
         newOptions.splice(index, 1);
         setOptions(newOptions);
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = (event: React.FormEvent) => {
         event.preventDefault();
         if (options.length < 2) {
             toast.error('A poll must have at least two options.');
             return;
         }
-        onSave({ title, options });
+        onSubmit({ title, options });
     };
 
     return (
@@ -81,9 +92,9 @@ const PollSettings = ({ poll, onSave, isEditing }) => {
                     ))
                 )}
             </div>
-            <Button type="submit">{isEditing ? 'Save Changes' : 'Create Poll'}</Button>
+            <Button type="submit">{poll ? 'Save Changes' : 'Create Poll'}</Button>
         </form>
     );
 };
 
-export default PollSettings;
+export default PollForm;

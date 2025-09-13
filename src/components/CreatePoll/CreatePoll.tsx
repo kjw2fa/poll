@@ -1,5 +1,5 @@
-import React, { useState, Suspense } from 'react';
-import PollSettings from '../PollSettings/PollSettings.tsx';
+import React, { Suspense } from 'react';
+import PollForm, { PollFormData } from '../PollForm/PollForm';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { CreatePollMutation as CreatePollMutationType } from './__generated__/CreatePollMutation.graphql';
@@ -22,23 +22,26 @@ const CreatePollMutation = graphql`
   }
 `;
 
-const CreatePollComponent = ({ userId }) => {
+const CreatePollComponent = ({ userId }: { userId: string }) => {
     const navigate = useNavigate();
-    const [commitMutation, isMutationInFlight] = useMutation<CreatePollMutationType>(CreatePollMutation);
+    const [commitMutation] = useMutation<CreatePollMutationType>(CreatePollMutation);
 
-    const handleSave = (pollData: any) => {
+    const handleSave = (pollData: Omit<PollFormData, 'id'>) => {
         commitMutation({
             variables: {
                 ...pollData,
                 userId,
             },
             onCompleted: (response) => {
-                const pollId = response.createPoll.pollEdge.node.id;
-                toast.success("Poll created successfully!");
-                navigate(`/poll/${pollId}`);
+                const pollId = response.createPoll?.pollEdge?.node?.id;
+                if (pollId) {
+                    toast.success("Poll created successfully!");
+                    navigate(`/poll/${pollId}`);
+                }
             },
             onError: (error) => {
                 console.error('Error creating poll:', error);
+                toast.error('Error creating poll.');
             },
             updater: (store: RecordSourceSelectorProxy) => {
                 const payload = store.getRootField('createPoll');
@@ -60,7 +63,7 @@ const CreatePollComponent = ({ userId }) => {
     return (
         <div className="flex flex-col gap-4">
             <h1 className="text-3xl font-bold mb-6">Create a New Poll</h1>
-            <PollSettings onSave={handleSave} isEditing={false} />
+            <PollForm onSubmit={handleSave} poll={null} />
         </div>
     );
 };
