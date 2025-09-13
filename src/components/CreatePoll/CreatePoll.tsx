@@ -6,6 +6,7 @@ import { CreatePollMutation as CreatePollMutationType } from './__generated__/Cr
 import PageContainer from '../ui/PageContainer';
 import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const CreatePollMutation = graphql`
   mutation CreatePollMutation($title: String!, $options: [String]!, $userId: ID!) {
@@ -33,6 +34,7 @@ const CreatePollComponent = ({ userId }) => {
             },
             onCompleted: (response) => {
                 const pollId = response.createPoll.pollEdge.node.id;
+                toast.success("Poll created successfully!");
                 navigate(`/poll/${pollId}`);
             },
             onError: (error) => {
