@@ -129,10 +129,6 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
         <div className="vote">
             <DndContext onDragEnd={handleDragEnd}>
                 <div className="flex justify-center gap-16 max-w-screen-md mx-auto">
-                    <div className="w-1/3 bg-blue-100 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2">Available Options</h3>
-                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
-                    </div>
                     <div className="w-2/3">
                         <table className="border-collapse border border-gray-300 w-full">
                             <thead>
@@ -144,6 +140,10 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
                                 {tableBody}
                             </tbody>
                         </table>
+                    </div>
+                    <div className="w-1/3 bg-blue-100 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">Available Options</h3>
+                        {Array.from(options).filter(option => !ratedOptions.has(option)).map(draggableOption)}
                     </div>
                 </div>
             </DndContext>
