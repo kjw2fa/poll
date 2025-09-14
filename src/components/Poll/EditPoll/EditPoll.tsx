@@ -6,11 +6,14 @@ import { EditPoll_poll$key } from './__generated__/EditPoll_poll.graphql';
 import PollForm, { PollFormData } from '../../PollForm/PollForm';
 
 const EditPollMutation = graphql`
-  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [String!]!) {
-    editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {
-      id
-      title
-      options
+  mutation EditPollMutation($input: EditPollInput!, $userId: ID!) {
+    editPoll(input: $input) {
+      poll {
+        id
+        title
+        options
+        ...Vote_poll @arguments(userId: $userId)
+      }
     }
   }
 `;
@@ -23,23 +26,23 @@ const EditPoll_poll = graphql`
   }
 `;
 
-const EditPoll = ({ poll: pollProp, userId, onPollUpdated }: { poll: EditPoll_poll$key, userId: string, onPollUpdated: (poll: any) => void }) => {
+const EditPoll = ({ poll: pollProp, userId }: { poll: EditPoll_poll$key, userId: string }) => {
   const poll = useFragment(EditPoll_poll, pollProp);
   const [commit, isInFlight] = useMutation<EditPollMutationType>(EditPollMutation);
 
   const handleUpdate = (pollData: Omit<PollFormData, 'id'>) => {
     commit({
       variables: {
-        pollId: poll.id,
+        input: {
+          pollId: poll.id,
+          userId,
+          title: pollData.title,
+          options: pollData.options,
+        },
         userId,
-        title: pollData.title,
-        options: pollData.options,
       },
-      onCompleted: (response) => {
+      onCompleted: () => {
         toast.success('Poll updated successfully!');
-        if (onPollUpdated) {
-          onPollUpdated(response.editPoll);
-        }
       },
       onError: (err) => {
         toast.error(err.message || 'Error updating poll.');

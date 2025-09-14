@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<48b80f8744bc23a32ef211af9dd86bab>>
+ * @generated SignedSource<<2cf24ab00187c62351fc5f81a444ad43>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -9,17 +9,25 @@
 // @ts-nocheck
 
 import { ConcreteRequest } from 'relay-runtime';
-export type EditPollMutation$variables = {
+import { FragmentRefs } from "relay-runtime";
+export type EditPollInput = {
   options: ReadonlyArray<string>;
   pollId: string;
   title: string;
   userId: string;
 };
+export type EditPollMutation$variables = {
+  input: EditPollInput;
+  userId: string;
+};
 export type EditPollMutation$data = {
   readonly editPoll: {
-    readonly id: string;
-    readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
-    readonly title: string | null | undefined;
+    readonly poll: {
+      readonly id: string;
+      readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+      readonly title: string | null | undefined;
+      readonly " $fragmentSpreads": FragmentRefs<"Vote_poll">;
+    } | null | undefined;
   } | null | undefined;
 };
 export type EditPollMutation = {
@@ -28,119 +36,163 @@ export type EditPollMutation = {
 };
 
 const node: ConcreteRequest = (function(){
-var v0 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "options"
-},
-v1 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "pollId"
-},
+var v0 = [
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "input"
+  },
+  {
+    "defaultValue": null,
+    "kind": "LocalArgument",
+    "name": "userId"
+  }
+],
+v1 = [
+  {
+    "kind": "Variable",
+    "name": "input",
+    "variableName": "input"
+  }
+],
 v2 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "title"
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
 },
 v3 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
-  "name": "userId"
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "title",
+  "storageKey": null
 },
-v4 = [
+v4 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "options",
+  "storageKey": null
+},
+v5 = [
   {
-    "alias": null,
-    "args": [
-      {
-        "kind": "Variable",
-        "name": "options",
-        "variableName": "options"
-      },
-      {
-        "kind": "Variable",
-        "name": "pollId",
-        "variableName": "pollId"
-      },
-      {
-        "kind": "Variable",
-        "name": "title",
-        "variableName": "title"
-      },
-      {
-        "kind": "Variable",
-        "name": "userId",
-        "variableName": "userId"
-      }
-    ],
-    "concreteType": "Poll",
-    "kind": "LinkedField",
-    "name": "editPoll",
-    "plural": false,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "id",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "title",
-        "storageKey": null
-      },
-      {
-        "alias": null,
-        "args": null,
-        "kind": "ScalarField",
-        "name": "options",
-        "storageKey": null
-      }
-    ],
-    "storageKey": null
+    "kind": "Variable",
+    "name": "userId",
+    "variableName": "userId"
   }
 ];
 return {
   "fragment": {
-    "argumentDefinitions": [
-      (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/),
-      (v3/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Fragment",
     "metadata": null,
     "name": "EditPollMutation",
-    "selections": (v4/*: any*/),
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "EditPollPayload",
+        "kind": "LinkedField",
+        "name": "editPoll",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "Poll",
+            "kind": "LinkedField",
+            "name": "poll",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
+              {
+                "args": (v5/*: any*/),
+                "kind": "FragmentSpread",
+                "name": "Vote_poll"
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ],
     "type": "Mutation",
     "abstractKey": null
   },
   "kind": "Request",
   "operation": {
-    "argumentDefinitions": [
-      (v1/*: any*/),
-      (v3/*: any*/),
-      (v2/*: any*/),
-      (v0/*: any*/)
-    ],
+    "argumentDefinitions": (v0/*: any*/),
     "kind": "Operation",
     "name": "EditPollMutation",
-    "selections": (v4/*: any*/)
+    "selections": [
+      {
+        "alias": null,
+        "args": (v1/*: any*/),
+        "concreteType": "EditPollPayload",
+        "kind": "LinkedField",
+        "name": "editPoll",
+        "plural": false,
+        "selections": [
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "Poll",
+            "kind": "LinkedField",
+            "name": "poll",
+            "plural": false,
+            "selections": [
+              (v2/*: any*/),
+              (v3/*: any*/),
+              (v4/*: any*/),
+              {
+                "alias": null,
+                "args": (v5/*: any*/),
+                "concreteType": "Vote",
+                "kind": "LinkedField",
+                "name": "votes",
+                "plural": true,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "option",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "rating",
+                    "storageKey": null
+                  }
+                ],
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          }
+        ],
+        "storageKey": null
+      }
+    ]
   },
   "params": {
-    "cacheID": "d37106b24dc61645150b328f88106259",
+    "cacheID": "48fc429b7b520727cc5c9c1d65ca582f",
     "id": null,
     "metadata": {},
     "name": "EditPollMutation",
     "operationKind": "mutation",
-    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [String!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options\n  }\n}\n"
+    "text": "mutation EditPollMutation(\n  $input: EditPollInput!\n  $userId: ID!\n) {\n  editPoll(input: $input) {\n    poll {\n      id\n      title\n      options\n      ...Vote_poll_1xxw8p\n    }\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "15e3c6f888f83569901aead26cbdb814";
+(node as any).hash = "e2d3bcf9a269c106fb37d247145cf0f5";
 
 export default node;

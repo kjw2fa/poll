@@ -1,10 +1,10 @@
 import React, { Suspense, useEffect } from 'react';
 import { useParams, useNavigate, Routes, Route, useLocation } from 'react-router-dom';
-import { Tabs, TabsList, TabsTrigger } from "../ui/tabs.tsx";
-import Vote from './Vote/Vote.tsx';
-import PollResults from './PollResults/PollResults.tsx';
-import EditPoll from './EditPoll/EditPoll.tsx';
-import PollSearch from './PollSearch/PollSearch.tsx';
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import Vote from './Vote/Vote';
+import PollResults from './PollResults/PollResults';
+import EditPoll from './EditPoll/EditPoll';
+import PollSearch from './PollSearch/PollSearch';
 import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollQuery as PollQueryType } from './__generated__/PollQuery.graphql';
@@ -56,10 +56,6 @@ const PollComponent = ({ userId, id }) => {
         }
     }, [poll, id, navigate, location.pathname]);
 
-    const handlePollUpdated = (updatedPoll: any) => {
-        // This will be handled by Relay's data management
-    };
-
     const activeTab = location.pathname.split('/').pop();
 
     return (
@@ -75,7 +71,7 @@ const PollComponent = ({ userId, id }) => {
             <Routes>
                 <Route path="vote" element={<Vote userId={userId} poll={poll} />} />
                 <Route path="results" element={<PollResults pollId={id} />} />
-                {canEdit && <Route path="edit" element={<EditPoll userId={userId} poll={poll} onPollUpdated={handlePollUpdated} />} />}
+                {canEdit && <Route path="edit" element={<EditPoll userId={userId} poll={poll} />} />}
             </Routes>
         </div>
     );

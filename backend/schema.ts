@@ -451,6 +451,23 @@ const RatingInput = new GraphQLInputObjectType({
     }
 });
 
+const EditPollInputType = new GraphQLInputObjectType({
+    name: 'EditPollInput',
+    fields: {
+        pollId: { type: new GraphQLNonNull(GraphQLID) },
+        userId: { type: new GraphQLNonNull(GraphQLID) },
+        title: { type: new GraphQLNonNull(GraphQLString) },
+        options: { type: new GraphQLNonNull(new GraphQLList(GraphQLString)) }
+    }
+});
+
+const EditPollPayloadType = new GraphQLObjectType({
+    name: 'EditPollPayload',
+    fields: () => ({
+        poll: { type: PollType },
+    }),
+});
+
 const LoginResponseType = new GraphQLObjectType({
     name: 'LoginResponse',
     fields: () => ({
@@ -547,50 +564,48 @@ const Mutation = new GraphQLObjectType({
             }
         },
         editPoll: {
-            type: PollType,
+            type: EditPollPayloadType,
             args: {
-                pollId: { type: new GraphQLNonNull(GraphQLID) },
-                userId: { type: new GraphQLNonNull(GraphQLID) },
-                title: { type: new GraphQLNonNull(GraphQLString) },
-                options: { type: new GraphQLNonNull(new GraphQLList(GraphQLString)) }
+                input: { type: new GraphQLNonNull(EditPollInputType) }
             },
-            async resolve(parent: any, args: { pollId: string, userId: string, title: string, options: string[] }): Promise<PollRow | null> {
-                const { id: pollIdStr } = fromGlobalId(args.pollId);
-                const pollId = parseInt(pollIdStr, 10);
-                const { id: userIdStr } = fromGlobalId(args.userId);
-                const userId = parseInt(userIdStr, 10);
+            async resolve(parent: any, args: { input: { pollId: string, userId: string, title: string, options: string[] } }): Promise<{ poll: PollRow | null }> {
+                const { pollId, userId, title, options } = args.input;
+                const { id: pollIdStr } = fromGlobalId(pollId);
+                const pollIdNum = parseInt(pollIdStr, 10);
+                const { id: userIdStr } = fromGlobalId(userId);
+                const userIdNum = parseInt(userIdStr, 10);
 
-                const permission = await dbGet<PollPermissionRow>('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, PermissionType.EDIT]);
+                const permission = await dbGet<PollPermissionRow>('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollIdNum, userIdNum, PermissionType.EDIT]);
                 if (!permission) {
                     throw new Error('No edit permission');
                 }
 
                 // Update title
-                await dbRun('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
+                await dbRun('UPDATE Polls SET title = ? WHERE id = ?', [title, pollIdNum]);
 
                 // Get current options
-                const currentOptionsRows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                const currentOptionsRows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollIdNum]);
                 const currentOptions = currentOptionsRows.map(r => r.optionText);
 
                 // Find removed and added options
-                const removedOptions = currentOptions.filter(o => !args.options.includes(o));
-                const addedOptions = args.options.filter(o => !currentOptions.includes(o));
+                const removedOptions = currentOptions.filter(o => !options.includes(o));
+                const addedOptions = options.filter(o => !currentOptions.includes(o));
 
                 if (removedOptions.length > 0) {
                     const placeholders = removedOptions.map(() => '?').join(',');
-                    await dbRun(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
+                    await dbRun(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollIdNum, ...removedOptions]);
                     // Also delete votes for removed options
-                    await dbRun(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
+                    await dbRun(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollIdNum, ...removedOptions]);
                 }
 
                 if (addedOptions.length > 0) {
                     for (const option of addedOptions) {
-                        await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                        await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollIdNum, option]);
                     }
                 }
                 
-                const updatedPoll = await dbGet<PollRow>('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                return updatedPoll ?? null;
+                const updatedPoll = await dbGet<PollRow>('SELECT * FROM Polls WHERE id = ?', [pollIdNum]);
+                return { poll: updatedPoll ?? null };
             }
         },
                 signup: {

@@ -362,6 +362,21 @@ const RatingInput = new graphql_1.GraphQLInputObjectType({
         rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
     }
 });
+const EditPollInputType = new graphql_1.GraphQLInputObjectType({
+    name: 'EditPollInput',
+    fields: {
+        pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
+        userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
+        title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
+        options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) }
+    }
+});
+const EditPollPayloadType = new graphql_1.GraphQLObjectType({
+    name: 'EditPollPayload',
+    fields: () => ({
+        poll: { type: PollType },
+    }),
+});
 const LoginResponseType = new graphql_1.GraphQLObjectType({
     name: 'LoginResponse',
     fields: () => ({
@@ -451,44 +466,42 @@ const Mutation = new graphql_1.GraphQLObjectType({
             }
         },
         editPoll: {
-            type: PollType,
+            type: EditPollPayloadType,
             args: {
-                pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) }
+                input: { type: new graphql_1.GraphQLNonNull(EditPollInputType) }
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollIdStr } = fromGlobalId(args.pollId);
-                    const pollId = parseInt(pollIdStr, 10);
-                    const { id: userIdStr } = fromGlobalId(args.userId);
-                    const userId = parseInt(userIdStr, 10);
-                    const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, enums_1.PermissionType.EDIT]);
+                    const { pollId, userId, title, options } = args.input;
+                    const { id: pollIdStr } = fromGlobalId(pollId);
+                    const pollIdNum = parseInt(pollIdStr, 10);
+                    const { id: userIdStr } = fromGlobalId(userId);
+                    const userIdNum = parseInt(userIdStr, 10);
+                    const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollIdNum, userIdNum, enums_1.PermissionType.EDIT]);
                     if (!permission) {
                         throw new Error('No edit permission');
                     }
                     // Update title
-                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
+                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [title, pollIdNum]);
                     // Get current options
-                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollIdNum]);
                     const currentOptions = currentOptionsRows.map(r => r.optionText);
                     // Find removed and added options
-                    const removedOptions = currentOptions.filter(o => !args.options.includes(o));
-                    const addedOptions = args.options.filter(o => !currentOptions.includes(o));
+                    const removedOptions = currentOptions.filter(o => !options.includes(o));
+                    const addedOptions = options.filter(o => !currentOptions.includes(o));
                     if (removedOptions.length > 0) {
                         const placeholders = removedOptions.map(() => '?').join(',');
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollIdNum, ...removedOptions]);
                         // Also delete votes for removed options
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollIdNum, ...removedOptions]);
                     }
                     if (addedOptions.length > 0) {
                         for (const option of addedOptions) {
-                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollIdNum, option]);
                         }
                     }
-                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null;
+                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollIdNum]);
+                    return { poll: updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null };
                 });
             }
         },
