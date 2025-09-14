@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5d8efd3bcaa1c3d45ed9f870b616c836>>
+ * @generated SignedSource<<f28a901f2dfb53cd3d90652a1c30a05a>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -22,6 +22,9 @@ export type PollQuery$data = {
       readonly permission_type: PermissionType | null | undefined;
       readonly target_id: string | null | undefined;
     } | null | undefined> | null | undefined;
+    readonly results: {
+      readonly " $fragmentSpreads": FragmentRefs<"PollResults_results">;
+    } | null | undefined;
     readonly title: string | null | undefined;
     readonly " $fragmentSpreads": FragmentRefs<"EditPoll_poll" | "Vote_poll">;
   } | null | undefined;
@@ -96,6 +99,23 @@ v5 = [
     "name": "userId",
     "variableName": "userId"
   }
+],
+v6 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "option",
+  "storageKey": null
+},
+v7 = [
+  (v6/*: any*/),
+  {
+    "alias": null,
+    "args": null,
+    "kind": "ScalarField",
+    "name": "averageRating",
+    "storageKey": null
+  }
 ];
 return {
   "fragment": {
@@ -124,6 +144,22 @@ return {
             "args": null,
             "kind": "FragmentSpread",
             "name": "EditPoll_poll"
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollResult",
+            "kind": "LinkedField",
+            "name": "results",
+            "plural": false,
+            "selections": [
+              {
+                "args": null,
+                "kind": "FragmentSpread",
+                "name": "PollResults_results"
+              }
+            ],
+            "storageKey": null
           }
         ],
         "storageKey": null
@@ -164,18 +200,64 @@ return {
             "name": "votes",
             "plural": true,
             "selections": [
+              (v6/*: any*/),
               {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "option",
+                "name": "rating",
+                "storageKey": null
+              }
+            ],
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollResult",
+            "kind": "LinkedField",
+            "name": "results",
+            "plural": false,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "pollTitle",
                 "storageKey": null
               },
               {
                 "alias": null,
                 "args": null,
                 "kind": "ScalarField",
-                "name": "rating",
+                "name": "totalVotes",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "voters",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "WinningOption",
+                "kind": "LinkedField",
+                "name": "results",
+                "plural": true,
+                "selections": (v7/*: any*/),
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "WinningOption",
+                "kind": "LinkedField",
+                "name": "allAverageRatings",
+                "plural": true,
+                "selections": (v7/*: any*/),
                 "storageKey": null
               }
             ],
@@ -187,16 +269,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "cadf0be9a7a65d25309b4fbaed84f95b",
+    "cacheID": "46ccd9f51ff725104ff59bb648fb1586",
     "id": null,
     "metadata": {},
     "name": "PollQuery",
     "operationKind": "query",
-    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    permissions {\n      permission_type\n      target_id\n    }\n    ...Vote_poll_1xxw8p\n    ...EditPoll_poll\n  }\n}\n\nfragment EditPoll_poll on Poll {\n  id\n  title\n  options\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
+    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    permissions {\n      permission_type\n      target_id\n    }\n    ...Vote_poll_1xxw8p\n    ...EditPoll_poll\n    results {\n      ...PollResults_results\n    }\n  }\n}\n\nfragment EditPoll_poll on Poll {\n  id\n  title\n  options\n}\n\nfragment PollResults_results on PollResult {\n  pollTitle\n  totalVotes\n  voters\n  results {\n    option\n    averageRating\n  }\n  allAverageRatings {\n    option\n    averageRating\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "7d0f00be91aac2fe5f21b619844dafc0";
+(node as any).hash = "77c4f9a71e449a11837d81b0e7fcdb22";
 
 export default node;

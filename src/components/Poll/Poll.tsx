@@ -21,6 +21,9 @@ const PollQuery = graphql`
       }
       ...Vote_poll @arguments(userId: $userId)
       ...EditPoll_poll
+      results {
+        ...PollResults_results
+      }
     }
   }
 `;
@@ -70,7 +73,7 @@ const PollComponent = ({ userId, id }) => {
             </Tabs>
             <Routes>
                 <Route path="vote" element={<Vote userId={userId} poll={poll} />} />
-                <Route path="results" element={<PollResults pollId={id} />} />
+                <Route path="results" element={<PollResults resultsRef={poll.results} />} />
                 {canEdit && <Route path="edit" element={<EditPoll userId={userId} poll={poll} />} />}
             </Routes>
         </div>

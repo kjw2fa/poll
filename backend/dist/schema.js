@@ -123,6 +123,25 @@ const VoteType = new graphql_1.GraphQLObjectType({
         rating: { type: graphql_1.GraphQLInt }
     })
 });
+// WinningOption Type
+const WinningOptionType = new graphql_1.GraphQLObjectType({
+    name: 'WinningOption',
+    fields: () => ({
+        option: { type: graphql_1.GraphQLString },
+        averageRating: { type: graphql_1.GraphQLFloat }
+    })
+});
+// PollResult Type
+const PollResultType = new graphql_1.GraphQLObjectType({
+    name: 'PollResult',
+    fields: () => ({
+        pollTitle: { type: graphql_1.GraphQLString },
+        totalVotes: { type: graphql_1.GraphQLInt },
+        voters: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
+        results: { type: new graphql_1.GraphQLList(WinningOptionType) },
+        allAverageRatings: { type: new graphql_1.GraphQLList(WinningOptionType) }
+    })
+});
 // Poll Type
 const PollType = new graphql_1.GraphQLObjectType({
     name: 'Poll',
@@ -170,6 +189,57 @@ const PollType = new graphql_1.GraphQLObjectType({
                     const pollOptions = pollOptionsRows.map(r => r.optionText);
                     const filteredDetails = details.filter(detail => pollOptions.includes(detail.option));
                     return filteredDetails;
+                });
+            }
+        },
+        results: {
+            type: PollResultType,
+            resolve(parent) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const pollId = parent.id;
+                    const pollTitle = parent.title;
+                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const pollOptions = pollOptionsRows.map(r => r.optionText);
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId]);
+                    const optionRatings = {};
+                    pollOptions.forEach((option) => {
+                        optionRatings[option] = [];
+                    });
+                    const votersSet = new Set();
+                    rows.forEach(row => {
+                        if (row.username)
+                            votersSet.add(row.username);
+                        if (row.option && optionRatings[row.option]) {
+                            optionRatings[row.option].push(row.rating);
+                        }
+                    });
+                    const averageRatings = {};
+                    let maxAverageRating = -1;
+                    for (const option in optionRatings) {
+                        const ratingsArr = optionRatings[option];
+                        if (ratingsArr.length > 0) {
+                            const sum = ratingsArr.reduce((a, b) => a + b, 0);
+                            const avg = sum / ratingsArr.length;
+                            averageRatings[option] = avg;
+                            if (avg > maxAverageRating) {
+                                maxAverageRating = avg;
+                            }
+                        }
+                    }
+                    const winningOptions = [];
+                    for (const option in averageRatings) {
+                        if (averageRatings[option] === maxAverageRating) {
+                            winningOptions.push({ option, averageRating: maxAverageRating });
+                        }
+                    }
+                    const allAverageRatings = Object.entries(averageRatings).map(([option, averageRating]) => ({ option, averageRating }));
+                    return {
+                        pollTitle,
+                        totalVotes: votersSet.size,
+                        voters: Array.from(votersSet),
+                        results: winningOptions,
+                        allAverageRatings
+                    };
                 });
             }
         }
@@ -234,25 +304,6 @@ const MyPollsType = new graphql_1.GraphQLObjectType({
         }
     })
 });
-// WinningOption Type
-const WinningOptionType = new graphql_1.GraphQLObjectType({
-    name: 'WinningOption',
-    fields: () => ({
-        option: { type: graphql_1.GraphQLString },
-        averageRating: { type: graphql_1.GraphQLFloat }
-    })
-});
-// PollResult Type
-const PollResultType = new graphql_1.GraphQLObjectType({
-    name: 'PollResult',
-    fields: () => ({
-        pollTitle: { type: graphql_1.GraphQLString },
-        totalVotes: { type: graphql_1.GraphQLInt },
-        voters: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
-        results: { type: new graphql_1.GraphQLList(WinningOptionType) },
-        allAverageRatings: { type: new graphql_1.GraphQLList(WinningOptionType) }
-    })
-});
 // Root Query
 const RootQuery = new graphql_1.GraphQLObjectType({
     name: 'RootQueryType',
@@ -285,63 +336,6 @@ const RootQuery = new graphql_1.GraphQLObjectType({
                 return { userId: args.userId };
             }
         },
-        pollResults: {
-            type: PollResultType,
-            args: { pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollIdStr } = fromGlobalId(args.pollId);
-                    const pollId = parseInt(pollIdStr, 10);
-                    const pollRow = yield (0, db_utils_1.dbGet)('SELECT title FROM Polls WHERE id = ?', [pollId]);
-                    if (!pollRow) {
-                        throw new Error('Poll not found');
-                    }
-                    const pollTitle = pollRow.title;
-                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                    const pollOptions = pollOptionsRows.map(r => r.optionText);
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId]);
-                    const optionRatings = {};
-                    pollOptions.forEach((option) => {
-                        optionRatings[option] = [];
-                    });
-                    const votersSet = new Set();
-                    rows.forEach(row => {
-                        if (row.username)
-                            votersSet.add(row.username);
-                        if (row.option && optionRatings[row.option]) {
-                            optionRatings[row.option].push(row.rating);
-                        }
-                    });
-                    const averageRatings = {};
-                    let maxAverageRating = -1;
-                    for (const option in optionRatings) {
-                        const ratingsArr = optionRatings[option];
-                        if (ratingsArr.length > 0) {
-                            const sum = ratingsArr.reduce((a, b) => a + b, 0);
-                            const avg = sum / ratingsArr.length;
-                            averageRatings[option] = avg;
-                            if (avg > maxAverageRating) {
-                                maxAverageRating = avg;
-                            }
-                        }
-                    }
-                    const winningOptions = [];
-                    for (const option in averageRatings) {
-                        if (averageRatings[option] === maxAverageRating) {
-                            winningOptions.push({ option, averageRating: maxAverageRating });
-                        }
-                    }
-                    const allAverageRatings = Object.entries(averageRatings).map(([option, averageRating]) => ({ option, averageRating }));
-                    return {
-                        pollTitle,
-                        totalVotes: votersSet.size,
-                        voters: Array.from(votersSet),
-                        results: winningOptions,
-                        allAverageRatings
-                    };
-                });
-            }
-        },
         searchPolls: {
             type: new graphql_1.GraphQLList(PollType),
             args: { searchTerm: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) } },
@@ -361,21 +355,6 @@ const RatingInput = new graphql_1.GraphQLInputObjectType({
         option: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
         rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
     }
-});
-const EditPollInputType = new graphql_1.GraphQLInputObjectType({
-    name: 'EditPollInput',
-    fields: {
-        pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-        userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-        title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) }
-    }
-});
-const EditPollPayloadType = new graphql_1.GraphQLObjectType({
-    name: 'EditPollPayload',
-    fields: () => ({
-        poll: { type: PollType },
-    }),
 });
 const LoginResponseType = new graphql_1.GraphQLObjectType({
     name: 'LoginResponse',
@@ -466,42 +445,44 @@ const Mutation = new graphql_1.GraphQLObjectType({
             }
         },
         editPoll: {
-            type: EditPollPayloadType,
+            type: PollType,
             args: {
-                input: { type: new graphql_1.GraphQLNonNull(EditPollInputType) }
+                pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
+                userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
+                title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
+                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) }
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const { pollId, userId, title, options } = args.input;
-                    const { id: pollIdStr } = fromGlobalId(pollId);
-                    const pollIdNum = parseInt(pollIdStr, 10);
-                    const { id: userIdStr } = fromGlobalId(userId);
-                    const userIdNum = parseInt(userIdStr, 10);
-                    const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollIdNum, userIdNum, enums_1.PermissionType.EDIT]);
+                    const { id: pollIdStr } = fromGlobalId(args.pollId);
+                    const pollId = parseInt(pollIdStr, 10);
+                    const { id: userIdStr } = fromGlobalId(args.userId);
+                    const userId = parseInt(userIdStr, 10);
+                    const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, enums_1.PermissionType.EDIT]);
                     if (!permission) {
                         throw new Error('No edit permission');
                     }
                     // Update title
-                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [title, pollIdNum]);
+                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
                     // Get current options
-                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollIdNum]);
+                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
                     const currentOptions = currentOptionsRows.map(r => r.optionText);
                     // Find removed and added options
-                    const removedOptions = currentOptions.filter(o => !options.includes(o));
-                    const addedOptions = options.filter(o => !currentOptions.includes(o));
+                    const removedOptions = currentOptions.filter(o => !args.options.includes(o));
+                    const addedOptions = args.options.filter(o => !currentOptions.includes(o));
                     if (removedOptions.length > 0) {
                         const placeholders = removedOptions.map(() => '?').join(',');
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollIdNum, ...removedOptions]);
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
                         // Also delete votes for removed options
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollIdNum, ...removedOptions]);
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
                     }
                     if (addedOptions.length > 0) {
                         for (const option of addedOptions) {
-                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollIdNum, option]);
+                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
                         }
                     }
-                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollIdNum]);
-                    return { poll: updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null };
+                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
+                    return updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null;
                 });
             }
         },

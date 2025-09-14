@@ -1,39 +1,32 @@
 import React, { Suspense } from 'react';
-import { useLazyLoadQuery, graphql } from 'react-relay';
+import { useFragment, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
-import { PollResultsQuery as PollResultsQueryType } from './__generated__/PollResultsQuery.graphql';
+import { PollResults_results$key } from './__generated__/PollResults_results.graphql';
 
 import { Award } from 'lucide-react';
 
-const PollResultsQuery = graphql`
-  query PollResultsQuery($pollId: ID!) {
-    pollResults(pollId: $pollId) {
-      pollTitle
-      totalVotes
-      voters
-      results {
-        option
-        averageRating
-      }
-      allAverageRatings {
-        option
-        averageRating
-      }
+const PollResults_results = graphql`
+  fragment PollResults_results on PollResult {
+    pollTitle
+    totalVotes
+    voters
+    results {
+      option
+      averageRating
+    }
+    allAverageRatings {
+      option
+      averageRating
     }
   }
 `;
 
-const PollResultsComponent = ({ pollId }) => {
-    const data = useLazyLoadQuery<PollResultsQueryType>(
-        PollResultsQuery,
-        { pollId },
-    );
+const PollResultsComponent = ({ resultsRef }: { resultsRef: PollResults_results$key }) => {
+    const pollResults = useFragment(PollResults_results, resultsRef);
 
-    if (!data || !data.pollResults) {
+    if (!pollResults) {
         return <div>Loading results...</div>;
     }
-
-    const { pollResults } = data;
 
     // Create a set of winning option names
     const winningOptionNames = new Set(pollResults.results.map(r => r.option));
@@ -74,11 +67,11 @@ const PollResultsComponent = ({ pollId }) => {
     );
 };
 
-const PollResults = ({ pollId }) => {
+const PollResults = ({ resultsRef }: { resultsRef: PollResults_results$key }) => {
     return (
         <ErrorBoundary fallback={<div>Something went wrong</div>}>
             <Suspense fallback={<div>Loading...</div>}>
-                <PollResultsComponent pollId={pollId} />
+                <PollResultsComponent resultsRef={resultsRef} />
             </Suspense>
         </ErrorBoundary>
     );
