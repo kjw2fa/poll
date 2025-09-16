@@ -1,5 +1,4 @@
 import React, { useState, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { DndContext, UniqueIdentifier } from '@dnd-kit/core';
 import { useMutation, graphql, useFragment } from 'react-relay';
 import { toast } from 'sonner';
@@ -44,16 +43,23 @@ const Vote_poll = graphql`
   }
 `;
 
+type Option = {
+    id: string;
+    optionText: string;
+};
+
 const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key }) => {
     const poll = useFragment(Vote_poll, pollProp);
-    const optionMap = useMemo(() => new Map(poll.options.map(o => [o.id, o.optionText])), [poll.options]);
 
     const initialRatings = useMemo(() => {
-        const previousRatings = new Map<string, number>();
+        const previousRatings = new Map<Option, number>();
         const userVote = poll.votes.find(v => v.user.id === userId);
         if (userVote) {
             userVote.ratings.forEach(r => {
-                previousRatings.set(r.option.id, r.rating);
+                const option = poll.options.find(o => o.id === r.option.id);
+                if (option) {
+                    previousRatings.set(option, r.rating);
+                }
             });
         }
         return previousRatings;
@@ -68,15 +74,20 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
             return;
         }
         const optionId = active.id as string;
+        const option = poll.options.find(o => o.id === optionId);
+
+        if (!option) {
+            return;
+        }
 
         setOptionRatingMap(prevRatings => {
             const newRatings = new Map(prevRatings);
 
             if (over) {
                 const newRatingValue = parseInt(over.id as string, 10);
-                newRatings.set(optionId, newRatingValue);
+                newRatings.set(option, newRatingValue);
             } else {
-                newRatings.delete(optionId);
+                newRatings.delete(option);
             }
 
             return newRatings;
@@ -84,8 +95,8 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
     };
 
     const handleSubmit = () => {
-        const ratingsArray = Array.from(optionRatingMap.entries()).map(([optionId, rating]) => ({
-            optionId,
+        const ratingsArray = Array.from(optionRatingMap.entries()).map(([option, rating]) => ({
+            optionId: option.id,
             rating
         }));
 
@@ -99,41 +110,11 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
                 toast.success('Votes submitted successfully!');
             },
             onError: (error) => {
+                console.error(error);
                 toast.error(error.message || 'Error submitting vote.');
             },
             updater: (store: RecordSourceSelectorProxy) => {
-                const pollRecord = store.get(poll.id);
-                if (!pollRecord) {
-                    return;
-                }
-
-                const votes = pollRecord.getLinkedRecords('votes') || [];
-                const existingVoteIndex = votes.findIndex(v => v.getLinkedRecord('user')?.getValue('id') === userId);
-
-                const newVoteRecord = store.create(Date.now().toString(), 'Vote');
-                const userRecord = store.get(userId);
-                if (userRecord) {
-                    newVoteRecord.setLinkedRecord(userRecord, 'user');
-                }
-                const ratings = ratingsArray.map(r => {
-                    const ratingRecord = store.create(Date.now().toString() + r.optionId, 'VoteRating');
-                    const optionRecord = store.get(r.optionId);
-                    if (optionRecord) {
-                        ratingRecord.setLinkedRecord(optionRecord, 'option');
-                    }
-                    ratingRecord.setValue(r.rating, 'rating');
-                    return ratingRecord;
-                });
-                newVoteRecord.setLinkedRecords(ratings, 'ratings');
-
-                if (existingVoteIndex !== -1) {
-                    const newVotes = [...votes];
-                    newVotes[existingVoteIndex] = newVoteRecord;
-                    pollRecord.setLinkedRecords(newVotes, 'votes');
-                } else {
-                    const newVotes = [...votes, newVoteRecord];
-                    pollRecord.setLinkedRecords(newVotes, 'votes');
-                }
+                store.invalidateStore();
             },
         });
     };
@@ -142,34 +123,14 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
         return <div>Loading...</div>;
     }
 
-    const ratingOptionsMap = new Map<number, Set<string>>();
-    for (let i = 1; i <= 10; i++) {
-        ratingOptionsMap.set(i, new Set());
-    }
-    for (const [optionId, rating] of optionRatingMap.entries()) {
-        const options = ratingOptionsMap.get(rating);
-        if (options) {
-            options.add(optionId);
-        }
-    }
-
-    const draggableOption = (option: {id: string, optionText: string}) =>
+    const draggableOption = (option: Option) =>
         <Draggable key={option.id} id={option.id}>
-            <Badge variant="outline">{optionMap.get(option.id)}</Badge>
+            <Badge variant="outline">{option.optionText}</Badge>
         </Draggable>;
 
-    const tableBody: React.ReactNode[] = [];
-    const sortedRatings = Array.from(ratingOptionsMap.entries()).sort(([a], [b]) => b - a);
-    for (const [ratingValue, options] of sortedRatings) {
-        tableBody.push(<tr key={ratingValue}>
-            <td className="border border-gray-300 p-2 w-16 text-center">{ratingValue}</td>
-            <Droppable id={String(ratingValue)}>
-                {Array.from(options).map(optionId => draggableOption(poll.options.find(o => o.id === optionId)!))}
-            </Droppable>
-        </tr>)
-    }
+    const ratings = [10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+    const ratedOptions = new Set<Option>(optionRatingMap.keys());
 
-    const ratedOptions = new Set<string>(optionRatingMap.keys());
     return (
         <div className="vote">
             <DndContext onDragEnd={handleDragEnd}>
@@ -182,13 +143,22 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
                                 </tr>
                             </thead>
                             <tbody>
-                                {tableBody}
+                                {ratings.map(ratingValue => (
+                                    <tr key={ratingValue}>
+                                        <td className="border border-gray-300 p-2 w-16 text-center">{ratingValue}</td>
+                                        <Droppable id={String(ratingValue)}>
+                                            {Array.from(optionRatingMap.keys())
+                                                .filter(option => optionRatingMap.get(option) === ratingValue)
+                                                .map(draggableOption)}
+                                        </Droppable>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>
                     <div className="w-1/3 bg-blue-100 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2">Available Options</h3>
-                        {poll.options.filter(option => !ratedOptions.has(option.id)).map(draggableOption)}
+                        {poll.options.filter(option => !ratedOptions.has(option)).map(draggableOption)}
                     </div>
                 </div>
             </DndContext>
