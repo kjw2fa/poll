@@ -115,6 +115,16 @@ const PollPermissionsType = new graphql_1.GraphQLObjectType({
         },
     })
 });
+const PollOptionType = new graphql_1.GraphQLObjectType({
+    name: 'PollOption',
+    fields: () => ({
+        id: {
+            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
+            resolve: (parent) => toGlobalId('PollOption', parent.id)
+        },
+        optionText: { type: graphql_1.GraphQLString }
+    })
+});
 // Vote Type
 const VoteType = new graphql_1.GraphQLObjectType({
     name: 'Vote',
@@ -155,11 +165,11 @@ const PollType = new graphql_1.GraphQLObjectType({
             resolve: (parent) => parent.title
         },
         options: {
-            type: new graphql_1.GraphQLList(graphql_1.GraphQLString),
+            type: new graphql_1.GraphQLList(PollOptionType),
             resolve(parent) {
                 return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
-                    return rows.map(row => row.optionText);
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
+                    return rows.map(row => (Object.assign(Object.assign({}, row), { pollId: parent.id })));
                 });
             }
         },
@@ -184,11 +194,13 @@ const PollType = new graphql_1.GraphQLObjectType({
                     if (!voteRow) {
                         return [];
                     }
-                    const details = yield (0, db_utils_1.dbAll)('SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteRow.voteId]);
-                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                    const pollOptions = pollOptionsRows.map(r => r.optionText);
-                    const filteredDetails = details.filter(detail => pollOptions.includes(detail.option));
-                    return filteredDetails;
+                    const details = yield (0, db_utils_1.dbAll)(`
+                    SELECT vd.id, vd.voteId, vd.optionId, po.optionText as option, vd.rating 
+                    FROM VoteDetails vd
+                    JOIN PollOptions po ON vd.optionId = po.id
+                    WHERE vd.voteId = ?
+                `, [voteRow.voteId]);
+                    return details;
                 });
             }
         },
@@ -198,9 +210,9 @@ const PollType = new graphql_1.GraphQLObjectType({
                 return __awaiter(this, void 0, void 0, function* () {
                     const pollId = parent.id;
                     const pollTitle = parent.title;
-                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
                     const pollOptions = pollOptionsRows.map(r => r.optionText);
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId]);
+                    const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, po.optionText as option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId JOIN PollOptions po ON vd.optionId = po.id WHERE v.pollId = ?', [pollId]);
                     const optionRatings = {};
                     pollOptions.forEach((option) => {
                         optionRatings[option] = [];
@@ -352,8 +364,15 @@ const RootQuery = new graphql_1.GraphQLObjectType({
 const RatingInput = new graphql_1.GraphQLInputObjectType({
     name: 'RatingInput',
     fields: {
-        option: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
+        optionId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
         rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
+    }
+});
+const PollOptionInput = new graphql_1.GraphQLInputObjectType({
+    name: 'PollOptionInput',
+    fields: {
+        id: { type: graphql_1.GraphQLID },
+        optionText: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) }
     }
 });
 const LoginResponseType = new graphql_1.GraphQLObjectType({
@@ -384,7 +403,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
             type: CreatePollPayload,
             args: {
                 title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) },
+                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(PollOptionInput))) },
                 userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) }
             },
             resolve(parent, args) {
@@ -394,7 +413,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title) VALUES (?)', [args.title]);
                     const pollId = result.lastID;
                     for (const option of args.options) {
-                        yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                        yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
                     }
                     yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, userId]);
                     const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
@@ -431,8 +450,9 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     }
                     const result = yield (0, db_utils_1.dbRun)('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId]);
                     const voteId = result.lastID;
-                    for (const { option, rating } of args.ratings) {
-                        yield (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
+                    for (const { optionId: optionIdStr, rating } of args.ratings) {
+                        const { id: optionId } = fromGlobalId(optionIdStr);
+                        yield (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId), rating]);
                     }
                     const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
                     return {
@@ -450,7 +470,7 @@ const Mutation = new graphql_1.GraphQLObjectType({
                 pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
                 userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
                 title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(graphql_1.GraphQLString)) }
+                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(PollOptionInput))) }
             },
             resolve(parent, args) {
                 return __awaiter(this, void 0, void 0, function* () {
@@ -465,20 +485,22 @@ const Mutation = new graphql_1.GraphQLObjectType({
                     // Update title
                     yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
                     // Get current options
-                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                    const currentOptions = currentOptionsRows.map(r => r.optionText);
-                    // Find removed and added options
-                    const removedOptions = currentOptions.filter(o => !args.options.includes(o));
-                    const addedOptions = args.options.filter(o => !currentOptions.includes(o));
+                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                    const newOptions = args.options;
+                    // Find removed, added, and existing options
+                    const newOptionIds = newOptions.map(o => o.id ? fromGlobalId(o.id).id : null).filter(id => id !== null);
+                    const removedOptions = currentOptionsRows.filter(o => !newOptionIds.includes(String(o.id)));
+                    const addedOptions = newOptions.filter(o => !o.id);
                     if (removedOptions.length > 0) {
-                        const placeholders = removedOptions.map(() => '?').join(',');
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
+                        const removedOptionIds = removedOptions.map(o => o.id);
+                        const placeholders = removedOptionIds.map(() => '?').join(',');
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE id IN (${placeholders})`, removedOptionIds);
                         // Also delete votes for removed options
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
+                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE optionId IN (${placeholders})`, removedOptionIds);
                     }
                     if (addedOptions.length > 0) {
                         for (const option of addedOptions) {
-                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
                         }
                     }
                     const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);

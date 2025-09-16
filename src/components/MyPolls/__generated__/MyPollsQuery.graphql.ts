@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6a1149e9cd4801a3c7b27c4d911aa9bb>>
+ * @generated SignedSource<<18df1b2e961513e0e37002b591637ffb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -182,8 +182,20 @@ v10 = [
           {
             "alias": null,
             "args": null,
-            "kind": "ScalarField",
+            "concreteType": "PollOption",
+            "kind": "LinkedField",
             "name": "options",
+            "plural": true,
+            "selections": [
+              (v4/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "optionText",
+                "storageKey": null
+              }
+            ],
             "storageKey": null
           },
           {
@@ -329,7 +341,7 @@ return {
     ]
   },
   "params": {
-    "cacheID": "ccff9d0bb6e9f50a9292ca2c40df42e4",
+    "cacheID": "4bde79eb2a40de42790cf3f0dd3ba047",
     "id": null,
     "metadata": {
       "connection": [
@@ -355,7 +367,7 @@ return {
     },
     "name": "MyPollsQuery",
     "operationKind": "query",
-    "text": "query MyPollsQuery(\n  $userId: ID!\n  $count: Int = 10\n  $cursor: String\n) {\n  myPolls(userId: $userId) {\n    createdPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    votedPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
+    "text": "query MyPollsQuery(\n  $userId: ID!\n  $count: Int = 10\n  $cursor: String\n) {\n  myPolls(userId: $userId) {\n    createdPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    votedPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();

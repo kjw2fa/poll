@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f2e36411762bff831a2f7de78a3ee815>>
+ * @generated SignedSource<<6c89b98a74f840ea1c1d1a058a7f6339>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,8 +10,12 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type PollOptionInput = {
+  id?: string | null | undefined;
+  optionText: string;
+};
 export type EditPollMutation$variables = {
-  options: ReadonlyArray<string>;
+  options: ReadonlyArray<PollOptionInput>;
   pollId: string;
   title: string;
   userId: string;
@@ -19,7 +23,10 @@ export type EditPollMutation$variables = {
 export type EditPollMutation$data = {
   readonly editPoll: {
     readonly id: string;
-    readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+    readonly options: ReadonlyArray<{
+      readonly id: string;
+      readonly optionText: string | null | undefined;
+    } | null | undefined> | null | undefined;
     readonly results: {
       readonly " $fragmentSpreads": FragmentRefs<"PollResults_results">;
     } | null | undefined;
@@ -93,8 +100,20 @@ v7 = {
 v8 = {
   "alias": null,
   "args": null,
-  "kind": "ScalarField",
+  "concreteType": "PollOption",
+  "kind": "LinkedField",
   "name": "options",
+  "plural": true,
+  "selections": [
+    (v6/*: any*/),
+    {
+      "alias": null,
+      "args": null,
+      "kind": "ScalarField",
+      "name": "optionText",
+      "storageKey": null
+    }
+  ],
   "storageKey": null
 },
 v9 = [
@@ -267,16 +286,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "04abed69bd8c4f4647299f2266712d0b",
+    "cacheID": "583ea782872c03426716de3b9d8fb5c0",
     "id": null,
     "metadata": {},
     "name": "EditPollMutation",
     "operationKind": "mutation",
-    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [String!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options\n    ...Vote_poll_1xxw8p\n    results {\n      ...PollResults_results\n    }\n  }\n}\n\nfragment PollResults_results on PollResult {\n  pollTitle\n  totalVotes\n  voters\n  results {\n    option\n    averageRating\n  }\n  allAverageRatings {\n    option\n    averageRating\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
+    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [PollOptionInput!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options {\n      id\n      optionText\n    }\n    ...Vote_poll_1xxw8p\n    results {\n      ...PollResults_results\n    }\n  }\n}\n\nfragment PollResults_results on PollResult {\n  pollTitle\n  totalVotes\n  voters\n  results {\n    option\n    averageRating\n  }\n  allAverageRatings {\n    option\n    averageRating\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  id\n  options {\n    id\n    optionText\n  }\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "bb0b68a851ed7438af8e3b31893ad2b5";
+(node as any).hash = "3c3252842db5f410eab4b98ab846eb2f";
 
 export default node;

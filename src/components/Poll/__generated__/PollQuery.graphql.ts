@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f28a901f2dfb53cd3d90652a1c30a05a>>
+ * @generated SignedSource<<49b1682d28aad59336b471b2809b8f7c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -188,8 +188,20 @@ return {
           {
             "alias": null,
             "args": null,
-            "kind": "ScalarField",
+            "concreteType": "PollOption",
+            "kind": "LinkedField",
             "name": "options",
+            "plural": true,
+            "selections": [
+              (v2/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "optionText",
+                "storageKey": null
+              }
+            ],
             "storageKey": null
           },
           {
@@ -269,12 +281,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "46ccd9f51ff725104ff59bb648fb1586",
+    "cacheID": "dde14e91980b593ed37072fc9080dc45",
     "id": null,
     "metadata": {},
     "name": "PollQuery",
     "operationKind": "query",
-    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    permissions {\n      permission_type\n      target_id\n    }\n    ...Vote_poll_1xxw8p\n    ...EditPoll_poll\n    results {\n      ...PollResults_results\n    }\n  }\n}\n\nfragment EditPoll_poll on Poll {\n  id\n  title\n  options\n}\n\nfragment PollResults_results on PollResult {\n  pollTitle\n  totalVotes\n  voters\n  results {\n    option\n    averageRating\n  }\n  allAverageRatings {\n    option\n    averageRating\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  options\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
+    "text": "query PollQuery(\n  $id: ID!\n  $userId: ID!\n) {\n  poll(id: $id) {\n    id\n    title\n    permissions {\n      permission_type\n      target_id\n    }\n    ...Vote_poll_1xxw8p\n    ...EditPoll_poll\n    results {\n      ...PollResults_results\n    }\n  }\n}\n\nfragment EditPoll_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n}\n\nfragment PollResults_results on PollResult {\n  pollTitle\n  totalVotes\n  voters\n  results {\n    option\n    averageRating\n  }\n  allAverageRatings {\n    option\n    averageRating\n  }\n}\n\nfragment Vote_poll_1xxw8p on Poll {\n  id\n  options {\n    id\n    optionText\n  }\n  votes(userId: $userId) {\n    option\n    rating\n  }\n}\n"
   }
 };
 })();

@@ -59,10 +59,11 @@ const dbPromise = new Promise((resolve, reject) => {
                 });
                 db.run(`CREATE TABLE IF NOT EXISTS VoteDetails (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    pollId INTEGER,
                     voteId INTEGER,
-                    option TEXT,
-                    rating INTEGER
+                    optionId INTEGER,
+                    rating INTEGER,
+                    FOREIGN KEY (voteId) REFERENCES Votes(voteId),
+                    FOREIGN KEY (optionId) REFERENCES PollOptions(id)
                     )`, (err) => {
                     if (err) {
                         console.error(err.message);

@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const CreatePollMutation = graphql`
-  mutation CreatePollMutation($title: String!, $options: [String]!, $userId: ID!) {
+  mutation CreatePollMutation($title: String!, $options: [PollOptionInput!]!, $userId: ID!) {
     createPoll(title: $title, options: $options, userId: $userId) {
         pollEdge {
             cursor
@@ -29,7 +29,8 @@ const CreatePollComponent = ({ userId }: { userId: string }) => {
     const handleSave = (pollData: Omit<PollFormData, 'id'>) => {
         commitMutation({
             variables: {
-                ...pollData,
+                title: pollData.title,
+                options: pollData.options.map(o => ({ optionText: o.optionText })),
                 userId,
             },
             onCompleted: (response) => {

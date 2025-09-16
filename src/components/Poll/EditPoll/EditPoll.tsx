@@ -6,11 +6,14 @@ import { EditPoll_poll$key } from './__generated__/EditPoll_poll.graphql';
 import PollForm, { PollFormData } from '../../PollForm/PollForm';
 
 const EditPollMutation = graphql`
-  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [String!]!) {
+  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [PollOptionInput!]!) {
     editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {
       id
       title
-      options
+      options {
+        id
+        optionText
+      }
       ...Vote_poll @arguments(userId: $userId)
       results {
         ...PollResults_results
@@ -23,7 +26,10 @@ const EditPoll_poll = graphql`
   fragment EditPoll_poll on Poll {
     id
     title
-    options
+    options {
+      id
+      optionText
+    }
   }
 `;
 
@@ -37,7 +43,7 @@ const EditPoll = ({ poll: pollProp, userId }: { poll: EditPoll_poll$key, userId:
         pollId: poll.id,
         userId,
         title: pollData.title,
-        options: pollData.options,
+        options: pollData.options.map(o => ({ id: o.id, optionText: o.optionText })),
       },
       onCompleted: () => {
         toast.success('Poll updated successfully!');

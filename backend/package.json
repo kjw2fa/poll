@@ -7,7 +7,9 @@
     "start": "node dist/server.js",
     "build": "tsc",
     "dev": "tsc -w & nodemon dist/server.js",
-    "update-schema": "get-graphql-schema http://localhost:3001/graphql > schema.graphql"
+    "update-schema": "get-graphql-schema http://localhost:3001/graphql > schema.graphql",
+    "generate": "npm run update-schema",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",

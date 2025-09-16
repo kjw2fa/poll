@@ -27,8 +27,8 @@ interface Vote {
 
 interface VoteDetail {
     id: number;
-    pollId: number;
     voteId: number;
+    optionId: number;
     option: string;
     rating: number;
 }
@@ -60,9 +60,8 @@ interface VoteRow {
 
 interface VoteDetailRow {
     id: number;
-    pollId: number;
     voteId: number;
-    option: string;
+    optionId: number;
     rating: number;
 }
 
@@ -198,6 +197,19 @@ const PollPermissionsType = new GraphQLObjectType({
     })
 });
 
+
+
+const PollOptionType = new GraphQLObjectType({
+    name: 'PollOption',
+    fields: () => ({
+        id: { 
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (parent: PollOptionRow) => toGlobalId('PollOption', parent.id)
+        },
+        optionText: { type: GraphQLString }
+    })
+});
+
 // Vote Type
 const VoteType = new GraphQLObjectType({
     name: 'Vote',
@@ -241,10 +253,10 @@ const PollType: GraphQLObjectType = new GraphQLObjectType({
             resolve: (parent: PollRow) => parent.title
         },
         options: { 
-            type: new GraphQLList(GraphQLString),
-            async resolve(parent: PollRow): Promise<string[]> {
-                const rows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
-                return rows.map(row => row.optionText);
+            type: new GraphQLList(PollOptionType),
+            async resolve(parent: PollRow): Promise<PollOptionRow[]> {
+                const rows = await dbAll<PollOptionRow>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
+                return rows.map(row => ({...row, pollId: parent.id}));
             }
         },
         permissions: {
@@ -266,14 +278,15 @@ const PollType: GraphQLObjectType = new GraphQLObjectType({
                 if (!voteRow) {
                     return [];
                 }
-                const details = await dbAll<VoteDetailRow>('SELECT option, rating FROM VoteDetails WHERE pollId = ? AND voteId = ?', [pollId, voteRow.voteId]);
+
+                const details = await dbAll<any>(`
+                    SELECT vd.id, vd.voteId, vd.optionId, po.optionText as option, vd.rating 
+                    FROM VoteDetails vd
+                    JOIN PollOptions po ON vd.optionId = po.id
+                    WHERE vd.voteId = ?
+                `, [voteRow.voteId]);
                 
-                const pollOptionsRows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                const pollOptions = pollOptionsRows.map(r => r.optionText);
-                
-                const filteredDetails = details.filter(detail => pollOptions.includes(detail.option));
-                
-                return filteredDetails;
+                return details;
             }
         },
         results: {
@@ -282,10 +295,10 @@ const PollType: GraphQLObjectType = new GraphQLObjectType({
                 const pollId = parent.id;
                 const pollTitle = parent.title;
 
-                const pollOptionsRows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+                const pollOptionsRows = await dbAll<PollOptionRow>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
                 const pollOptions = pollOptionsRows.map(r => r.optionText);
 
-                const rows = await dbAll<PollResultRow>('SELECT u.username, vd.option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId WHERE v.pollId = ?', [pollId]);
+                const rows = await dbAll<any>('SELECT u.username, po.optionText as option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId JOIN PollOptions po ON vd.optionId = po.id WHERE v.pollId = ?', [pollId]);
                 const optionRatings: { [key: string]: number[] } = {};
                 pollOptions.forEach((option: string) => {
                     optionRatings[option] = [];
@@ -440,8 +453,16 @@ const RootQuery = new GraphQLObjectType({
 const RatingInput = new GraphQLInputObjectType({
     name: 'RatingInput',
     fields: {
-        option: { type: new GraphQLNonNull(GraphQLString) },
+        optionId: { type: new GraphQLNonNull(GraphQLID) },
         rating: { type: new GraphQLNonNull(GraphQLInt) }
+    }
+});
+
+const PollOptionInput = new GraphQLInputObjectType({
+    name: 'PollOptionInput',
+    fields: {
+        id: { type: GraphQLID },
+        optionText: { type: new GraphQLNonNull(GraphQLString) }
     }
 });
 
@@ -476,17 +497,17 @@ const Mutation = new GraphQLObjectType({
             type: CreatePollPayload,
             args: {
                 title: { type: new GraphQLNonNull(GraphQLString) },
-                options: { type: new GraphQLNonNull(new GraphQLList(GraphQLString)) },
+                options: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PollOptionInput))) },
                 userId: { type: new GraphQLNonNull(GraphQLID) }
             },
-            async resolve(parent: any, args: { title: string, options: string[], userId: string }): Promise<any> {
+            async resolve(parent: any, args: { title: string, options: { optionText: string }[], userId: string }): Promise<any> {
                 const { id: userIdStr } = fromGlobalId(args.userId);
                 const userId = parseInt(userIdStr, 10);
                 const result = await dbRun('INSERT INTO Polls (title) VALUES (?)', [args.title]);
                 const pollId = result.lastID;
 
                 for (const option of args.options) {
-                    await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                    await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
                 }
 
                 await dbRun('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.EDIT, TargetType.USER, userId]);
@@ -508,7 +529,7 @@ const Mutation = new GraphQLObjectType({
                 userId: { type: new GraphQLNonNull(GraphQLID) },
                 ratings: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(RatingInput))) }
             },
-            async resolve(parent: any, args: { pollId: string, userId: string, ratings: { option: string, rating: number }[] }): Promise<any> {
+            async resolve(parent: any, args: { pollId: string, userId: string, ratings: { optionId: string, rating: number }[] }): Promise<any> {
                 const { id: pollIdStr } = fromGlobalId(args.pollId);
                 const pollId = parseInt(pollIdStr, 10);
                 const { id: userIdStr } = fromGlobalId(args.userId);
@@ -528,8 +549,9 @@ const Mutation = new GraphQLObjectType({
                 const result = await dbRun('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId]);
                 const voteId = result.lastID;
 
-                for (const { option, rating } of args.ratings) {
-                    await dbRun('INSERT INTO VoteDetails (pollId, voteId, option, rating) VALUES (?, ?, ?, ?)', [pollId, voteId, option, rating]);
+                for (const { optionId: optionIdStr, rating } of args.ratings) {
+                    const { id: optionId } = fromGlobalId(optionIdStr);
+                    await dbRun('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId), rating]);
                 }
                 const row = await dbGet<PollRow>('SELECT * FROM Polls WHERE id = ?', [pollId]);
                 return {
@@ -546,9 +568,9 @@ const Mutation = new GraphQLObjectType({
                 pollId: { type: new GraphQLNonNull(GraphQLID) },
                 userId: { type: new GraphQLNonNull(GraphQLID) },
                 title: { type: new GraphQLNonNull(GraphQLString) },
-                options: { type: new GraphQLNonNull(new GraphQLList(GraphQLString)) }
+                options: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PollOptionInput))) }
             },
-            async resolve(parent: any, args: { pollId: string, userId: string, title: string, options: string[] }): Promise<PollRow | null> {
+            async resolve(parent: any, args: { pollId: string, userId: string, title: string, options: { id?: string, optionText: string }[] }): Promise<PollRow | null> {
                 const { id: pollIdStr } = fromGlobalId(args.pollId);
                 const pollId = parseInt(pollIdStr, 10);
                 const { id: userIdStr } = fromGlobalId(args.userId);
@@ -563,23 +585,26 @@ const Mutation = new GraphQLObjectType({
                 await dbRun('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
 
                 // Get current options
-                const currentOptionsRows = await dbAll<PollOptionRow>('SELECT optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                const currentOptions = currentOptionsRows.map(r => r.optionText);
+                const currentOptionsRows = await dbAll<PollOptionRow>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
 
-                // Find removed and added options
-                const removedOptions = currentOptions.filter(o => !args.options.includes(o));
-                const addedOptions = args.options.filter(o => !currentOptions.includes(o));
+                const newOptions = args.options;
+
+                // Find removed, added, and existing options
+                const newOptionIds = newOptions.map(o => o.id ? fromGlobalId(o.id).id : null).filter(id => id !== null);
+                const removedOptions = currentOptionsRows.filter(o => !newOptionIds.includes(String(o.id)));
+                const addedOptions = newOptions.filter(o => !o.id);
 
                 if (removedOptions.length > 0) {
-                    const placeholders = removedOptions.map(() => '?').join(',');
-                    await dbRun(`DELETE FROM PollOptions WHERE pollId = ? AND optionText IN (${placeholders})`, [pollId, ...removedOptions]);
+                    const removedOptionIds = removedOptions.map(o => o.id);
+                    const placeholders = removedOptionIds.map(() => '?').join(',');
+                    await dbRun(`DELETE FROM PollOptions WHERE id IN (${placeholders})`, removedOptionIds);
                     // Also delete votes for removed options
-                    await dbRun(`DELETE FROM VoteDetails WHERE pollId = ? AND option IN (${placeholders})`, [pollId, ...removedOptions]);
+                    await dbRun(`DELETE FROM VoteDetails WHERE optionId IN (${placeholders})`, removedOptionIds);
                 }
 
                 if (addedOptions.length > 0) {
                     for (const option of addedOptions) {
-                        await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option]);
+                        await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
                     }
                 }
                 

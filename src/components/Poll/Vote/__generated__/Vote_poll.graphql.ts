@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d2a9f2ee6b49f1be64a09aa055342632>>
+ * @generated SignedSource<<08da7ae99386c2566a31be9bfe8dd821>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,11 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type Vote_poll$data = {
-  readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+  readonly id: string;
+  readonly options: ReadonlyArray<{
+    readonly id: string;
+    readonly optionText: string | null | undefined;
+  } | null | undefined> | null | undefined;
   readonly votes: ReadonlyArray<{
     readonly option: string | null | undefined;
     readonly rating: number | null | undefined;
@@ -23,7 +27,15 @@ export type Vote_poll$key = {
   readonly " $fragmentSpreads": FragmentRefs<"Vote_poll">;
 };
 
-const node: ReaderFragment = {
+const node: ReaderFragment = (function(){
+var v0 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
+return {
   "argumentDefinitions": [
     {
       "defaultValue": null,
@@ -35,11 +47,24 @@ const node: ReaderFragment = {
   "metadata": null,
   "name": "Vote_poll",
   "selections": [
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
+      "concreteType": "PollOption",
+      "kind": "LinkedField",
       "name": "options",
+      "plural": true,
+      "selections": [
+        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "optionText",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -77,7 +102,8 @@ const node: ReaderFragment = {
   "type": "Poll",
   "abstractKey": null
 };
+})();
 
-(node as any).hash = "b026ffc45c92ded373ace6cb6388c0e7";
+(node as any).hash = "77666151b19388007c4bb645d05f7ebc";
 
 export default node;

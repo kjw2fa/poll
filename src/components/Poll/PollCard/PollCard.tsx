@@ -18,7 +18,10 @@ const pollCardFragment = graphql`
   fragment PollCard_poll on Poll {
     id
     title
-    options
+    options {
+      id
+      optionText
+    }
     permissions {
       permission_type
       target_id
@@ -43,7 +46,7 @@ const PollCard = (props: { poll: PollCard_poll$key, userId: string }) => {
       <CardContent className="flex flex-wrap gap-2">
         {visibleOptions.map((option, idx) => (
           <Badge key={idx} variant="secondary">
-            {option}
+            {option.optionText}
           </Badge>
         ))}
         {pollOptions.length > numberOfOptionsToShow && (
@@ -57,7 +60,7 @@ const PollCard = (props: { poll: PollCard_poll$key, userId: string }) => {
               <div className="flex flex-col gap-1">
                 {pollOptions.map((option, idx) => (
                   <Badge key={idx} variant="secondary">
-                    {option}
+                    {option.optionText}
                   </Badge>
                 ))}
               </div>

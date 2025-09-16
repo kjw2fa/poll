@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<114eb7f2087b57330c75765da186c851>>
+ * @generated SignedSource<<c4a2b14e87f510eeee49ee02edbcbb30>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,10 @@ import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type EditPoll_poll$data = {
   readonly id: string;
-  readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+  readonly options: ReadonlyArray<{
+    readonly id: string;
+    readonly optionText: string | null | undefined;
+  } | null | undefined> | null | undefined;
   readonly title: string | null | undefined;
   readonly " $fragmentType": "EditPoll_poll";
 };
@@ -21,19 +24,21 @@ export type EditPoll_poll$key = {
   readonly " $fragmentSpreads": FragmentRefs<"EditPoll_poll">;
 };
 
-const node: ReaderFragment = {
+const node: ReaderFragment = (function(){
+var v0 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
+return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "EditPoll_poll",
   "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    },
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -44,15 +49,28 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
+      "concreteType": "PollOption",
+      "kind": "LinkedField",
       "name": "options",
+      "plural": true,
+      "selections": [
+        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "optionText",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     }
   ],
   "type": "Poll",
   "abstractKey": null
 };
+})();
 
-(node as any).hash = "98c1377419a86c9c19f3d06121be8aa6";
+(node as any).hash = "75ed20feba37038264386f01f4b2cda3";
 
 export default node;

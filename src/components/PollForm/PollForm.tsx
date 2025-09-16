@@ -5,25 +5,28 @@ import { Label } from "../ui/label";
 import { toast } from 'sonner';
 
 export type PollFormData = {
-  id?: string;
-  title: string;
-  options: string[];
+    id?: string;
+    title: string;
+    options: {
+        id: string;
+        optionText: string;
+    }[];
 };
 
 type PollFormProps = {
-  poll: PollFormData | null;
-  onSubmit: (data: Omit<PollFormData, 'id'>) => void;
+    poll: PollFormData | null;
+    onSubmit: (data: Omit<PollFormData, 'id'>) => void;
 };
 
 const PollForm = ({ poll, onSubmit }: PollFormProps) => {
     const [title, setTitle] = useState('');
-    const [options, setOptions] = useState<string[]>([]);
+    const [options, setOptions] = useState<{ id: string; optionText: string }[]>([]);
     const [newOption, setNewOption] = useState('');
 
     useEffect(() => {
         if (poll) {
             setTitle(poll.title);
-            setOptions(poll.options.filter((o): o is string => o !== null && o !== undefined));
+            setOptions(poll.options);
         }
     }, [poll]);
 
@@ -33,7 +36,7 @@ const PollForm = ({ poll, onSubmit }: PollFormProps) => {
 
     const handleAddNewOption = () => {
         if (newOption.trim() !== '' && options.length < 100) {
-            setOptions([...options, newOption.trim()]);
+            setOptions([...options, { id: '', optionText: newOption.trim() }]);
             setNewOption('');
         }
     };
@@ -47,7 +50,7 @@ const PollForm = ({ poll, onSubmit }: PollFormProps) => {
 
     const handleOptionChange = (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
         const newOptions = [...options];
-        newOptions[index] = event.target.value;
+        newOptions[index] = { ...newOptions[index], optionText: event.target.value };
         setOptions(newOptions);
     };
 
@@ -86,7 +89,7 @@ const PollForm = ({ poll, onSubmit }: PollFormProps) => {
                 ) : (
                     options.map((option, index) => (
                         <div key={index} className="flex w-full items-center space-x-2">
-                            <Input type="text" value={option} onChange={(e) => handleOptionChange(index, e)} />
+                            <Input type="text" value={option.optionText} onChange={(e) => handleOptionChange(index, e)} readOnly={!!option.id} />
                             <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
                         </div>
                     ))

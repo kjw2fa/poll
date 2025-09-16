@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<3f900932ad6ef335615941a4f4dac887>>
+ * @generated SignedSource<<d58b925bab3c4c4688c3e1270d0633db>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,7 +13,10 @@ export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 import { FragmentRefs } from "relay-runtime";
 export type PollCard_poll$data = {
   readonly id: string;
-  readonly options: ReadonlyArray<string | null | undefined> | null | undefined;
+  readonly options: ReadonlyArray<{
+    readonly id: string;
+    readonly optionText: string | null | undefined;
+  } | null | undefined> | null | undefined;
   readonly permissions: ReadonlyArray<{
     readonly permission_type: PermissionType | null | undefined;
     readonly target_id: string | null | undefined;
@@ -26,19 +29,21 @@ export type PollCard_poll$key = {
   readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
 };
 
-const node: ReaderFragment = {
+const node: ReaderFragment = (function(){
+var v0 = {
+  "alias": null,
+  "args": null,
+  "kind": "ScalarField",
+  "name": "id",
+  "storageKey": null
+};
+return {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
   "name": "PollCard_poll",
   "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "id",
-      "storageKey": null
-    },
+    (v0/*: any*/),
     {
       "alias": null,
       "args": null,
@@ -49,8 +54,20 @@ const node: ReaderFragment = {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
+      "concreteType": "PollOption",
+      "kind": "LinkedField",
       "name": "options",
+      "plural": true,
+      "selections": [
+        (v0/*: any*/),
+        {
+          "alias": null,
+          "args": null,
+          "kind": "ScalarField",
+          "name": "optionText",
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     },
     {
@@ -82,7 +99,8 @@ const node: ReaderFragment = {
   "type": "Poll",
   "abstractKey": null
 };
+})();
 
-(node as any).hash = "7365f76609717046e5cbbc238ca25737";
+(node as any).hash = "5857926392bf3158da25774a88a9d2a2";
 
 export default node;
