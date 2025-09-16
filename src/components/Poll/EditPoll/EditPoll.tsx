@@ -14,10 +14,7 @@ const EditPollMutation = graphql`
         id
         optionText
       }
-      ...Vote_poll @arguments(userId: $userId)
-      results {
-        ...PollResults_results
-      }
+      ...Vote_poll
     }
   }
 `;

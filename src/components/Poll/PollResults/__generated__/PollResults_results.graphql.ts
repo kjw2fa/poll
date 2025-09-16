@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<f13c126d61cd1b0c1231262af31aad40>>
+ * @generated SignedSource<<0ba775cd62c0ffe1f2f17d7e8990e8af>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,17 +11,17 @@
 import { ReaderFragment } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type PollResults_results$data = {
-  readonly allAverageRatings: ReadonlyArray<{
-    readonly averageRating: number | null | undefined;
-    readonly option: string | null | undefined;
+  readonly votes: ReadonlyArray<{
+    readonly ratings: ReadonlyArray<{
+      readonly option: {
+        readonly optionText: string | null | undefined;
+      };
+      readonly rating: number;
+    }> | null | undefined;
+    readonly user: {
+      readonly username: string | null | undefined;
+    };
   } | null | undefined> | null | undefined;
-  readonly pollTitle: string | null | undefined;
-  readonly results: ReadonlyArray<{
-    readonly averageRating: number | null | undefined;
-    readonly option: string | null | undefined;
-  } | null | undefined> | null | undefined;
-  readonly totalVotes: number | null | undefined;
-  readonly voters: ReadonlyArray<string | null | undefined> | null | undefined;
   readonly " $fragmentType": "PollResults_results";
 };
 export type PollResults_results$key = {
@@ -29,24 +29,7 @@ export type PollResults_results$key = {
   readonly " $fragmentSpreads": FragmentRefs<"PollResults_results">;
 };
 
-const node: ReaderFragment = (function(){
-var v0 = [
-  {
-    "alias": null,
-    "args": null,
-    "kind": "ScalarField",
-    "name": "option",
-    "storageKey": null
-  },
-  {
-    "alias": null,
-    "args": null,
-    "kind": "ScalarField",
-    "name": "averageRating",
-    "storageKey": null
-  }
-];
-return {
+const node: ReaderFragment = {
   "argumentDefinitions": [],
   "kind": "Fragment",
   "metadata": null,
@@ -55,50 +38,73 @@ return {
     {
       "alias": null,
       "args": null,
-      "kind": "ScalarField",
-      "name": "pollTitle",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "totalVotes",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "voters",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "WinningOption",
+      "concreteType": "Vote",
       "kind": "LinkedField",
-      "name": "results",
+      "name": "votes",
       "plural": true,
-      "selections": (v0/*: any*/),
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "concreteType": "WinningOption",
-      "kind": "LinkedField",
-      "name": "allAverageRatings",
-      "plural": true,
-      "selections": (v0/*: any*/),
+      "selections": [
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "User",
+          "kind": "LinkedField",
+          "name": "user",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "username",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "VoteRating",
+          "kind": "LinkedField",
+          "name": "ratings",
+          "plural": true,
+          "selections": [
+            {
+              "alias": null,
+              "args": null,
+              "concreteType": "PollOption",
+              "kind": "LinkedField",
+              "name": "option",
+              "plural": false,
+              "selections": [
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
+                  "name": "optionText",
+                  "storageKey": null
+                }
+              ],
+              "storageKey": null
+            },
+            {
+              "alias": null,
+              "args": null,
+              "kind": "ScalarField",
+              "name": "rating",
+              "storageKey": null
+            }
+          ],
+          "storageKey": null
+        }
+      ],
       "storageKey": null
     }
   ],
-  "type": "PollResult",
+  "type": "Poll",
   "abstractKey": null
 };
-})();
 
-(node as any).hash = "4e5d8545bb8b43dc3fb9a67c129ea354";
+(node as any).hash = "7c0c6b2b1625b6a64492caabed22c2bf";
 
 export default node;

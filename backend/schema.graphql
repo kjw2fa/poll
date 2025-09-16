@@ -49,8 +49,7 @@ type Poll {
   title: String
   options: [PollOption]
   permissions: [PollPermissions]
-  votes(userId: ID!): [Vote]
-  results: PollResult
+  votes: [Vote]
 }
 
 type PollConnection {
@@ -72,14 +71,6 @@ type PollPermissions {
   permission_type: PermissionType
   target_type: TargetType
   target_id: ID
-}
-
-type PollResult {
-  pollTitle: String
-  totalVotes: Int
-  voters: [String]
-  results: [WinningOption]
-  allAverageRatings: [WinningOption]
 }
 
 input RatingInput {
@@ -109,8 +100,15 @@ type User {
 }
 
 type Vote {
-  option: String
-  rating: Int
+  id: ID!
+  user: User!
+  poll: Poll!
+  ratings: [VoteRating!]
+}
+
+type VoteRating {
+    option: PollOption!
+    rating: Int!
 }
 
 type WinningOption {

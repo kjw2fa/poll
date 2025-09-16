@@ -11,7 +11,7 @@ import { PollQuery as PollQueryType } from './__generated__/PollQuery.graphql';
 import PageContainer from '../ui/PageContainer';
 
 const PollQuery = graphql`
-  query PollQuery($id: ID!, $userId: ID!) {
+  query PollQuery($id: ID!) {
     poll(id: $id) {
       id
       title
@@ -19,11 +19,9 @@ const PollQuery = graphql`
         permission_type
         target_id
       }
-      ...Vote_poll @arguments(userId: $userId)
+      ...Vote_poll
       ...EditPoll_poll
-      results {
-        ...PollResults_results
-      }
+      ...PollResults_results
     }
   }
 `;
@@ -45,13 +43,12 @@ const Poll = (props: { userId: string }) => {
 const PollComponent = ({ userId, id }) => {
     const data = useLazyLoadQuery<PollQueryType>(
         PollQuery,
-        { id, userId },
+        { id },
     );
     const navigate = useNavigate();
     const location = useLocation();
 
     const poll = data.poll;
-    const canEdit = poll?.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
 
     useEffect(() => {
         if (poll && !location.pathname.endsWith('vote') && !location.pathname.endsWith('results') && !location.pathname.endsWith('edit')) {
@@ -59,6 +56,11 @@ const PollComponent = ({ userId, id }) => {
         }
     }, [poll, id, navigate, location.pathname]);
 
+    if (!poll) {
+        return <div>Poll not found</div>;
+    }
+
+    const canEdit = poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
     const activeTab = location.pathname.split('/').pop();
 
     return (
@@ -73,7 +75,7 @@ const PollComponent = ({ userId, id }) => {
             </Tabs>
             <Routes>
                 <Route path="vote" element={<Vote userId={userId} poll={poll} />} />
-                <Route path="results" element={<PollResults resultsRef={poll.results} />} />
+                <Route path="results" element={<PollResults resultsRef={poll} />} />
                 {canEdit && <Route path="edit" element={<EditPoll userId={userId} poll={poll} />} />}
             </Routes>
         </div>

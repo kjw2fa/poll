@@ -125,31 +125,51 @@ const PollOptionType = new graphql_1.GraphQLObjectType({
         optionText: { type: graphql_1.GraphQLString }
     })
 });
+const VoteRatingType = new graphql_1.GraphQLObjectType({
+    name: 'VoteRating',
+    fields: () => ({
+        option: { type: new graphql_1.GraphQLNonNull(PollOptionType) },
+        rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
+    })
+});
 // Vote Type
 const VoteType = new graphql_1.GraphQLObjectType({
     name: 'Vote',
     fields: () => ({
-        option: { type: graphql_1.GraphQLString },
-        rating: { type: graphql_1.GraphQLInt }
-    })
-});
-// WinningOption Type
-const WinningOptionType = new graphql_1.GraphQLObjectType({
-    name: 'WinningOption',
-    fields: () => ({
-        option: { type: graphql_1.GraphQLString },
-        averageRating: { type: graphql_1.GraphQLFloat }
-    })
-});
-// PollResult Type
-const PollResultType = new graphql_1.GraphQLObjectType({
-    name: 'PollResult',
-    fields: () => ({
-        pollTitle: { type: graphql_1.GraphQLString },
-        totalVotes: { type: graphql_1.GraphQLInt },
-        voters: { type: new graphql_1.GraphQLList(graphql_1.GraphQLString) },
-        results: { type: new graphql_1.GraphQLList(WinningOptionType) },
-        allAverageRatings: { type: new graphql_1.GraphQLList(WinningOptionType) }
+        id: {
+            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
+            resolve: (parent) => toGlobalId('Vote', parent.voteId)
+        },
+        user: {
+            type: new graphql_1.GraphQLNonNull(UserType),
+            resolve(parent) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    return yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE id = ?', [parent.userId]);
+                });
+            }
+        },
+        poll: {
+            type: new graphql_1.GraphQLNonNull(PollType),
+            resolve(parent) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    return yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
+                });
+            }
+        },
+        ratings: {
+            type: new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(VoteRatingType)),
+            resolve(parent) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    const details = yield (0, db_utils_1.dbAll)(`
+                    SELECT vd.optionId, po.optionText, vd.rating 
+                    FROM VoteDetails vd
+                    JOIN PollOptions po ON vd.optionId = po.id
+                    WHERE vd.voteId = ?
+                `, [parent.voteId]);
+                    return details.map(d => ({ option: { id: d.optionId, optionText: d.optionText }, rating: d.rating }));
+                });
+            }
+        }
     })
 });
 // Poll Type
@@ -184,77 +204,14 @@ const PollType = new graphql_1.GraphQLObjectType({
         },
         votes: {
             type: new graphql_1.GraphQLList(VoteType),
-            args: { userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const pollId = parent.id;
-                    const { id: userIdStr } = fromGlobalId(args.userId);
-                    const userId = parseInt(userIdStr, 10);
-                    const voteRow = yield (0, db_utils_1.dbGet)('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [pollId, userId]);
-                    if (!voteRow) {
-                        return [];
-                    }
-                    const details = yield (0, db_utils_1.dbAll)(`
-                    SELECT vd.id, vd.voteId, vd.optionId, po.optionText as option, vd.rating 
-                    FROM VoteDetails vd
-                    JOIN PollOptions po ON vd.optionId = po.id
-                    WHERE vd.voteId = ?
-                `, [voteRow.voteId]);
-                    return details;
-                });
-            }
-        },
-        results: {
-            type: PollResultType,
             resolve(parent) {
                 return __awaiter(this, void 0, void 0, function* () {
                     const pollId = parent.id;
-                    const pollTitle = parent.title;
-                    const pollOptionsRows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                    const pollOptions = pollOptionsRows.map(r => r.optionText);
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT u.username, po.optionText as option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId JOIN PollOptions po ON vd.optionId = po.id WHERE v.pollId = ?', [pollId]);
-                    const optionRatings = {};
-                    pollOptions.forEach((option) => {
-                        optionRatings[option] = [];
-                    });
-                    const votersSet = new Set();
-                    rows.forEach(row => {
-                        if (row.username)
-                            votersSet.add(row.username);
-                        if (row.option && optionRatings[row.option]) {
-                            optionRatings[row.option].push(row.rating);
-                        }
-                    });
-                    const averageRatings = {};
-                    let maxAverageRating = -1;
-                    for (const option in optionRatings) {
-                        const ratingsArr = optionRatings[option];
-                        if (ratingsArr.length > 0) {
-                            const sum = ratingsArr.reduce((a, b) => a + b, 0);
-                            const avg = sum / ratingsArr.length;
-                            averageRatings[option] = avg;
-                            if (avg > maxAverageRating) {
-                                maxAverageRating = avg;
-                            }
-                        }
-                    }
-                    const winningOptions = [];
-                    for (const option in averageRatings) {
-                        if (averageRatings[option] === maxAverageRating) {
-                            winningOptions.push({ option, averageRating: maxAverageRating });
-                        }
-                    }
-                    const allAverageRatings = Object.entries(averageRatings).map(([option, averageRating]) => ({ option, averageRating }));
-                    return {
-                        pollTitle,
-                        totalVotes: votersSet.size,
-                        voters: Array.from(votersSet),
-                        results: winningOptions,
-                        allAverageRatings
-                    };
+                    const voteRows = yield (0, db_utils_1.dbAll)('SELECT * FROM Votes WHERE pollId = ?', [pollId]);
+                    return voteRows;
                 });
             }
-        }
+        },
     })
 });
 const PageInfoType = new graphql_1.GraphQLObjectType({

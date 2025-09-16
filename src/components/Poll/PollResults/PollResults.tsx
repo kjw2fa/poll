@@ -3,57 +3,75 @@ import { useFragment, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollResults_results$key } from './__generated__/PollResults_results.graphql';
 
-import { Award } from 'lucide-react';
-
 const PollResults_results = graphql`
-  fragment PollResults_results on PollResult {
-    pollTitle
-    totalVotes
-    voters
-    results {
-      option
-      averageRating
-    }
-    allAverageRatings {
-      option
-      averageRating
+  fragment PollResults_results on Poll {
+    votes {
+        user {
+            username
+        }
+        ratings {
+            option {
+                optionText
+            }
+            rating
+        }
     }
   }
 `;
 
 const PollResultsComponent = ({ resultsRef }: { resultsRef: PollResults_results$key }) => {
-    const pollResults = useFragment(PollResults_results, resultsRef);
+    const poll = useFragment(PollResults_results, resultsRef);
 
-    if (!pollResults) {
+    if (!poll) {
         return <div>Loading results...</div>;
     }
 
-    // Create a set of winning option names
-    const winningOptionNames = new Set(pollResults.results.map(r => r.option));
+    const voters = new Set(poll.votes.map(v => v.user.username));
+
+    const optionRatings: { [key: string]: number[] } = {};
+    poll.votes.forEach(vote => {
+        vote.ratings.forEach(rating => {
+            if (!optionRatings[rating.option.optionText]) {
+                optionRatings[rating.option.optionText] = [];
+            }
+            optionRatings[rating.option.optionText].push(rating.rating);
+        });
+    });
+
+    const averageRatings: { option: string, averageRating: number }[] = Object.entries(optionRatings).map(([option, ratings]) => ({
+        option,
+        averageRating: ratings.reduce((a, b) => a + b, 0) / ratings.length
+    }));
+
+    averageRatings.sort((a, b) => b.averageRating - a.averageRating);
 
     return (
         <div className="poll-results flex flex-col items-center">
             <div className="mb-6 text-center">
-                <h2 className="text-2xl font-semibold mb-2">Winning {pollResults.results.length === 1 ? 'Option' : 'Options'}</h2>
-                {pollResults.results.length > 0 ? (
-                    <ul>
-                        {pollResults.results.map((result, index) => (
-                            <li key={index} className="flex items-center gap-2 justify-center">
-                                <Award className="text-yellow-500" />
-                                {result.option}
-                            </li>
+                <h2 className="text-2xl font-semibold mb-2">Results</h2>
+                <table className="min-w-full bg-white border border-gray-200">
+                    <thead>
+                        <tr>
+                            <th className="py-2 px-4 border-b">Option</th>
+                            <th className="py-2 px-4 border-b">Average Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {averageRatings.map((result, index) => (
+                            <tr key={index}>
+                                <td className="py-2 px-4 border-b">{result.option}</td>
+                                <td className="py-2 px-4 border-b">{result.averageRating.toFixed(2)}</td>
+                            </tr>
                         ))}
-                    </ul>
-                ) : (
-                    <p>No clear winning option yet.</p>
-                )}
+                    </tbody>
+                </table>
             </div>
 
             <div className="mb-6 text-center">
-                <h2 className="text-2xl font-semibold mb-2">Voters ({pollResults.totalVotes})</h2>
-                {pollResults.voters.length > 0 ? (
+                <h2 className="text-2xl font-semibold mb-2">Voters ({voters.size})</h2>
+                {Array.from(voters).length > 0 ? (
                     <ul>
-                        {pollResults.voters.map((voter, index) => (
+                        {Array.from(voters).map((voter, index) => (
                             <li key={index}>
                                 <strong>{voter}</strong>
                             </li>

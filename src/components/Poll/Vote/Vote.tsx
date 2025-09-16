@@ -7,6 +7,7 @@ import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__genera
 import { Vote_poll$key } from './__generated__/Vote_poll.graphql';
 import { Draggable, Droppable } from '../../ui/dnd';
 import { Badge } from '../../ui/badge';
+import { RecordSourceSelectorProxy } from 'relay-runtime';
 
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
@@ -16,10 +17,6 @@ const VoteSubmitVoteMutation = graphql`
             node {
                 id
                 ...PollCard_poll
-                votes(userId: $userId) {
-                    option
-                    rating
-                }
             }
         }
     }
@@ -27,15 +24,22 @@ const VoteSubmitVoteMutation = graphql`
 `;
 
 const Vote_poll = graphql`
-  fragment Vote_poll on Poll @argumentDefinitions(userId: {type: "ID!"}) {
+  fragment Vote_poll on Poll {
     id
     options {
       id
       optionText
     }
-    votes(userId: $userId) {
-      option
-      rating
+    votes {
+        user {
+            id
+        }
+        ratings {
+            option {
+                id
+            }
+            rating
+        }
     }
   }
 `;
@@ -46,29 +50,30 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
 
     const initialRatings = useMemo(() => {
         const previousRatings = new Map<string, number>();
-        if (poll && poll.votes) {
-            poll.votes.forEach(({ option, rating }: { option: string, rating: number }) => {
-                const optionId = Array.from(optionMap.entries()).find(([, text]) => text === option)?.[0];
-                if (optionId) {
-                    previousRatings.set(optionId, rating);
-                }
+        const userVote = poll.votes.find(v => v.user.id === userId);
+        if (userVote) {
+            userVote.ratings.forEach(r => {
+                previousRatings.set(r.option.id, r.rating);
             });
         }
         return previousRatings;
-    }, [poll, optionMap]);
+    }, [poll, userId]);
 
     const [optionRatingMap, setOptionRatingMap] = useState(initialRatings);
     const [commitMutation] = useMutation<VoteSubmitVoteMutationType>(VoteSubmitVoteMutation);
 
     const handleDragEnd = (event: any) => {
         const { active, over } = event;
+        if (!over) {
+            return;
+        }
         const optionId = active.id as string;
 
         setOptionRatingMap(prevRatings => {
             const newRatings = new Map(prevRatings);
 
             if (over) {
-                const newRatingValue = over.id as number;
+                const newRatingValue = parseInt(over.id as string, 10);
                 newRatings.set(optionId, newRatingValue);
             } else {
                 newRatings.delete(optionId);
@@ -96,9 +101,40 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
             onError: (error) => {
                 toast.error(error.message || 'Error submitting vote.');
             },
-            updater: (store) => {
-                store.invalidateStore();
-            }
+            updater: (store: RecordSourceSelectorProxy) => {
+                const pollRecord = store.get(poll.id);
+                if (!pollRecord) {
+                    return;
+                }
+
+                const votes = pollRecord.getLinkedRecords('votes') || [];
+                const existingVoteIndex = votes.findIndex(v => v.getLinkedRecord('user')?.getValue('id') === userId);
+
+                const newVoteRecord = store.create(Date.now().toString(), 'Vote');
+                const userRecord = store.get(userId);
+                if (userRecord) {
+                    newVoteRecord.setLinkedRecord(userRecord, 'user');
+                }
+                const ratings = ratingsArray.map(r => {
+                    const ratingRecord = store.create(Date.now().toString() + r.optionId, 'VoteRating');
+                    const optionRecord = store.get(r.optionId);
+                    if (optionRecord) {
+                        ratingRecord.setLinkedRecord(optionRecord, 'option');
+                    }
+                    ratingRecord.setValue(r.rating, 'rating');
+                    return ratingRecord;
+                });
+                newVoteRecord.setLinkedRecords(ratings, 'ratings');
+
+                if (existingVoteIndex !== -1) {
+                    const newVotes = [...votes];
+                    newVotes[existingVoteIndex] = newVoteRecord;
+                    pollRecord.setLinkedRecords(newVotes, 'votes');
+                } else {
+                    const newVotes = [...votes, newVoteRecord];
+                    pollRecord.setLinkedRecords(newVotes, 'votes');
+                }
+            },
         });
     };
 
@@ -119,7 +155,7 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
 
     const draggableOption = (option: {id: string, optionText: string}) =>
         <Draggable key={option.id} id={option.id}>
-            <Badge variant="outline">{option.optionText}</Badge>
+            <Badge variant="outline">{optionMap.get(option.id)}</Badge>
         </Draggable>;
 
     const tableBody: React.ReactNode[] = [];
@@ -127,7 +163,7 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
     for (const [ratingValue, options] of sortedRatings) {
         tableBody.push(<tr key={ratingValue}>
             <td className="border border-gray-300 p-2 w-16 text-center">{ratingValue}</td>
-            <Droppable id={ratingValue as UniqueIdentifier}>
+            <Droppable id={String(ratingValue)}>
                 {Array.from(options).map(optionId => draggableOption(poll.options.find(o => o.id === optionId)!))}
             </Droppable>
         </tr>)

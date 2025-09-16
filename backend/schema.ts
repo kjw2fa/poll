@@ -20,16 +20,14 @@ interface Poll {
 }
 
 interface Vote {
-    voteId: number;
-    pollId: number;
-    userId: string;
+    id: string;
+    poll: Poll;
+    user: User;
+    ratings: VoteRating[];
 }
 
-interface VoteDetail {
-    id: number;
-    voteId: number;
-    optionId: number;
-    option: string;
+interface VoteRating {
+    option: PollOption;
     rating: number;
 }
 
@@ -79,13 +77,6 @@ interface PollPermissionRow {
     target_type: TargetType;
     target_id: number;
 }
-
-interface PollResultRow {
-    username: string;
-    option: string;
-    rating: number;
-}
-
 
 export const JWT_SECRET = 'your-secret-key';
 
@@ -171,7 +162,7 @@ const TargetTypeEnum = new GraphQLEnumType({
 });
 
 // User Type
-const UserType = new GraphQLObjectType({
+const UserType: GraphQLObjectType = new GraphQLObjectType({
     name: 'User',
     fields: () => ({
         id: { type: new GraphQLNonNull(GraphQLID) },
@@ -197,9 +188,7 @@ const PollPermissionsType = new GraphQLObjectType({
     })
 });
 
-
-
-const PollOptionType = new GraphQLObjectType({
+const PollOptionType: GraphQLObjectType = new GraphQLObjectType({
     name: 'PollOption',
     fields: () => ({
         id: { 
@@ -210,33 +199,46 @@ const PollOptionType = new GraphQLObjectType({
     })
 });
 
+const VoteRatingType = new GraphQLObjectType({
+    name: 'VoteRating',
+    fields: () => ({
+        option: { type: new GraphQLNonNull(PollOptionType) },
+        rating: { type: new GraphQLNonNull(GraphQLInt) }
+    })
+});
+
 // Vote Type
-const VoteType = new GraphQLObjectType({
+const VoteType: GraphQLObjectType = new GraphQLObjectType({
     name: 'Vote',
     fields: () => ({
-        option: { type: GraphQLString },
-        rating: { type: GraphQLInt }
-    })
-});
-
-// WinningOption Type
-const WinningOptionType = new GraphQLObjectType({
-    name: 'WinningOption',
-    fields: () => ({
-        option: { type: GraphQLString },
-        averageRating: { type: GraphQLFloat }
-    })
-});
-
-// PollResult Type
-const PollResultType = new GraphQLObjectType({
-    name: 'PollResult',
-    fields: () => ({
-        pollTitle: { type: GraphQLString },
-        totalVotes: { type: GraphQLInt },
-        voters: { type: new GraphQLList(GraphQLString) },
-        results: { type: new GraphQLList(WinningOptionType) },
-        allAverageRatings: { type: new GraphQLList(WinningOptionType) }
+        id: {
+            type: new GraphQLNonNull(GraphQLID),
+            resolve: (parent: VoteRow) => toGlobalId('Vote', parent.voteId)
+        },
+        user: {
+            type: new GraphQLNonNull(UserType),
+            async resolve(parent: VoteRow): Promise<UserRow | null> {
+                return await dbGet<UserRow>('SELECT * FROM Users WHERE id = ?', [parent.userId]);
+            }
+        },
+        poll: {
+            type: new GraphQLNonNull(PollType),
+            async resolve(parent: VoteRow): Promise<PollRow | null> {
+                return await dbGet<PollRow>('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
+            }
+        },
+        ratings: {
+            type: new GraphQLList(new GraphQLNonNull(VoteRatingType)),
+            async resolve(parent: VoteRow): Promise<any[]> {
+                const details = await dbAll<any>(`
+                    SELECT vd.optionId, po.optionText, vd.rating 
+                    FROM VoteDetails vd
+                    JOIN PollOptions po ON vd.optionId = po.id
+                    WHERE vd.voteId = ?
+                `, [parent.voteId]);
+                return details.map(d => ({ option: { id: d.optionId, optionText: d.optionText }, rating: d.rating }));
+            }
+        }
     })
 });
 
@@ -268,82 +270,12 @@ const PollType: GraphQLObjectType = new GraphQLObjectType({
         },
         votes: {
             type: new GraphQLList(VoteType),
-            args: { userId: { type: new GraphQLNonNull(GraphQLID) } },
-            async resolve(parent: PollRow, args: { userId: string }): Promise<VoteDetail[]> {
+            async resolve(parent: PollRow): Promise<VoteRow[]> {
                 const pollId = parent.id;
-                const { id: userIdStr } = fromGlobalId(args.userId);
-                const userId = parseInt(userIdStr, 10);
-
-                const voteRow = await dbGet<VoteRow>('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ? LIMIT 1', [pollId, userId]);
-                if (!voteRow) {
-                    return [];
-                }
-
-                const details = await dbAll<any>(`
-                    SELECT vd.id, vd.voteId, vd.optionId, po.optionText as option, vd.rating 
-                    FROM VoteDetails vd
-                    JOIN PollOptions po ON vd.optionId = po.id
-                    WHERE vd.voteId = ?
-                `, [voteRow.voteId]);
-                
-                return details;
+                const voteRows = await dbAll<VoteRow>('SELECT * FROM Votes WHERE pollId = ?', [pollId]);
+                return voteRows;
             }
         },
-        results: {
-            type: PollResultType,
-            async resolve(parent: PollRow): Promise<any> {
-                const pollId = parent.id;
-                const pollTitle = parent.title;
-
-                const pollOptionsRows = await dbAll<PollOptionRow>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                const pollOptions = pollOptionsRows.map(r => r.optionText);
-
-                const rows = await dbAll<any>('SELECT u.username, po.optionText as option, vd.rating FROM Votes v JOIN Users u ON v.userId = u.id LEFT JOIN VoteDetails vd ON v.voteId = vd.voteId JOIN PollOptions po ON vd.optionId = po.id WHERE v.pollId = ?', [pollId]);
-                const optionRatings: { [key: string]: number[] } = {};
-                pollOptions.forEach((option: string) => {
-                    optionRatings[option] = [];
-                });
-
-                const votersSet = new Set<string>();
-                rows.forEach(row => {
-                    if (row.username) votersSet.add(row.username);
-                    if (row.option && optionRatings[row.option]) {
-                        optionRatings[row.option].push(row.rating);
-                    }
-                });
-
-                const averageRatings: { [key: string]: number } = {};
-                let maxAverageRating = -1;
-                for (const option in optionRatings) {
-                    const ratingsArr = optionRatings[option];
-                    if (ratingsArr.length > 0) {
-                        const sum = ratingsArr.reduce((a, b) => a + b, 0);
-                        const avg = sum / ratingsArr.length;
-                        averageRatings[option] = avg;
-                        if (avg > maxAverageRating) {
-                            maxAverageRating = avg;
-                        }
-                    }
-                }
-
-                const winningOptions: { option: string, averageRating: number }[] = [];
-                for (const option in averageRatings) {
-                    if (averageRatings[option] === maxAverageRating) {
-                        winningOptions.push({ option, averageRating: maxAverageRating });
-                    }
-                }
-                
-                const allAverageRatings = Object.entries(averageRatings).map(([option, averageRating]) => ({ option, averageRating }));
-
-                return {
-                    pollTitle,
-                    totalVotes: votersSet.size,
-                    voters: Array.from(votersSet),
-                    results: winningOptions,
-                    allAverageRatings
-                };
-            }
-        }
     })
 });
 
