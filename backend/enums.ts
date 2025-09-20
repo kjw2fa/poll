@@ -1,10 +1,10 @@
 export enum PermissionType {
-  VIEW = 'view',
-  VOTE = 'vote',
-  EDIT = 'edit',
+  VIEW = 'VIEW',
+  VOTE = 'VOTE',
+  EDIT = 'EDIT',
 }
 
 export enum TargetType {
-  USER = 'user',
-  PUBLIC = 'public',
+  USER = 'USER',
+  PUBLIC = 'PUBLIC',
 }
