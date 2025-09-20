@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18d8e501fa764a315001672ba552a057>>
+ * @generated SignedSource<<ebaba494737aa0a384a08bfbf200d224>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,13 +10,13 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type RatingInput = {
+export type VoteInput = {
   optionId: string;
   rating: number;
 };
 export type VoteSubmitVoteMutation$variables = {
   pollId: string;
-  ratings: ReadonlyArray<RatingInput>;
+  ratings: ReadonlyArray<VoteInput>;
   userId: string;
 };
 export type VoteSubmitVoteMutation$data = {
@@ -236,16 +236,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "61a8c3059e90d4e0a24dc6d6494caaeb",
+    "cacheID": "5f03e289f3a436116513ee203f8284cc",
     "id": null,
     "metadata": {},
     "name": "VoteSubmitVoteMutation",
     "operationKind": "mutation",
-    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [RatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
+    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [VoteInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "a570491618d705ddbd3a50b79eb60de4";
+(node as any).hash = "06f9044f2bfd766a6ca4f3994c967fa4";
 
 export default node;

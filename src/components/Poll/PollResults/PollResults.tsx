@@ -3,6 +3,8 @@ import { useFragment, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { PollResults_results$key } from './__generated__/PollResults_results.graphql';
 
+import { WinningOption } from '../../../generated/graphql';
+
 const PollResults_results = graphql`
   fragment PollResults_results on Poll {
     votes {
@@ -38,10 +40,10 @@ const PollResultsComponent = ({ resultsRef }: { resultsRef: PollResults_results$
         });
     });
 
-    const averageRatings: { option: string, averageRating: number }[] = Object.entries(optionRatings).map(([option, ratings]) => ({
+    const averageRatings: WinningOption[] = Object.entries(optionRatings).map(([option, ratings]) => (({
         option,
         averageRating: ratings.reduce((a, b) => a + b, 0) / ratings.length
-    }));
+    })));
 
     averageRatings.sort((a, b) => b.averageRating - a.averageRating);
 

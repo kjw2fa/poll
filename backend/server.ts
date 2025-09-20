@@ -1,39 +1,44 @@
 import express from 'express';
 import cors from 'cors';
-import { graphqlHTTP } from 'express-graphql';
+import { ApolloServer } from '@apollo/server';
+import { expressMiddleware } from '@apollo/server/express4';
+import http from 'http';
 import schema from './schema';
-import jwt from 'jsonwebtoken'; // Import jwt
-import { JWT_SECRET } from './schema'; // Import JWT_SECRET
+import jwt from 'jsonwebtoken';
+import { JWT_SECRET } from './schema';
 
 const app = express();
+const httpServer = http.createServer(app);
 const port = 3001;
 
-app.use(cors());
-app.use(express.json());
-
-// Middleware to extract and verify JWT
-app.use((req, res, next) => {
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-        const token = authHeader.split(' ')[1];
-        jwt.verify(token, JWT_SECRET, (err, user) => {
-            if (err) {
-                return res.sendStatus(403); // Forbidden
-            }
-            (req as any).userId = (user as any).userId; // Attach userId to request object
-            next();
-        });
-    } else {
-        next();
-    }
-});
-
-app.use('/graphql', graphqlHTTP((req) => ({
+const server = new ApolloServer({
     schema,
-    graphiql: true,
-    context: { userId: (req as any).userId } // Pass userId to context
-})));
-
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
 });
+
+async function startServer() {
+    await server.start();
+
+    app.use(cors());
+    app.use(express.json());
+
+    app.use('/graphql', expressMiddleware(server, {
+        context: async ({ req }: { req: express.Request }) => {
+            const authHeader = req.headers.authorization;
+            if (authHeader) {
+                const token = authHeader.split(' ')[1];
+                try {
+                    const user = jwt.verify(token, JWT_SECRET);
+                    return { userId: (user as any).userId };
+                } catch (err) {
+                    // handle error
+                }
+            }
+            return {};
+        },
+    }));
+
+    await new Promise<void>((resolve) => httpServer.listen({ port }, resolve));
+    console.log(`Server running on port ${port}`);
+}
+
+startServer();

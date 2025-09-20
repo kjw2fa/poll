@@ -18,17 +18,17 @@ input PollOptionInput {
   optionText: String!
 }
 
+input VoteInput {
+  optionId: ID!
+  rating: Int!
+}
+
 type Mutation {
   createPoll(title: String!, options: [PollOptionInput!]!, userId: ID!): CreatePollPayload
-  submitVote(pollId: ID!, userId: ID!, ratings: [RatingInput!]!): SubmitVotePayload
+  submitVote(pollId: ID!, userId: ID!, ratings: [VoteInput!]!): SubmitVotePayload
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionInput!]!): Poll
   signup(username: String!, email: String!, password: String!): User
   login(username: String!, password: String!): LoginResponse
-}
-
-type MyPolls {
-  createdPolls(first: Int, after: String, last: Int, before: String): PollConnection
-  votedPolls(first: Int, after: String, last: Int, before: String): PollConnection
 }
 
 type PageInfo {
@@ -50,6 +50,8 @@ type Poll {
   options: [PollOption]
   permissions: [PollPermissions]
   votes: [Vote]
+  createdAt: String
+  updatedAt: String
 }
 
 type PollConnection {
@@ -81,7 +83,7 @@ input RatingInput {
 type RootQueryType {
   polls: [Poll]
   poll(id: ID!): Poll
-  myPolls(userId: ID!): MyPolls
+  user(id: ID!): User
   searchPolls(searchTerm: String!): [Poll]
 }
 
@@ -97,6 +99,11 @@ enum TargetType {
 type User {
   id: ID!
   username: String
+  email: String
+  # The password is not exposed to the client
+  password: String
+  polls(permission: PermissionType): [Poll]
+  votes: [Vote]
 }
 
 type Vote {
@@ -107,6 +114,7 @@ type Vote {
 }
 
 type VoteRating {
+    optionId: ID!
     option: PollOption!
     rating: Int!
 }

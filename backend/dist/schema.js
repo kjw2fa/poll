@@ -15,9 +15,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.JWT_SECRET = void 0;
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const graphql_1 = require("graphql");
+const schema_1 = require("@graphql-tools/schema");
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const db_utils_1 = require("./db-utils");
-const enums_1 = require("./enums");
+const graphql_1 = require("./src/generated/graphql");
 exports.JWT_SECRET = 'your-secret-key';
 // Helper functions for global IDs
 const toGlobalId = (type, id) => Buffer.from(`${type}:${id}`).toString('base64');
@@ -74,447 +76,206 @@ function paginationResolver(baseQuery, queryParams, { first, after, last, before
         };
     });
 }
-// Enum Types
-const PermissionTypeEnum = new graphql_1.GraphQLEnumType({
-    name: 'PermissionType',
-    values: {
-        VIEW: { value: enums_1.PermissionType.VIEW },
-        VOTE: { value: enums_1.PermissionType.VOTE },
-        EDIT: { value: enums_1.PermissionType.EDIT },
-    },
-});
-const TargetTypeEnum = new graphql_1.GraphQLEnumType({
-    name: 'TargetType',
-    values: {
-        USER: { value: enums_1.TargetType.USER },
-        PUBLIC: { value: enums_1.TargetType.PUBLIC },
-    },
-});
-// User Type
-const UserType = new graphql_1.GraphQLObjectType({
-    name: 'User',
-    fields: () => ({
-        id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-        username: { type: graphql_1.GraphQLString }
-    })
-});
-// Permissions Type
-const PollPermissionsType = new graphql_1.GraphQLObjectType({
-    name: 'PollPermissions',
-    fields: () => ({
-        permission_type: { type: PermissionTypeEnum },
-        target_type: { type: TargetTypeEnum },
-        target_id: {
-            type: graphql_1.GraphQLID,
-            resolve: (parent) => {
-                if (parent.target_type === enums_1.TargetType.USER) {
-                    return toGlobalId('User', parent.target_id);
-                }
+const typeDefs = fs_1.default.readFileSync(path_1.default.join(__dirname, '..', 'schema.graphql'), 'utf8');
+const resolvers = {
+    RootQueryType: {
+        polls: () => __awaiter(void 0, void 0, void 0, function* () {
+            const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls', []);
+            return rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id) })));
+        }),
+        poll: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(id);
+            const pollId = parseInt(pollIdStr, 10);
+            const poll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
+            if (!poll) {
                 return null;
             }
-        },
-    })
-});
-const PollOptionType = new graphql_1.GraphQLObjectType({
-    name: 'PollOption',
-    fields: () => ({
-        id: {
-            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
-            resolve: (parent) => toGlobalId('PollOption', parent.id)
-        },
-        optionText: { type: graphql_1.GraphQLString }
-    })
-});
-const VoteRatingType = new graphql_1.GraphQLObjectType({
-    name: 'VoteRating',
-    fields: () => ({
-        option: { type: new graphql_1.GraphQLNonNull(PollOptionType) },
-        rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
-    })
-});
-// Vote Type
-const VoteType = new graphql_1.GraphQLObjectType({
-    name: 'Vote',
-    fields: () => ({
-        id: {
-            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
-            resolve: (parent) => toGlobalId('Vote', parent.voteId)
-        },
-        user: {
-            type: new graphql_1.GraphQLNonNull(UserType),
-            resolve(parent) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    return yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE id = ?', [parent.userId]);
-                });
+            return Object.assign(Object.assign({}, poll), { id: toGlobalId('Poll', poll.id) });
+        }),
+        searchPolls: (parent, { searchTerm }) => __awaiter(void 0, void 0, void 0, function* () {
+            const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
+            return rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id) })));
+        })
+    },
+    Mutation: {
+        createPoll: (parent, { title, options, userId }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: userIdStr } = fromGlobalId(userId);
+            const parsedUserId = parseInt(userIdStr, 10);
+            const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title) VALUES (?)', [title]);
+            const pollId = result.lastID;
+            for (const option of options) {
+                yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
             }
-        },
-        poll: {
-            type: new graphql_1.GraphQLNonNull(PollType),
-            resolve(parent) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    return yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
-                });
+            yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, graphql_1.PermissionType.Edit, graphql_1.TargetType.User, parsedUserId]);
+            const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
+            if (!row) {
+                throw new Error('Failed to create poll');
             }
-        },
-        ratings: {
-            type: new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(VoteRatingType)),
-            resolve(parent) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const details = yield (0, db_utils_1.dbAll)(`
-                    SELECT vd.optionId, po.optionText, vd.rating 
-                    FROM VoteDetails vd
-                    JOIN PollOptions po ON vd.optionId = po.id
-                    WHERE vd.voteId = ?
-                `, [parent.voteId]);
-                    return details.map(d => ({ option: { id: d.optionId, optionText: d.optionText }, rating: d.rating }));
-                });
+            return {
+                pollEdge: {
+                    cursor: toCursor(pollId),
+                    node: row,
+                }
+            };
+        }),
+        submitVote: (parent, { pollId, userId, ratings }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(pollId);
+            const parsedPollId = parseInt(pollIdStr, 10);
+            const { id: userIdStr } = fromGlobalId(userId);
+            const parsedUserId = parseInt(userIdStr, 10);
+            const user = yield (0, db_utils_1.dbGet)('SELECT username FROM Users WHERE id = ?', [parsedUserId]);
+            if (!user) {
+                throw new Error('User not found');
             }
+            const result = yield (0, db_utils_1.dbRun)('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [parsedPollId, parsedUserId]);
+            const voteId = result.lastID;
+            for (const { optionId: optionIdStr, rating } of ratings) {
+                const { id: optionId } = fromGlobalId(optionIdStr);
+                yield (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId), rating]);
+            }
+            const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
+            if (!row) {
+                throw new Error('Poll not found after voting');
+            }
+            return {
+                pollEdge: {
+                    cursor: toCursor(parsedPollId),
+                    node: row,
+                }
+            };
+        }),
+        editPoll: (parent, { pollId, userId, title, options }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(pollId);
+            const parsedPollId = parseInt(pollIdStr, 10);
+            const { id: userIdStr } = fromGlobalId(userId);
+            const parsedUserId = parseInt(userIdStr, 10);
+            const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [parsedPollId, parsedUserId, graphql_1.PermissionType.Edit]);
+            if (!permission) {
+                throw new Error('No edit permission');
+            }
+            yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [title, parsedPollId]);
+            const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parsedPollId]);
+            const newOptions = options;
+            const newOptionIds = newOptions.map(o => o.id ? fromGlobalId(o.id).id : null).filter(id => id !== null);
+            const removedOptions = currentOptionsRows.filter(o => !newOptionIds.includes(String(o.id)));
+            const addedOptions = newOptions.filter(o => !o.id);
+            if (removedOptions.length > 0) {
+                const removedOptionIds = removedOptions.map(o => o.id);
+                const placeholders = removedOptionIds.map(() => '?').join(',');
+                yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE id IN (${placeholders})`, removedOptionIds);
+                yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE optionId IN (${placeholders})`, removedOptionIds);
+            }
+            if (addedOptions.length > 0) {
+                for (const option of addedOptions) {
+                    yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [parsedPollId, option.optionText]);
+                }
+            }
+            const poll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
+            if (!poll) {
+                return null;
+            }
+            return Object.assign(Object.assign({}, poll), { id: toGlobalId('Poll', poll.id) });
+        }),
+        signup: (parent, { username, email, password }) => __awaiter(void 0, void 0, void 0, function* () {
+            const hashedPassword = yield bcrypt_1.default.hash(password, 10);
+            try {
+                const result = yield (0, db_utils_1.dbRun)('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
+                const user = yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE id = ?', [result.lastID]);
+                if (!user) {
+                    return null;
+                }
+                return Object.assign(Object.assign({}, user), { id: toGlobalId('User', user.id) });
+            }
+            catch (err) {
+                if (err.message.includes('UNIQUE constraint failed: Users.username')) {
+                    throw new Error('Username already exists.');
+                }
+                if (err.message.includes('UNIQUE constraint failed: Users.email')) {
+                    throw new Error('Email already exists.');
+                }
+                throw err;
+            }
+        }),
+        login: (parent, { username, password }) => __awaiter(void 0, void 0, void 0, function* () {
+            const user = yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE username = ? OR email = ?', [username, username]);
+            if (!user) {
+                throw new Error('Invalid username or password.');
+            }
+            const match = yield bcrypt_1.default.compare(password, user.password);
+            if (!match) {
+                throw new Error('Invalid username or password.');
+            }
+            const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, exports.JWT_SECRET, { expiresIn: '1d' });
+            return { token, userId: toGlobalId('User', user.id), username: user.username };
+        })
+    },
+    Poll: {
+        id: (parent) => toGlobalId('Poll', parent.id),
+        options: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(parent.id);
+            const pollId = parseInt(pollIdStr, 10);
+            return yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
+        }),
+        permissions: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(parent.id);
+            const pollId = parseInt(pollIdStr, 10);
+            return yield (0, db_utils_1.dbAll)('SELECT * FROM PollPermissions WHERE pollId = ?', [pollId]);
+        }),
+        votes: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: pollIdStr } = fromGlobalId(parent.id);
+            const pollId = parseInt(pollIdStr, 10);
+            return yield (0, db_utils_1.dbAll)('SELECT * FROM Votes WHERE pollId = ?', [pollId]);
+        }),
+    },
+    PollOption: {
+        id: (parent) => toGlobalId('PollOption', parent.id)
+    },
+    Vote: {
+        id: (parent) => toGlobalId('Vote', parent.id),
+        user: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const user = yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE id = ?', [parent.userId]);
+            if (!user)
+                throw new Error('User not found');
+            return user;
+        }),
+        poll: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const poll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
+            if (!poll)
+                throw new Error('Poll not found');
+            return poll;
+        }),
+        ratings: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            return yield (0, db_utils_1.dbAll)(`
+                SELECT vd.optionId, po.optionText, vd.rating 
+                FROM VoteDetails vd
+                JOIN PollOptions po ON vd.optionId = po.id
+                WHERE vd.voteId = ?
+            `, [parent.id]);
+        })
+    },
+    PollPermissions: {
+        target_id: (parent) => {
+            if (parent.target_type && parent.target_type === graphql_1.TargetType.User) {
+                if (parent.target_id) {
+                    return toGlobalId('User', parent.target_id);
+                }
+            }
+            return null;
         }
-    })
-});
-// Poll Type
-const PollType = new graphql_1.GraphQLObjectType({
-    name: 'Poll',
-    fields: () => ({
-        id: {
-            type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID),
-            resolve: (parent) => toGlobalId('Poll', parent.id)
-        },
-        title: {
-            type: graphql_1.GraphQLString,
-            resolve: (parent) => parent.title
-        },
-        options: {
-            type: new graphql_1.GraphQLList(PollOptionType),
-            resolve(parent) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
-                    return rows.map(row => (Object.assign(Object.assign({}, row), { pollId: parent.id })));
-                });
-            }
-        },
-        permissions: {
-            type: new graphql_1.GraphQLList(PollPermissionsType),
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id]);
-                    return rows;
-                });
-            }
-        },
-        votes: {
-            type: new graphql_1.GraphQLList(VoteType),
-            resolve(parent) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const pollId = parent.id;
-                    const voteRows = yield (0, db_utils_1.dbAll)('SELECT * FROM Votes WHERE pollId = ?', [pollId]);
-                    return voteRows;
-                });
-            }
-        },
-    })
-});
-const PageInfoType = new graphql_1.GraphQLObjectType({
-    name: 'PageInfo',
-    fields: () => ({
-        hasNextPage: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
-        hasPreviousPage: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLBoolean) },
-        startCursor: { type: graphql_1.GraphQLString },
-        endCursor: { type: graphql_1.GraphQLString },
-    }),
-});
-const PollEdgeType = new graphql_1.GraphQLObjectType({
-    name: 'PollEdge',
-    fields: () => ({
-        cursor: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-        node: { type: PollType },
-    }),
-});
-const PollConnectionType = new graphql_1.GraphQLObjectType({
-    name: 'PollConnection',
-    fields: () => ({
-        edges: { type: new graphql_1.GraphQLList(PollEdgeType) },
-        pageInfo: { type: new graphql_1.GraphQLNonNull(PageInfoType) },
-    }),
-});
-// MyPolls Type
-const MyPollsType = new graphql_1.GraphQLObjectType({
-    name: 'MyPolls',
-    fields: () => ({
-        createdPolls: {
-            type: PollConnectionType,
-            args: {
-                first: { type: graphql_1.GraphQLInt },
-                after: { type: graphql_1.GraphQLString },
-                last: { type: graphql_1.GraphQLInt },
-                before: { type: graphql_1.GraphQLString },
-            },
-            resolve: (parent, args) => {
-                const { id: userIdStr } = fromGlobalId(parent.userId);
-                const userId = parseInt(userIdStr, 10);
-                const baseQuery = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ? AND PollPermissions.permission_type = ?';
-                return paginationResolver(baseQuery, [userId, enums_1.PermissionType.EDIT], args);
-            }
-        },
-        votedPolls: {
-            type: PollConnectionType,
-            args: {
-                first: { type: graphql_1.GraphQLInt },
-                after: { type: graphql_1.GraphQLString },
-                last: { type: graphql_1.GraphQLInt },
-                before: { type: graphql_1.GraphQLString },
-            },
-            resolve: (parent, args) => {
-                const { id: userIdStr } = fromGlobalId(parent.userId);
-                const userId = parseInt(userIdStr, 10);
-                const baseQuery = 'SELECT Polls.* FROM Polls JOIN Votes ON Polls.id = Votes.pollId WHERE Votes.userId = ? GROUP BY Polls.id';
-                return paginationResolver(baseQuery, [userId], args);
-            }
-        }
-    })
-});
-// Root Query
-const RootQuery = new graphql_1.GraphQLObjectType({
-    name: 'RootQueryType',
-    fields: {
-        polls: {
-            type: new graphql_1.GraphQLList(PollType),
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls', []);
-                    return rows;
-                });
-            }
-        },
-        poll: {
-            type: PollType,
-            args: { id: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollIdStr } = fromGlobalId(args.id);
-                    const pollId = parseInt(pollIdStr, 10);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return row !== null && row !== void 0 ? row : null;
-                });
-            }
-        },
-        myPolls: {
-            type: MyPollsType,
-            args: { userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) } },
-            resolve(parent, args) {
-                return { userId: args.userId };
-            }
-        },
-        searchPolls: {
-            type: new graphql_1.GraphQLList(PollType),
-            args: { searchTerm: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) } },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls WHERE title LIKE ?', [`%${args.searchTerm}%`]);
-                    return rows;
-                });
-            }
-        }
+    },
+    VoteRating: {
+        option: (parent) => __awaiter(void 0, void 0, void 0, function* () {
+            const option = yield (0, db_utils_1.dbGet)('SELECT id, optionText FROM PollOptions WHERE id = ?', [parent.optionId]);
+            if (!option)
+                throw new Error('Option not found');
+            return option;
+        })
+    },
+    User: {
+        id: (parent) => toGlobalId('User', parent.id)
     }
-});
-// Rating Input Type
-const RatingInput = new graphql_1.GraphQLInputObjectType({
-    name: 'RatingInput',
-    fields: {
-        optionId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-        rating: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLInt) }
-    }
-});
-const PollOptionInput = new graphql_1.GraphQLInputObjectType({
-    name: 'PollOptionInput',
-    fields: {
-        id: { type: graphql_1.GraphQLID },
-        optionText: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) }
-    }
-});
-const LoginResponseType = new graphql_1.GraphQLObjectType({
-    name: 'LoginResponse',
-    fields: () => ({
-        token: { type: graphql_1.GraphQLString },
-        userId: { type: graphql_1.GraphQLID },
-        username: { type: graphql_1.GraphQLString }
-    })
-});
-const CreatePollPayload = new graphql_1.GraphQLObjectType({
-    name: 'CreatePollPayload',
-    fields: () => ({
-        pollEdge: { type: PollEdgeType },
-    }),
-});
-const SubmitVotePayload = new graphql_1.GraphQLObjectType({
-    name: 'SubmitVotePayload',
-    fields: () => ({
-        pollEdge: { type: PollEdgeType },
-    }),
-});
-// Mutations
-const Mutation = new graphql_1.GraphQLObjectType({
-    name: 'Mutation',
-    fields: {
-        createPoll: {
-            type: CreatePollPayload,
-            args: {
-                title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(PollOptionInput))) },
-                userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) }
-            },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const { id: userIdStr } = fromGlobalId(args.userId);
-                    const userId = parseInt(userIdStr, 10);
-                    const result = yield (0, db_utils_1.dbRun)('INSERT INTO Polls (title) VALUES (?)', [args.title]);
-                    const pollId = result.lastID;
-                    for (const option of args.options) {
-                        yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
-                    }
-                    yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, enums_1.PermissionType.EDIT, enums_1.TargetType.USER, userId]);
-                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return {
-                        pollEdge: {
-                            cursor: toCursor(pollId),
-                            node: row,
-                        }
-                    };
-                });
-            }
-        },
-        submitVote: {
-            type: SubmitVotePayload,
-            args: {
-                pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                ratings: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(RatingInput))) }
-            },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollIdStr } = fromGlobalId(args.pollId);
-                    const pollId = parseInt(pollIdStr, 10);
-                    const { id: userIdStr } = fromGlobalId(args.userId);
-                    const userId = parseInt(userIdStr, 10);
-                    const user = yield (0, db_utils_1.dbGet)('SELECT username FROM Users WHERE id = ?', [userId]);
-                    if (!user) {
-                        throw new Error('User not found');
-                    }
-                    // Find old voteId and delete old VoteDetails
-                    const oldVote = yield (0, db_utils_1.dbGet)('SELECT voteId FROM Votes WHERE pollId = ? AND userId = ?', [pollId, userId]);
-                    if (oldVote) {
-                        yield (0, db_utils_1.dbRun)('DELETE FROM VoteDetails WHERE voteId = ?', [oldVote.voteId]);
-                    }
-                    const result = yield (0, db_utils_1.dbRun)('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [pollId, userId]);
-                    const voteId = result.lastID;
-                    for (const { optionId: optionIdStr, rating } of args.ratings) {
-                        const { id: optionId } = fromGlobalId(optionIdStr);
-                        yield (0, db_utils_1.dbRun)('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId), rating]);
-                    }
-                    const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return {
-                        pollEdge: {
-                            cursor: toCursor(pollId),
-                            node: row,
-                        }
-                    };
-                });
-            }
-        },
-        editPoll: {
-            type: PollType,
-            args: {
-                pollId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                userId: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLID) },
-                title: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                options: { type: new graphql_1.GraphQLNonNull(new graphql_1.GraphQLList(new graphql_1.GraphQLNonNull(PollOptionInput))) }
-            },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const { id: pollIdStr } = fromGlobalId(args.pollId);
-                    const pollId = parseInt(pollIdStr, 10);
-                    const { id: userIdStr } = fromGlobalId(args.userId);
-                    const userId = parseInt(userIdStr, 10);
-                    const permission = yield (0, db_utils_1.dbGet)('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [pollId, userId, enums_1.PermissionType.EDIT]);
-                    if (!permission) {
-                        throw new Error('No edit permission');
-                    }
-                    // Update title
-                    yield (0, db_utils_1.dbRun)('UPDATE Polls SET title = ? WHERE id = ?', [args.title, pollId]);
-                    // Get current options
-                    const currentOptionsRows = yield (0, db_utils_1.dbAll)('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]);
-                    const newOptions = args.options;
-                    // Find removed, added, and existing options
-                    const newOptionIds = newOptions.map(o => o.id ? fromGlobalId(o.id).id : null).filter(id => id !== null);
-                    const removedOptions = currentOptionsRows.filter(o => !newOptionIds.includes(String(o.id)));
-                    const addedOptions = newOptions.filter(o => !o.id);
-                    if (removedOptions.length > 0) {
-                        const removedOptionIds = removedOptions.map(o => o.id);
-                        const placeholders = removedOptionIds.map(() => '?').join(',');
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM PollOptions WHERE id IN (${placeholders})`, removedOptionIds);
-                        // Also delete votes for removed options
-                        yield (0, db_utils_1.dbRun)(`DELETE FROM VoteDetails WHERE optionId IN (${placeholders})`, removedOptionIds);
-                    }
-                    if (addedOptions.length > 0) {
-                        for (const option of addedOptions) {
-                            yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
-                        }
-                    }
-                    const updatedPoll = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
-                    return updatedPoll !== null && updatedPoll !== void 0 ? updatedPoll : null;
-                });
-            }
-        },
-        signup: {
-            type: UserType,
-            args: {
-                username: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                email: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                password: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) }
-            },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const hashedPassword = yield bcrypt_1.default.hash(args.password, 10);
-                    try {
-                        const result = yield (0, db_utils_1.dbRun)('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [args.username, args.email, hashedPassword]);
-                        return { id: toGlobalId('User', result.lastID), username: args.username, email: args.email };
-                    }
-                    catch (err) {
-                        if (err.message.includes('UNIQUE constraint failed: Users.username')) {
-                            throw new Error('Username already exists.');
-                        }
-                        if (err.message.includes('UNIQUE constraint failed: Users.email')) {
-                            throw new Error('Email already exists.');
-                        }
-                        throw err;
-                    }
-                });
-            }
-        },
-        login: {
-            type: LoginResponseType,
-            args: {
-                username: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) },
-                password: { type: new graphql_1.GraphQLNonNull(graphql_1.GraphQLString) }
-            },
-            resolve(parent, args) {
-                return __awaiter(this, void 0, void 0, function* () {
-                    const user = yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE username = ? OR email = ?', [args.username, args.username]);
-                    if (!user) {
-                        throw new Error('Invalid username or password.');
-                    }
-                    const match = yield bcrypt_1.default.compare(args.password, user.password);
-                    if (!match) {
-                        throw new Error('Invalid username or password.');
-                    }
-                    const token = jsonwebtoken_1.default.sign({ userId: user.id, username: user.username }, exports.JWT_SECRET, { expiresIn: '1d' });
-                    return { token, userId: toGlobalId('User', user.id), username: user.username };
-                });
-            }
-        }
-    }
-});
-exports.default = new graphql_1.GraphQLSchema({
-    query: RootQuery,
-    mutation: Mutation
+};
+exports.default = (0, schema_1.makeExecutableSchema)({
+    typeDefs,
+    resolvers,
 });

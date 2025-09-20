@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<18df1b2e961513e0e37002b591637ffb>>
+ * @generated SignedSource<<a934b9c24b4215c533a60235b8bee00e>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,29 +10,23 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
+export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 export type MyPollsQuery$variables = {
-  count?: number | null | undefined;
-  cursor?: string | null | undefined;
+  permission: PermissionType;
   userId: string;
 };
 export type MyPollsQuery$data = {
-  readonly myPolls: {
-    readonly createdPolls: {
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
-        } | null | undefined;
-      } | null | undefined> | null | undefined;
-    } | null | undefined;
-    readonly votedPolls: {
-      readonly edges: ReadonlyArray<{
-        readonly node: {
-          readonly id: string;
-          readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
-        } | null | undefined;
-      } | null | undefined> | null | undefined;
-    } | null | undefined;
+  readonly user: {
+    readonly polls: ReadonlyArray<{
+      readonly id: string;
+      readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
+    } | null | undefined> | null | undefined;
+    readonly votes: ReadonlyArray<{
+      readonly poll: {
+        readonly id: string;
+        readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
+      };
+    } | null | undefined> | null | undefined;
   } | null | undefined;
 };
 export type MyPollsQuery = {
@@ -42,25 +36,27 @@ export type MyPollsQuery = {
 
 const node: ConcreteRequest = (function(){
 var v0 = {
-  "defaultValue": 10,
+  "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "count"
+  "name": "permission"
 },
 v1 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "cursor"
-},
-v2 = {
-  "defaultValue": null,
-  "kind": "LocalArgument",
   "name": "userId"
 },
+v2 = [
+  {
+    "kind": "Variable",
+    "name": "id",
+    "variableName": "userId"
+  }
+],
 v3 = [
   {
     "kind": "Variable",
-    "name": "userId",
-    "variableName": "userId"
+    "name": "permission",
+    "variableName": "permission"
   }
 ],
 v4 = {
@@ -70,175 +66,73 @@ v4 = {
   "name": "id",
   "storageKey": null
 },
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "__typename",
-  "storageKey": null
-},
-v6 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "cursor",
-  "storageKey": null
-},
-v7 = {
-  "alias": null,
-  "args": null,
-  "concreteType": "PageInfo",
-  "kind": "LinkedField",
-  "name": "pageInfo",
-  "plural": false,
-  "selections": [
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "endCursor",
-      "storageKey": null
-    },
-    {
-      "alias": null,
-      "args": null,
-      "kind": "ScalarField",
-      "name": "hasNextPage",
-      "storageKey": null
-    }
-  ],
-  "storageKey": null
-},
-v8 = [
+v5 = [
+  (v4/*: any*/),
   {
-    "alias": null,
     "args": null,
-    "concreteType": "PollEdge",
-    "kind": "LinkedField",
-    "name": "edges",
-    "plural": true,
-    "selections": [
-      {
-        "alias": null,
-        "args": null,
-        "concreteType": "Poll",
-        "kind": "LinkedField",
-        "name": "node",
-        "plural": false,
-        "selections": [
-          (v4/*: any*/),
-          {
-            "args": null,
-            "kind": "FragmentSpread",
-            "name": "PollCard_poll"
-          },
-          (v5/*: any*/)
-        ],
-        "storageKey": null
-      },
-      (v6/*: any*/)
-    ],
-    "storageKey": null
-  },
-  (v7/*: any*/)
-],
-v9 = [
-  {
-    "kind": "Variable",
-    "name": "after",
-    "variableName": "cursor"
-  },
-  {
-    "kind": "Variable",
-    "name": "first",
-    "variableName": "count"
+    "kind": "FragmentSpread",
+    "name": "PollCard_poll"
   }
 ],
-v10 = [
+v6 = [
+  (v4/*: any*/),
   {
     "alias": null,
     "args": null,
-    "concreteType": "PollEdge",
+    "kind": "ScalarField",
+    "name": "title",
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": null,
+    "concreteType": "PollOption",
     "kind": "LinkedField",
-    "name": "edges",
+    "name": "options",
+    "plural": true,
+    "selections": [
+      (v4/*: any*/),
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "optionText",
+        "storageKey": null
+      }
+    ],
+    "storageKey": null
+  },
+  {
+    "alias": null,
+    "args": null,
+    "concreteType": "PollPermissions",
+    "kind": "LinkedField",
+    "name": "permissions",
     "plural": true,
     "selections": [
       {
         "alias": null,
         "args": null,
-        "concreteType": "Poll",
-        "kind": "LinkedField",
-        "name": "node",
-        "plural": false,
-        "selections": [
-          (v4/*: any*/),
-          {
-            "alias": null,
-            "args": null,
-            "kind": "ScalarField",
-            "name": "title",
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "PollOption",
-            "kind": "LinkedField",
-            "name": "options",
-            "plural": true,
-            "selections": [
-              (v4/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "optionText",
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          {
-            "alias": null,
-            "args": null,
-            "concreteType": "PollPermissions",
-            "kind": "LinkedField",
-            "name": "permissions",
-            "plural": true,
-            "selections": [
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "permission_type",
-                "storageKey": null
-              },
-              {
-                "alias": null,
-                "args": null,
-                "kind": "ScalarField",
-                "name": "target_id",
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
-          },
-          (v5/*: any*/)
-        ],
+        "kind": "ScalarField",
+        "name": "permission_type",
         "storageKey": null
       },
-      (v6/*: any*/)
+      {
+        "alias": null,
+        "args": null,
+        "kind": "ScalarField",
+        "name": "target_id",
+        "storageKey": null
+      }
     ],
     "storageKey": null
-  },
-  (v7/*: any*/)
+  }
 ];
 return {
   "fragment": {
     "argumentDefinitions": [
       (v0/*: any*/),
-      (v1/*: any*/),
-      (v2/*: any*/)
+      (v1/*: any*/)
     ],
     "kind": "Fragment",
     "metadata": null,
@@ -246,30 +140,41 @@ return {
     "selections": [
       {
         "alias": null,
-        "args": (v3/*: any*/),
-        "concreteType": "MyPolls",
+        "args": (v2/*: any*/),
+        "concreteType": "User",
         "kind": "LinkedField",
-        "name": "myPolls",
+        "name": "user",
         "plural": false,
         "selections": [
           {
-            "alias": "createdPolls",
-            "args": null,
-            "concreteType": "PollConnection",
+            "alias": null,
+            "args": (v3/*: any*/),
+            "concreteType": "Poll",
             "kind": "LinkedField",
-            "name": "__MyPolls_createdPolls_connection",
-            "plural": false,
-            "selections": (v8/*: any*/),
+            "name": "polls",
+            "plural": true,
+            "selections": (v5/*: any*/),
             "storageKey": null
           },
           {
-            "alias": "votedPolls",
+            "alias": null,
             "args": null,
-            "concreteType": "PollConnection",
+            "concreteType": "Vote",
             "kind": "LinkedField",
-            "name": "__MyPolls_votedPolls_connection",
-            "plural": false,
-            "selections": (v8/*: any*/),
+            "name": "votes",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Poll",
+                "kind": "LinkedField",
+                "name": "poll",
+                "plural": false,
+                "selections": (v5/*: any*/),
+                "storageKey": null
+              }
+            ],
             "storageKey": null
           }
         ],
@@ -282,96 +187,69 @@ return {
   "kind": "Request",
   "operation": {
     "argumentDefinitions": [
-      (v2/*: any*/),
-      (v0/*: any*/),
-      (v1/*: any*/)
+      (v1/*: any*/),
+      (v0/*: any*/)
     ],
     "kind": "Operation",
     "name": "MyPollsQuery",
     "selections": [
       {
         "alias": null,
-        "args": (v3/*: any*/),
-        "concreteType": "MyPolls",
+        "args": (v2/*: any*/),
+        "concreteType": "User",
         "kind": "LinkedField",
-        "name": "myPolls",
+        "name": "user",
         "plural": false,
         "selections": [
           {
             "alias": null,
-            "args": (v9/*: any*/),
-            "concreteType": "PollConnection",
+            "args": (v3/*: any*/),
+            "concreteType": "Poll",
             "kind": "LinkedField",
-            "name": "createdPolls",
-            "plural": false,
-            "selections": (v10/*: any*/),
+            "name": "polls",
+            "plural": true,
+            "selections": (v6/*: any*/),
             "storageKey": null
           },
           {
             "alias": null,
-            "args": (v9/*: any*/),
-            "filters": null,
-            "handle": "connection",
-            "key": "MyPolls_createdPolls",
-            "kind": "LinkedHandle",
-            "name": "createdPolls"
-          },
-          {
-            "alias": null,
-            "args": (v9/*: any*/),
-            "concreteType": "PollConnection",
+            "args": null,
+            "concreteType": "Vote",
             "kind": "LinkedField",
-            "name": "votedPolls",
-            "plural": false,
-            "selections": (v10/*: any*/),
+            "name": "votes",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Poll",
+                "kind": "LinkedField",
+                "name": "poll",
+                "plural": false,
+                "selections": (v6/*: any*/),
+                "storageKey": null
+              },
+              (v4/*: any*/)
+            ],
             "storageKey": null
           },
-          {
-            "alias": null,
-            "args": (v9/*: any*/),
-            "filters": null,
-            "handle": "connection",
-            "key": "MyPolls_votedPolls",
-            "kind": "LinkedHandle",
-            "name": "votedPolls"
-          }
+          (v4/*: any*/)
         ],
         "storageKey": null
       }
     ]
   },
   "params": {
-    "cacheID": "4bde79eb2a40de42790cf3f0dd3ba047",
+    "cacheID": "409ad2bb5679f197ced864e643182c95",
     "id": null,
-    "metadata": {
-      "connection": [
-        {
-          "count": "count",
-          "cursor": "cursor",
-          "direction": "forward",
-          "path": [
-            "myPolls",
-            "createdPolls"
-          ]
-        },
-        {
-          "count": "count",
-          "cursor": "cursor",
-          "direction": "forward",
-          "path": [
-            "myPolls",
-            "votedPolls"
-          ]
-        }
-      ]
-    },
+    "metadata": {},
     "name": "MyPollsQuery",
     "operationKind": "query",
-    "text": "query MyPollsQuery(\n  $userId: ID!\n  $count: Int = 10\n  $cursor: String\n) {\n  myPolls(userId: $userId) {\n    createdPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n    votedPolls(first: $count, after: $cursor) {\n      edges {\n        node {\n          id\n          ...PollCard_poll\n          __typename\n        }\n        cursor\n      }\n      pageInfo {\n        endCursor\n        hasNextPage\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
+    "text": "query MyPollsQuery(\n  $userId: ID!\n  $permission: PermissionType!\n) {\n  user(id: $userId) {\n    polls(permission: $permission) {\n      id\n      ...PollCard_poll\n    }\n    votes {\n      poll {\n        id\n        ...PollCard_poll\n      }\n      id\n    }\n    id\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "9b94054e1c70266d59185b0a4a67c0d3";
+(node as any).hash = "d60f2293127edc38aa1786534b7d9303";
 
 export default node;

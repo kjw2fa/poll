@@ -11,6 +11,9 @@ export default defineConfig({
     svgr(),
     relay,
   ],
+  define: {
+    'global': {},
+  },
   test: {
     globals: true,
     environment: 'jsdom',

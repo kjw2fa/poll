@@ -9,7 +9,7 @@ import { Badge } from '../../ui/badge';
 import { RecordSourceSelectorProxy } from 'relay-runtime';
 
 const VoteSubmitVoteMutation = graphql`
-  mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [RatingInput!]!) {
+  mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [VoteInput!]!) {
     submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {
         pollEdge {
             cursor
@@ -43,10 +43,7 @@ const Vote_poll = graphql`
   }
 `;
 
-type Option = {
-    id: string;
-    optionText: string;
-};
+import { PollOption as Option } from '../../../generated/graphql';
 
 const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key }) => {
     const poll = useFragment(Vote_poll, pollProp);

@@ -4,13 +4,10 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { toast } from 'sonner';
 
-export type PollFormData = {
-    id?: string;
-    title: string;
-    options: {
-        id: string;
-        optionText: string;
-    }[];
+import { Poll, PollOption } from '../../generated/graphql';
+
+export type PollFormData = Pick<Poll, 'id' | 'title'> & {
+    options: Pick<PollOption, 'id' | 'optionText'>[];
 };
 
 type PollFormProps = {
@@ -20,7 +17,7 @@ type PollFormProps = {
 
 const PollForm = ({ poll, onSubmit }: PollFormProps) => {
     const [title, setTitle] = useState('');
-    const [options, setOptions] = useState<{ id: string; optionText: string }[]>([]);
+    const [options, setOptions] = useState<Pick<PollOption, 'id' | 'optionText'>[]>([]);
     const [newOption, setNewOption] = useState('');
 
     useEffect(() => {
