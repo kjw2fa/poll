@@ -1,16 +1,16 @@
 overwrite: true
-schema: "backend/schema.graphql"
-documents: "src/**/*.tsx"
+schema: "shared/schema.graphql"
+documents: "client/src/**/*.tsx"
 generates:
-  src/generated/graphql.ts:
+  shared/generated-types.ts:
     plugins:
       - "typescript"
       - "typescript-operations"
       - "typescript-resolvers"
     config:
       mappers:
-        Poll: "backend/db-types#PollDbObject"
-        PollOption: "backend/db-types#PollOptionDbObject"
-        Vote: "backend/db-types#VoteDbObject"
-        User: "backend/db-types#UserDbObject"
-        PollPermissions: "backend/db-types#PollPermissionsDbObject"
+        Poll: "server/db-types#PollDbObject"
+        PollOption: "server/db-types#PollOptionDbObject"
+        Vote: "server/db-types#VoteDbObject"
+        User: "server/db-types#UserDbObject"
+        PollPermissions: "server/db-types#PollPermissionsDbObject"
