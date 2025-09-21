@@ -7,7 +7,7 @@ import PollCard from '../Poll/PollCard/PollCard';
 import { PermissionType } from '../../generated/graphql.ts';
 
 const MyPollsQuery = graphql`
-  query MyPollsQuery($userId: ID!, $permission: PermissionType!) {
+  query MyPollsQuery($userId: ID!, $permission: PermissionType) {
     user(id: $userId) {
       polls(permission: $permission) {
         id

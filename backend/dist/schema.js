@@ -19,7 +19,7 @@ const schema_1 = require("@graphql-tools/schema");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const db_utils_1 = require("./db-utils");
-const graphql_1 = require("./src/generated/graphql");
+const graphql_1 = require("@/generated/graphql");
 exports.JWT_SECRET = 'your-secret-key';
 // Helper functions for global IDs
 const toGlobalId = (type, id) => Buffer.from(`${type}:${id}`).toString('base64');
@@ -95,7 +95,16 @@ const resolvers = {
         searchPolls: (parent, { searchTerm }) => __awaiter(void 0, void 0, void 0, function* () {
             const rows = yield (0, db_utils_1.dbAll)('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
             return rows.map(row => (Object.assign(Object.assign({}, row), { id: toGlobalId('Poll', row.id) })));
-        })
+        }),
+        user: (parent, { id }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: userIdStr } = fromGlobalId(id);
+            const userId = parseInt(userIdStr, 10);
+            const user = yield (0, db_utils_1.dbGet)('SELECT * FROM Users WHERE id = ?', [userId]);
+            if (!user) {
+                return null;
+            }
+            return Object.assign(Object.assign({}, user), { id: toGlobalId('User', user.id) });
+        }),
     },
     Mutation: {
         createPoll: (parent, { title, options, userId }) => __awaiter(void 0, void 0, void 0, function* () {
@@ -106,6 +115,7 @@ const resolvers = {
             for (const option of options) {
                 yield (0, db_utils_1.dbRun)('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
             }
+            console.log('Inserting permission with:', { pollId, permissionType: graphql_1.PermissionType.Edit, targetType: graphql_1.TargetType.User, parsedUserId });
             yield (0, db_utils_1.dbRun)('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, graphql_1.PermissionType.Edit, graphql_1.TargetType.User, parsedUserId]);
             const row = yield (0, db_utils_1.dbGet)('SELECT * FROM Polls WHERE id = ?', [pollId]);
             if (!row) {
@@ -272,7 +282,19 @@ const resolvers = {
         })
     },
     User: {
-        id: (parent) => toGlobalId('User', parent.id)
+        id: (parent) => toGlobalId('User', parent.id),
+        polls: (parent, { permission }) => __awaiter(void 0, void 0, void 0, function* () {
+            const { id: userIdStr } = fromGlobalId(parent.id);
+            const userId = parseInt(userIdStr, 10);
+            let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
+            const params = [userId];
+            if (permission) {
+                query += ' AND PollPermissions.permission_type = ?';
+                params.push(permission);
+            }
+            const polls = yield (0, db_utils_1.dbAll)(query, params);
+            return polls.map(poll => (Object.assign(Object.assign({}, poll), { id: toGlobalId('Poll', poll.id) })));
+        }),
     }
 };
 exports.default = (0, schema_1.makeExecutableSchema)({

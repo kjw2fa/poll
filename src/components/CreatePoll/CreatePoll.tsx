@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import PollForm, { PollFormData } from '../PollForm/PollForm';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -25,6 +25,12 @@ const CreatePollMutation = graphql`
 const CreatePollComponent = ({ userId }: { userId: string }) => {
     const navigate = useNavigate();
     const [commitMutation] = useMutation<CreatePollMutationType>(CreatePollMutation);
+
+    useEffect(() => {
+        if (!userId) {
+            navigate('/');
+        }
+    }, [userId, navigate]);
 
     const handleSave = (pollData: Omit<PollFormData, 'id'>) => {
         commitMutation({

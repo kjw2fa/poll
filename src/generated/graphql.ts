@@ -1,5 +1,5 @@
 import { GraphQLResolveInfo } from 'graphql';
-import { PollDbObject, PollOptionDbObject, VoteDbObject, UserDbObject, PollPermissionsDbObject } from '../../backend/db-types';
+import { PollDbObject, PollOptionDbObject, VoteDbObject, UserDbObject, PollPermissionsDbObject } from 'backend/db-types';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
@@ -227,7 +227,7 @@ export type LoginMutationMutation = { __typename?: 'Mutation', login?: { __typen
 
 export type MyPollsQueryQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
-  permission: PermissionType;
+  permission?: InputMaybe<PermissionType>;
 }>;
 
 

@@ -5,8 +5,8 @@ import fs from 'fs';
 import path from 'path';
 import db from './database';
 import { dbGet, dbAll, dbRun } from './db-utils';
-import { PermissionType, TargetType } from './src/generated/graphql';
-import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption } from './src/generated/graphql';
+import { PermissionType, TargetType } from '@/generated/graphql';
+import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption } from '@/generated/graphql';
 import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject } from './db-types';
 
 interface UserWithPassword extends UserDbObject {
@@ -98,7 +98,16 @@ const resolvers: Resolvers = {
         searchPolls: async (parent: any, { searchTerm }: { searchTerm: string }) => {
             const rows = await dbAll<PollDbObject>('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
             return rows.map(row => ({ ...row, id: toGlobalId('Poll', row.id) }));
-        }
+        },
+        user: async (parent, { id }) => {
+            const { id: userIdStr } = fromGlobalId(id);
+            const userId = parseInt(userIdStr, 10);
+            const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [userId]);
+            if (!user) {
+                return null;
+            }
+            return { ...user, id: toGlobalId('User', user.id) };
+        },
     },
     Mutation: {
         createPoll: async (parent, { title, options, userId }) => {
@@ -287,7 +296,19 @@ const resolvers: Resolvers = {
         }
     },
     User: {
-        id: (parent: User) => toGlobalId('User', parent.id)
+        id: (parent: User) => toGlobalId('User', parent.id),
+        polls: async (parent, { permission }) => {
+            const { id: userIdStr } = fromGlobalId(parent.id as string);
+            const userId = parseInt(userIdStr, 10);
+            let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
+            const params: any[] = [userId];
+            if (permission) {
+                query += ' AND PollPermissions.permission_type = ?';
+                params.push(permission);
+            }
+            const polls = await dbAll<PollDbObject>(query, params);
+            return polls.map(poll => ({ ...poll, id: toGlobalId('Poll', poll.id) }));
+        },
     }
 };
 

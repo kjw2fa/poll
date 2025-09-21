@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a934b9c24b4215c533a60235b8bee00e>>
+ * @generated SignedSource<<22e11f01ee663a20957b0cbd8c89363d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -12,7 +12,7 @@ import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
 export type PermissionType = "EDIT" | "VIEW" | "VOTE" | "%future added value";
 export type MyPollsQuery$variables = {
-  permission: PermissionType;
+  permission?: PermissionType | null | undefined;
   userId: string;
 };
 export type MyPollsQuery$data = {
@@ -240,16 +240,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "409ad2bb5679f197ced864e643182c95",
+    "cacheID": "b7930877d0b68983c95c9767fbd6e6ea",
     "id": null,
     "metadata": {},
     "name": "MyPollsQuery",
     "operationKind": "query",
-    "text": "query MyPollsQuery(\n  $userId: ID!\n  $permission: PermissionType!\n) {\n  user(id: $userId) {\n    polls(permission: $permission) {\n      id\n      ...PollCard_poll\n    }\n    votes {\n      poll {\n        id\n        ...PollCard_poll\n      }\n      id\n    }\n    id\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
+    "text": "query MyPollsQuery(\n  $userId: ID!\n  $permission: PermissionType\n) {\n  user(id: $userId) {\n    polls(permission: $permission) {\n      id\n      ...PollCard_poll\n    }\n    votes {\n      poll {\n        id\n        ...PollCard_poll\n      }\n      id\n    }\n    id\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "d60f2293127edc38aa1786534b7d9303";
+(node as any).hash = "4bb4fea4aa450a434ed19252b3464174";
 
 export default node;

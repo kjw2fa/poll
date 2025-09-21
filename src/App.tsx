@@ -95,7 +95,7 @@ function App() {
           <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={<HomePage />} />
-              <Route path="/create" element={<CreatePoll userId={userId} />} />
+              {loggedIn && <Route path="/create" element={<CreatePoll userId={userId} />} />}
               <Route path="/poll" element={<Poll userId={userId} />} />
               <Route path="/poll/:id/*" element={<Poll userId={userId} />} />
               <Route path="/poll/edit" element={<EditPoll userId={userId} />} />
