@@ -3,39 +3,91 @@ schema {
   mutation: Mutation
 }
 
-type CreatePollPayload {
-  pollEdge: PollEdge
-}
-
-type LoginResponse {
-  token: String
-  userId: ID
-  username: String
-}
-
-input PollOptionInput {
-  id: ID
-  optionText: String!
-}
-
-input VoteInput {
-  optionId: ID!
-  rating: Int!
+type RootQueryType {
+  polls: [Poll!]!
+  poll(id: ID!): Poll
+  searchPolls(searchTerm: String!): [Poll!]!
+  user(id: ID!): User
 }
 
 type Mutation {
   createPoll(title: String!, options: [PollOptionInput!]!, userId: ID!): CreatePollPayload
-  submitVote(pollId: ID!, userId: ID!, ratings: [VoteInput!]!): SubmitVotePayload
-  editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionInput!]!): Poll
+  editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionEditInput!]!): Poll
+  submitVote(pollId: ID!, userId: ID!, ratings: [VoteRatingInput!]!): SubmitVotePayload
   signup(username: String!, email: String!, password: String!): User
-  login(username: String!, password: String!): LoginResponse
+  login(username: String!, password: String!): AuthPayload
 }
 
-type PageInfo {
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-  startCursor: String
-  endCursor: String
+type Poll {
+  id: ID!
+  title: String!
+  options: [PollOption!]!
+  votes: [Vote!]!
+  permissions: [PollPermissions!]!
+}
+
+type PollOption {
+  id: ID!
+  optionText: String!
+}
+
+type Vote {
+  id: ID!
+  user: User!
+  poll: Poll!
+  ratings: [VoteRating!]!
+}
+
+type User {
+  id: ID!
+  username: String!
+  email: String!
+  polls(permission: PermissionType): [Poll!]!
+}
+
+type PollPermissions {
+  id: ID!
+  permission_type: PermissionType!
+  target_type: TargetType!
+  target_id: ID
+}
+
+type VoteRating {
+  option: PollOption!
+  rating: Int!
+}
+
+input PollOptionInput {
+  optionText: String!
+}
+
+input VoteRatingInput {
+  optionId: ID!
+  rating: Int!
+}
+
+input PollOptionEditInput {
+  id: ID
+  optionText: String!
+}
+
+type CreatePollPayload {
+  pollEdge: PollEdge!
+}
+
+type PollEdge {
+  cursor: String!
+  node: Poll!
+}
+
+type SubmitVotePayload {
+  pollEdge: PollEdge!
+}
+
+type AuthPayload {
+  token: String!
+  userId: ID!
+  username: String!
 }
 
 enum PermissionType {
@@ -44,83 +96,7 @@ enum PermissionType {
   EDIT
 }
 
-type Poll {
-  id: ID!
-  title: String
-  options: [PollOption]
-  permissions: [PollPermissions]
-  votes: [Vote]
-  createdAt: String
-  updatedAt: String
-}
-
-type PollConnection {
-  edges: [PollEdge]
-  pageInfo: PageInfo!
-}
-
-type PollEdge {
-  cursor: String!
-  node: Poll
-}
-
-type PollOption {
-  id: ID!
-  optionText: String
-}
-
-type PollPermissions {
-  permission_type: PermissionType
-  target_type: TargetType
-  target_id: ID
-}
-
-input RatingInput {
-  optionId: ID!
-  rating: Int!
-}
-
-type RootQueryType {
-  polls: [Poll]
-  poll(id: ID!): Poll
-  user(id: ID!): User
-  searchPolls(searchTerm: String!): [Poll]
-}
-
-type SubmitVotePayload {
-  pollEdge: PollEdge
-}
-
 enum TargetType {
   USER
   PUBLIC
 }
-
-type User {
-  id: ID!
-  username: String
-  email: String
-  # The password is not exposed to the client
-  password: String
-  polls(permission: PermissionType): [Poll]
-  votes: [Vote]
-}
-
-type Vote {
-  id: ID!
-  user: User!
-  poll: Poll!
-  ratings: [VoteRating!]
-}
-
-type VoteRating {
-    optionId: ID!
-    option: PollOption!
-    rating: Int!
-}
-
-type WinningOption {
-  option: String
-  averageRating: Float
-}
-

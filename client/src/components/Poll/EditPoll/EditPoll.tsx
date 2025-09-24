@@ -6,7 +6,7 @@ import { EditPoll_poll$key } from './__generated__/EditPoll_poll.graphql';
 import PollForm, { PollFormData } from '../../PollForm/PollForm';
 
 const EditPollMutation = graphql`
-  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [PollOptionInput!]!) {
+  mutation EditPollMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [PollOptionEditInput!]!) {
     editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {
       id
       title

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "strict": true,
     "esModuleInterop": true,
@@ -13,6 +13,9 @@
       "@/*": ["./*"],
       "@shared/*": ["../shared/*"]
     }
+  },
+  "ts-node": {
+    "esm": true
   },
   "include": [
     "**/*.ts"

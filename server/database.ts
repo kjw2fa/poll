@@ -1,6 +1,10 @@
-import path from 'path';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
 import sqlite3 from 'sqlite3';
-import { PermissionType, TargetType } from './enums';
+import { PermissionType, TargetType } from '../shared/db-types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const DBSOURCE = path.join(__dirname, '../db.sqlite'); // Always use project root
 

@@ -3,9 +3,9 @@ import cors from 'cors';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import http from 'http';
-import schema from './schema';
+import schema from './schema.js';
 import jwt from 'jsonwebtoken';
-import { JWT_SECRET } from './schema';
+import { JWT_SECRET } from './schema.js';
 
 const app = express();
 const httpServer = http.createServer(app);

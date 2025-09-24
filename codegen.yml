@@ -9,8 +9,8 @@ generates:
       - "typescript-resolvers"
     config:
       mappers:
-        Poll: "server/db-types#PollDbObject"
-        PollOption: "server/db-types#PollOptionDbObject"
-        Vote: "server/db-types#VoteDbObject"
-        User: "server/db-types#UserDbObject"
-        PollPermissions: "server/db-types#PollPermissionsDbObject"
+        Poll: ./db-types.ts#PollDbObject
+        PollOption: ./db-types.ts#PollOptionDbObject
+        User: ./db-types.ts#UserDbObject
+        Vote: ./db-types.ts#VoteDbObject
+        PollPermissions: ./db-types.ts#PollPermissionsDbObject

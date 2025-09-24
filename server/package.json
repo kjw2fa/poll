@@ -1,12 +1,13 @@
 {
   "name": "poll-backend",
   "version": "1.0.0",
+  "type": "module",
   "description": "Backend for the poll application",
   "main": "dist/server.js",
   "scripts": {
     "start": "node -r tsconfig-paths/register dist/server.js",
-    "build": "tsc",
-    "dev": "nodemon --watch . --ext ts,json --exec ts-node -r tsconfig-paths/register server.ts",
+    "build": "tsc && tsc-alias",
+    "dev": "nodemon --watch . --ext ts,json --exec node --import tsx server.ts",
     "update-schema": "get-graphql-schema http://localhost:3001/graphql > ../shared/schema.graphql",
     "generate": "npm run update-schema"
   },
@@ -31,6 +32,8 @@
     "get-graphql-schema": "^2.1.2",
     "nodemon": "^2.0.15",
     "ts-node": "^10.9.2",
+    "tsc-alias": "^1.8.16",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   }
 }

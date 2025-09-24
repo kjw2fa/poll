@@ -2,12 +2,15 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import fs from 'fs';
-import path from 'path';
-import db from './database';
-import { dbGet, dbAll, dbRun } from './db-utils';
-import { PermissionType, TargetType } from '@shared/generated-types';
-import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption } from '@shared/generated-types';
-import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject } from './db-types';
+import path, { dirname } from 'path';
+import { fileURLToPath } from 'url';
+import db from './database.js';
+import { dbGet, dbAll, dbRun } from './db-utils.js';
+import { PermissionType, TargetType, PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject } from '../shared/db-types.js';
+import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption } from '../shared/generated-types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 interface UserWithPassword extends UserDbObject {
     password?: string;
@@ -78,15 +81,15 @@ async function paginationResolver(baseQuery: string, queryParams: any[], { first
     };
 }
 
-const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'schema.graphql'), 'utf8');
+const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.graphql'), 'utf8');
 
-const resolvers: Resolvers = {
+// const resolvers: Resolvers = {
     RootQueryType: {
         polls: async () => {
             const rows = await dbAll<PollDbObject>('SELECT * FROM Polls', []);
             return rows.map(row => ({ ...row, id: toGlobalId('Poll', row.id) }));
         },
-        poll: async (parent: any, { id }: { id: string }) => {
+        poll: async (parent: unknown, { id }: { id: string }) => {
             const { id: pollIdStr } = fromGlobalId(id);
             const pollId = parseInt(pollIdStr, 10);
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [pollId]);
@@ -95,11 +98,11 @@ const resolvers: Resolvers = {
             }
             return { ...poll, id: toGlobalId('Poll', poll.id) };
         },
-        searchPolls: async (parent: any, { searchTerm }: { searchTerm: string }) => {
+        searchPolls: async (parent: unknown, { searchTerm }: { searchTerm: string }) => {
             const rows = await dbAll<PollDbObject>('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
             return rows.map(row => ({ ...row, id: toGlobalId('Poll', row.id) }));
         },
-        user: async (parent, { id }) => {
+        user: async (parent: unknown, { id }: { id: string }) => {
             const { id: userIdStr } = fromGlobalId(id);
             const userId = parseInt(userIdStr, 10);
             const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [userId]);
@@ -110,7 +113,7 @@ const resolvers: Resolvers = {
         },
     },
     Mutation: {
-        createPoll: async (parent, { title, options, userId }) => {
+        createPoll: async (parent: unknown, { title, options, userId }: { title: string, options: { optionText: string }[], userId: string }) => {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
             const result = await dbRun('INSERT INTO Polls (title) VALUES (?)', [title]);
@@ -140,7 +143,7 @@ const resolvers: Resolvers = {
                 }
             };
         },
-        submitVote: async (parent, { pollId, userId, ratings }) => {
+        submitVote: async (parent: unknown, { pollId, userId, ratings }: { pollId: string, userId: string, ratings: { optionId: string, rating: number }[] }) => {
             const { id: pollIdStr } = fromGlobalId(pollId);
             const parsedPollId = parseInt(pollIdStr, 10);
             const { id: userIdStr } = fromGlobalId(userId);
@@ -169,7 +172,7 @@ const resolvers: Resolvers = {
                 }
             };
         },
-        editPoll: async (parent, { pollId, userId, title, options }) => {
+        editPoll: async (parent: unknown, { pollId, userId, title, options }: { pollId: string, userId: string, title: string, options: { id?: string, optionText: string }[] }) => {
             const { id: pollIdStr } = fromGlobalId(pollId);
             const parsedPollId = parseInt(pollIdStr, 10);
             const { id: userIdStr } = fromGlobalId(userId);
@@ -209,7 +212,7 @@ const resolvers: Resolvers = {
             }
             return { ...poll, id: toGlobalId('Poll', poll.id) };
         },
-        signup: async (parent, { username, email, password }) => {
+        signup: async (parent: unknown, { username, email, password }: { username: string, email: string, password: string }) => {
             const hashedPassword = await bcrypt.hash(password, 10);
             try {
                 const result = await dbRun('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
@@ -228,7 +231,7 @@ const resolvers: Resolvers = {
                 throw err;
             }
         },
-        login: async (parent, { username, password }) => {
+        login: async (parent: unknown, { username, password }: { username: string, password: string }) => {
             const user = await dbGet<UserWithPassword>('SELECT * FROM Users WHERE username = ? OR email = ?', [username, username]);
             if (!user) {
                 throw new Error('Invalid username or password.');
@@ -242,39 +245,39 @@ const resolvers: Resolvers = {
         }
     },
     Poll: {
-        id: (parent) => toGlobalId('Poll', parent.id),
-        options: async (parent) => {
+        id: (parent: PollDbObject) => toGlobalId('Poll', parent.id),
+        options: async (parent: PollDbObject) => {
             const { id: pollIdStr } = fromGlobalId(parent.id as string);
             const pollId = parseInt(pollIdStr, 10);
             return await dbAll<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]) as unknown as PollOption[];
         },
-        permissions: async (parent) => {
+        permissions: async (parent: PollDbObject) => {
             const { id: pollIdStr } = fromGlobalId(parent.id as string);
             const pollId = parseInt(pollIdStr, 10);
             return await dbAll<PollPermissionsDbObject>('SELECT * FROM PollPermissions WHERE pollId = ?', [pollId]) as unknown as PollPermissions[];
         },
-        votes: async (parent) => {
+        votes: async (parent: PollDbObject) => {
             const { id: pollIdStr } = fromGlobalId(parent.id as string);
             const pollId = parseInt(pollIdStr, 10);
             return await dbAll<VoteDbObject>('SELECT * FROM Votes WHERE pollId = ?', [pollId]) as unknown as Vote[];
         },
     },
     PollOption: {
-        id: (parent) => toGlobalId('PollOption', parent.id)
+        id: (parent: PollOptionDbObject) => toGlobalId('PollOption', parent.id)
     },
     Vote: {
-        id: (parent) => toGlobalId('Vote', parent.id),
-        user: async (parent: any) => {
+        id: (parent: VoteDbObject) => toGlobalId('Vote', parent.id),
+        user: async (parent: VoteDbObject) => {
             const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [parent.userId]);
             if (!user) throw new Error('User not found');
             return user as unknown as User;
         },
-        poll: async (parent: any) => {
+        poll: async (parent: VoteDbObject) => {
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
             if (!poll) throw new Error('Poll not found');
             return poll as unknown as Poll;
         },
-        ratings: async (parent) => {
+        ratings: async (parent: VoteDbObject) => {
             return await dbAll<VoteRating>(`
                 SELECT vd.optionId, po.optionText, vd.rating 
                 FROM VoteDetails vd
@@ -284,7 +287,7 @@ const resolvers: Resolvers = {
         }
     },
     PollPermissions: {
-        target_id: (parent) => {
+        target_id: (parent: PollPermissionsDbObject) => {
             if (parent.target_type && parent.target_type === TargetType.User) {
                 if (parent.target_id) {
                     return toGlobalId('User', parent.target_id);
@@ -294,15 +297,15 @@ const resolvers: Resolvers = {
         }
     },
     VoteRating: {
-        option: async (parent: any) => {
+        option: async (parent: VoteRating) => {
             const option = await dbGet<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE id = ?', [parent.optionId]);
             if (!option) throw new Error('Option not found');
             return option as unknown as PollOption;
         }
     },
     User: {
-        id: (parent: User) => toGlobalId('User', parent.id),
-        polls: async (parent, { permission }) => {
+        id: (parent: UserDbObject) => toGlobalId('User', parent.id),
+        polls: async (parent: UserDbObject, { permission }: { permission?: PermissionType | null }) => {
             const { id: userIdStr } = fromGlobalId(parent.id as string);
             const userId = parseInt(userIdStr, 10);
             let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
@@ -317,7 +320,6 @@ const resolvers: Resolvers = {
     }
 };
 
-export default makeExecutableSchema({
+// export default makeExecutableSchema({
     typeDefs,
-    resolvers,
-});
+// });

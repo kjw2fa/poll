@@ -9,7 +9,7 @@ import { Badge } from '../../ui/badge';
 import { RecordSourceSelectorProxy } from 'relay-runtime';
 
 const VoteSubmitVoteMutation = graphql`
-  mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [VoteInput!]!) {
+  mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [VoteRatingInput!]!) {
     submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {
         pollEdge {
             cursor

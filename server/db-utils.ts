@@ -1,4 +1,4 @@
-import dbPromise from './database';
+import dbPromise from './database.js';
 import { RunResult } from 'sqlite3';
 
 export async function dbGet<T>(sql: string, params: any[]): Promise<T | undefined> {
