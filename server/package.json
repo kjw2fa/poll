@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node -r tsconfig-paths/register dist/server.js",
     "build": "tsc && tsc-alias",
-    "dev": "nodemon --watch . --ext ts,json --exec node --import tsx server.ts",
+    "dev": "nodemon --watch . --ext ts,json --exec tsx server.ts",
     "update-schema": "get-graphql-schema http://localhost:3001/graphql > ../shared/schema.graphql",
     "generate": "npm run update-schema"
   },

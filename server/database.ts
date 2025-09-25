@@ -1,7 +1,7 @@
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import sqlite3 from 'sqlite3';
-import { PermissionType, TargetType } from '../shared/db-types.js';
+import { PermissionType, TargetType } from '../shared/generated-types';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

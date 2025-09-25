@@ -5,7 +5,7 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { dbGet, dbAll, dbRun } from './db-utils.js';
-import { PermissionType, TargetType } from '@shared/generated-types';
+import { PermissionType, TargetType } from './shared/generated-types';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 export const JWT_SECRET = 'your-secret-key';

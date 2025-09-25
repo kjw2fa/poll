@@ -27,9 +27,15 @@ export interface VoteDbObject {
 export interface PollPermissionsDbObject {
   id: string;
   pollId: string;
-  permission_type: PermissionType;
-  target_type: TargetType;
+  permission_type: string;
+  target_type: string;
   target_id?: string;
+}
+
+export interface VoteRatingDbObject {
+  optionId: string;
+  optionText: string;
+  rating: number;
 }
 
 export type DbObject =
@@ -45,15 +51,4 @@ export enum DbCollection {
   POLL_OPTIONS = "pollOptions",
   VOTES = "votes",
   POLL_PERMISSIONS = "pollPermissions",
-}
-
-export enum PermissionType {
-  VIEW = 'VIEW',
-  VOTE = 'VOTE',
-  EDIT = 'EDIT',
-}
-
-export enum TargetType {
-  USER = 'USER',
-  PUBLIC = 'PUBLIC',
 }

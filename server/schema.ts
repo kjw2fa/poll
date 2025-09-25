@@ -5,9 +5,10 @@ import fs from 'fs';
 import path, { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import db from './database.js';
-import { dbGet, dbAll, dbRun } from './db-utils.js';
-import { PermissionType, TargetType, PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject } from '../shared/db-types.js';
-import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption } from '../shared/generated-types.js';
+import { dbGet, dbAll, dbRun } from './db-utils';
+import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject, VoteRatingDbObject } from '../shared/db-types';
+import { Poll, User, Vote, VoteRating, PollPermissions, Resolvers, PollOption, PermissionType, TargetType } from '../shared/generated-types';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -30,93 +31,34 @@ const fromGlobalId = (globalId: string) => {
 const toCursor = (id: number) => Buffer.from(String(id)).toString('base64');
 const fromCursor = (cursor: string) => Buffer.from(cursor, 'base64').toString('ascii');
 
-async function paginationResolver(baseQuery: string, queryParams: any[], { first, after, last, before }: { first?: number | null, after?: string | null, last?: number | null, before?: string | null }) {
-    let query = baseQuery;
-    const params = [...queryParams];
-
-    if (after) {
-        query += ` AND Polls.id > ?`;
-        params.push(parseInt(fromCursor(after), 10));
-    }
-
-    if (before) {
-        query += ` AND Polls.id < ?`;
-        params.push(parseInt(fromCursor(before), 10));
-    }
-
-    let limit = first || last || 10;
-    if (first) {
-        query += ` ORDER BY Polls.id ASC LIMIT ?`;
-        params.push(limit + 1);
-    } else if (last) {
-        query += ` ORDER BY Polls.id DESC LIMIT ?`;
-        params.push(limit + 1);
-    }
-
-    const rows = await dbAll<PollDbObject>(query, params);
-
-    let edges = rows.map(row => ({
-        cursor: toCursor(row.id as number),
-        node: row
-    }));
-
-    const hasNextPage = first ? edges.length > limit : false;
-    const hasPreviousPage = last ? edges.length > limit : false;
-
-    if (first && edges.length > limit) {
-        edges = edges.slice(0, limit);
-    }
-    if (last && edges.length > limit) {
-        edges = edges.slice(0, limit).reverse();
-    }
-
-    return {
-        edges,
-        pageInfo: {
-            hasNextPage,
-            hasPreviousPage,
-            startCursor: edges.length > 0 ? edges[0].cursor : null,
-            endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
-        }
-    };
-}
-
 const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.graphql'), 'utf8');
 
-// const resolvers: Resolvers = {
+const resolvers: Resolvers = {
     RootQueryType: {
         polls: async () => {
-            const rows = await dbAll<PollDbObject>('SELECT * FROM Polls', []);
-            return rows.map(row => ({ ...row, id: toGlobalId('Poll', row.id) }));
+            return dbAll<PollDbObject>('SELECT * FROM Polls', []);
         },
         poll: async (parent: unknown, { id }: { id: string }) => {
             const { id: pollIdStr } = fromGlobalId(id);
             const pollId = parseInt(pollIdStr, 10);
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [pollId]);
-            if (!poll) {
-                return null;
-            }
-            return { ...poll, id: toGlobalId('Poll', poll.id) };
+            return poll || null;
         },
         searchPolls: async (parent: unknown, { searchTerm }: { searchTerm: string }) => {
-            const rows = await dbAll<PollDbObject>('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
-            return rows.map(row => ({ ...row, id: toGlobalId('Poll', row.id) }));
+            return dbAll<PollDbObject>('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
         },
         user: async (parent: unknown, { id }: { id: string }) => {
             const { id: userIdStr } = fromGlobalId(id);
             const userId = parseInt(userIdStr, 10);
             const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [userId]);
-            if (!user) {
-                return null;
-            }
-            return { ...user, id: toGlobalId('User', user.id) };
+            return user || null;
         },
     },
     Mutation: {
         createPoll: async (parent: unknown, { title, options, userId }: { title: string, options: { optionText: string }[], userId: string }) => {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
-            const result = await dbRun('INSERT INTO Polls (title) VALUES (?)', [title]);
+            const result = await dbRun('INSERT INTO Polls (title, userId) VALUES (?, ?)', [title, parsedUserId]);
             const pollId = result.lastID;
 
             for (const option of options) {
@@ -124,11 +66,6 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
             }
 
             await dbRun('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.Edit, TargetType.User, parsedUserId]);
-            console.log('Inserted EDIT permission');
-            await dbRun('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.View, TargetType.Public, null]);
-            console.log('Inserted VIEW permission');
-            await dbRun('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.Vote, TargetType.Public, null]);
-            console.log('Inserted VOTE permission');
             
             const row = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [pollId]);
             
@@ -139,7 +76,7 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
             return {
                 pollEdge: {
                     cursor: toCursor(pollId),
-                    node: row as unknown as Poll,
+                    node: row,
                 }
             };
         },
@@ -168,11 +105,11 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
             return {
                 pollEdge: {
                     cursor: toCursor(parsedPollId),
-                    node: row as unknown as Poll,
+                    node: row,
                 }
             };
         },
-        editPoll: async (parent: unknown, { pollId, userId, title, options }: { pollId: string, userId: string, title: string, options: { id?: string, optionText: string }[] }) => {
+        editPoll: async (parent: unknown, { pollId, userId, title, options }: { pollId: string, userId: string, title: string, options: { id?: string | null, optionText: string }[] }) => {
             const { id: pollIdStr } = fromGlobalId(pollId);
             const parsedPollId = parseInt(pollIdStr, 10);
             const { id: userIdStr } = fromGlobalId(userId);
@@ -207,20 +144,14 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
             }
             
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
-            if (!poll) {
-                return null;
-            }
-            return { ...poll, id: toGlobalId('Poll', poll.id) };
+            return poll || null;
         },
         signup: async (parent: unknown, { username, email, password }: { username: string, email: string, password: string }) => {
             const hashedPassword = await bcrypt.hash(password, 10);
             try {
                 const result = await dbRun('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
                 const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [result.lastID]);
-                if (!user) {
-                    return null;
-                }
-                return { ...user, id: toGlobalId('User', user.id) };
+                return user || null;
             } catch (err: any) {
                 if (err.message.includes('UNIQUE constraint failed: Users.username')) {
                     throw new Error('Username already exists.');
@@ -246,20 +177,14 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
     },
     Poll: {
         id: (parent: PollDbObject) => toGlobalId('Poll', parent.id),
-        options: async (parent: PollDbObject) => {
-            const { id: pollIdStr } = fromGlobalId(parent.id as string);
-            const pollId = parseInt(pollIdStr, 10);
-            return await dbAll<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [pollId]) as unknown as PollOption[];
+        options: (parent: PollDbObject) => {
+            return dbAll<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
         },
-        permissions: async (parent: PollDbObject) => {
-            const { id: pollIdStr } = fromGlobalId(parent.id as string);
-            const pollId = parseInt(pollIdStr, 10);
-            return await dbAll<PollPermissionsDbObject>('SELECT * FROM PollPermissions WHERE pollId = ?', [pollId]) as unknown as PollPermissions[];
+        permissions: (parent: PollDbObject) => {
+            return dbAll<PollPermissionsDbObject>('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id]);
         },
-        votes: async (parent: PollDbObject) => {
-            const { id: pollIdStr } = fromGlobalId(parent.id as string);
-            const pollId = parseInt(pollIdStr, 10);
-            return await dbAll<VoteDbObject>('SELECT * FROM Votes WHERE pollId = ?', [pollId]) as unknown as Vote[];
+        votes: (parent: PollDbObject) => {
+            return dbAll<VoteDbObject>('SELECT * FROM Votes WHERE pollId = ?', [parent.id]);
         },
     },
     PollOption: {
@@ -270,20 +195,28 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
         user: async (parent: VoteDbObject) => {
             const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [parent.userId]);
             if (!user) throw new Error('User not found');
-            return user as unknown as User;
+            return user;
         },
         poll: async (parent: VoteDbObject) => {
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
             if (!poll) throw new Error('Poll not found');
-            return poll as unknown as Poll;
+            return poll;
         },
         ratings: async (parent: VoteDbObject) => {
-            return await dbAll<VoteRating>(`
+            const ratings = await dbAll<VoteRatingDbObject>(`
                 SELECT vd.optionId, po.optionText, vd.rating 
                 FROM VoteDetails vd
                 JOIN PollOptions po ON vd.optionId = po.id
                 WHERE vd.voteId = ?
             `, [parent.id]);
+            return ratings.map(r => ({
+                rating: r.rating,
+                option: {
+                    id: r.optionId,
+                    optionText: r.optionText,
+                    pollId: parent.pollId
+                }
+            }));
         }
     },
     PollPermissions: {
@@ -297,15 +230,12 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
         }
     },
     VoteRating: {
-        option: async (parent: VoteRating) => {
-            const option = await dbGet<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE id = ?', [parent.optionId]);
-            if (!option) throw new Error('Option not found');
-            return option as unknown as PollOption;
-        }
+        option: (parent) => parent.option,
+        rating: (parent) => parent.rating,
     },
     User: {
         id: (parent: UserDbObject) => toGlobalId('User', parent.id),
-        polls: async (parent: UserDbObject, { permission }: { permission?: PermissionType | null }) => {
+        polls: (parent: UserDbObject, { permission }: { permission?: PermissionType | null }) => {
             const { id: userIdStr } = fromGlobalId(parent.id as string);
             const userId = parseInt(userIdStr, 10);
             let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
@@ -314,12 +244,12 @@ const typeDefs = fs.readFileSync(path.join(__dirname, '..', 'shared', 'schema.gr
                 query += ' AND PollPermissions.permission_type = ?';
                 params.push(permission);
             }
-            const polls = await dbAll<PollDbObject>(query, params);
-            return polls.map(poll => ({ ...poll, id: toGlobalId('Poll', poll.id) }));
+            return dbAll<PollDbObject>(query, params);
         },
     }
 };
 
-// export default makeExecutableSchema({
+export default makeExecutableSchema({
     typeDefs,
-// });
+    resolvers,
+});

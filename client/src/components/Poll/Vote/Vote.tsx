@@ -43,7 +43,7 @@ const Vote_poll = graphql`
   }
 `;
 
-import { PollOption as Option } from '../../../generated/graphql';
+import { PollOption as Option } from '@shared/generated-types';
 
 const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key }) => {
     const poll = useFragment(Vote_poll, pollProp);

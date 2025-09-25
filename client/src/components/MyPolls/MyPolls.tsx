@@ -4,7 +4,7 @@ import { MyPollsQuery as MyPollsQueryType } from './__generated__/MyPollsQuery.g
 import PageContainer from '../ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import PollCard from '../Poll/PollCard/PollCard';
-import { PermissionType } from '../../__generated__/graphql';
+import { PermissionType } from '@shared/generated-types';
 
 const MyPollsQuery = graphql`
   query MyPollsQuery($userId: ID!, $permission: PermissionType) {
