@@ -33,7 +33,7 @@ export interface PollPermissionsDbObject {
 }
 
 export interface VoteRatingDbObject {
-  optionId: string;
+  optionId: number;
   optionText: string;
   rating: number;
 }
