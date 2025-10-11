@@ -20,7 +20,6 @@ export interface PollOptionDbObject {
 export interface VoteDbObject {
   id: number;
   pollId: number;
-  pollOptionId: number;
   userId: number;
 }
 

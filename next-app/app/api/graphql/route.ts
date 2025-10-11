@@ -88,7 +88,7 @@ const resolvers: Resolvers = {
 
             for (const { optionId: optionIdStr, rating } of ratings) {
                 const { id: optionId } = fromGlobalId(optionIdStr);
-                await dbRun('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId), rating]);
+                await dbRun('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId, 10), rating]);
             }
             const row = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
             if (!row) {
