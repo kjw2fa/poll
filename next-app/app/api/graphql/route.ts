@@ -3,15 +3,10 @@ import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import fs from 'fs';
-import path, { dirname } from 'path';
-import { fileURLToPath } from 'url';
 import { dbGet, dbAll, dbRun } from '../../../lib/db-utils';
 import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject, VoteRatingDbObject } from '../../../../shared/db-types';
 import { Resolvers, PermissionType, TargetType } from '../../../../shared/generated-types';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+import typeDefs from '../../../../shared/schema.graphql';
 
 // Helper functions for global IDs
 const toGlobalId = (type: string, id: number | string) => Buffer.from(`${type}:${id}`).toString('base64');
@@ -29,10 +24,6 @@ export const JWT_SECRET = 'your-secret-key';
 interface UserWithPassword extends UserDbObject {
     password?: string;
 }
-
-const typeDefs = fs.readFileSync(path.join(__dirname, '../../../../shared/schema.graphql'), {
-  encoding: 'utf-8',
-});
 
 const resolvers: Resolvers = {
     RootQueryType: {
