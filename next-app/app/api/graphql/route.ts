@@ -3,10 +3,13 @@ import { startServerAndCreateNextHandler } from '@as-integrations/next';
 import { makeExecutableSchema } from '@graphql-tools/schema';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import fs from 'fs';
+import path from 'path';
 import { dbGet, dbAll, dbRun } from '../../../lib/db-utils';
 import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject, VoteRatingDbObject } from '../../../../shared/db-types';
 import { Resolvers, PermissionType, TargetType } from '../../../../shared/generated-types';
-import typeDefs from '../../../../shared/schema.graphql';
+
+const typeDefs = fs.readFileSync(path.join(process.cwd(), '../shared/schema.graphql'), 'utf-8');
 
 // Helper functions for global IDs
 const toGlobalId = (type: string, id: number | string) => Buffer.from(`${type}:${id}`).toString('base64');
