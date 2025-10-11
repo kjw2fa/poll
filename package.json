@@ -3,18 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "client",
-    "server",
+    "next-app",
     "shared"
   ],
   "scripts": {
-    "dev": "npm run dev -w client",
-    "build": "npm run build -w client && npm run build -w server",
-    "start:client": "npm run start -w client",
-    "start:server": "npm run start -w server",
-    "test": "npm test -w client",
-    "relay": "relay-compiler --schema ./shared/schema.graphql --src ./client/src",
-    "codegen": "graphql-codegen --config codegen.yml"
+    "dev": "npm run dev -w next-app",
+    "build": "npm run build -w next-app",
+    "start": "npm run start -w next-app",
+    "test": "npm run test -w next-app",
+    "relay": "relay-compiler --schema ./shared/schema.graphql --src ./next-app",
+    "codegen": "graphql-codegen --config codegen.yml",
+    "generate": "npm run codegen && npm run relay"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.0",

@@ -1,0 +1,63 @@
+'use client';
+
+import React from 'react';
+import { useMutation, graphql, useFragment } from 'react-relay';
+import { toast } from 'sonner';
+import { EditPollPageMutation as EditPollMutationType } from './__generated__/EditPollPageMutation.graphql';
+import { EditPoll_poll$key } from '@/components/Poll/EditPoll/__generated__/EditPoll_poll.graphql';
+import PollForm, { PollFormData } from '@/components/PollForm/PollForm';
+
+const EditPollPageMutation = graphql`
+  mutation EditPollPageMutation($pollId: ID!, $userId: ID!, $title: String!, $options: [PollOptionEditInput!]!) {
+    editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {
+      id
+      title
+      options {
+        id
+        optionText
+      }
+      ...Vote_poll
+    }
+  }
+`;
+
+const EditPoll_poll = graphql`
+  fragment EditPollPage_poll on Poll {
+    id
+    title
+    options {
+      id
+      optionText
+    }
+  }
+`;
+
+const EditPollPage = ({ poll: pollProp, userId }: { poll: EditPoll_poll$key, userId: string }) => {
+  const poll = useFragment(EditPoll_poll, pollProp);
+  const [commit, isInFlight] = useMutation<EditPollMutationType>(EditPollPageMutation);
+
+  const handleUpdate = (pollData: Omit<PollFormData, 'id'>) => {
+    commit({
+      variables: {
+        pollId: poll.id,
+        userId,
+        title: pollData.title,
+        options: pollData.options.map(o => ({ id: o.id, optionText: o.optionText })),
+      },
+      onCompleted: () => {
+        toast.success('Poll updated successfully!');
+      },
+      onError: (err) => {
+        toast.error(err.message || 'Error updating poll.');
+      },
+    });
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <PollForm onSubmit={handleUpdate} poll={poll} />
+    </div>
+  );
+};
+
+export default EditPollPage;

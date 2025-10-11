@@ -1,35 +1,35 @@
 export interface UserDbObject {
-  id: string;
+  id: number;
   username: string;
   email: string;
   password?: string;
 }
 
 export interface PollDbObject {
-  id: string;
+  id: number;
   title: string;
-  userId: string;
+  userId: number;
 }
 
 export interface PollOptionDbObject {
-  id: string;
+  id: number;
   optionText: string;
-  pollId: string;
+  pollId: number;
 }
 
 export interface VoteDbObject {
-  id:string;
-  pollId: string;
-  pollOptionId: string;
-  userId: string;
+  id: number;
+  pollId: number;
+  pollOptionId: number;
+  userId: number;
 }
 
 export interface PollPermissionsDbObject {
-  id: string;
-  pollId: string;
+  id: number;
+  pollId: number;
   permission_type: string;
   target_type: string;
-  target_id?: string;
+  target_id?: number;
 }
 
 export interface VoteRatingDbObject {

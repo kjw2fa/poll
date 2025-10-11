@@ -27,3 +27,12 @@ yarn-error.log*
 
 # database
 db.sqlite
+
+# workspaces
+/next-app/node_modules
+/client/node_modules
+/server/node_modules
+/next-app/.next
+/client/dist
+/server/dist
+/next-app/db.sqlite
