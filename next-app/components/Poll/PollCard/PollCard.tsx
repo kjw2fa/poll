@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import {
   Card,
   CardContent,
@@ -70,7 +70,7 @@ const PollCard = (props: { poll: PollCard_poll$key, userId: string }) => {
       </CardContent>
       <div className="flex-grow" /> {/*This pushes the footer to the bottom */}
       <CardFooter >
-        <Link to={`/poll/${poll.id}`}>
+        <Link href={`/poll/${poll.id}`}>
           <Button variant="outline">View</Button>
         </Link>
       </CardFooter>

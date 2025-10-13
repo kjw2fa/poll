@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<ebaba494737aa0a384a08bfbf200d224>>
+ * @generated SignedSource<<e5b134241ab185937adb0bcd776e9615>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,13 +10,13 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type VoteInput = {
+export type VoteRatingInput = {
   optionId: string;
   rating: number;
 };
 export type VoteSubmitVoteMutation$variables = {
   pollId: string;
-  ratings: ReadonlyArray<VoteInput>;
+  ratings: ReadonlyArray<VoteRatingInput>;
   userId: string;
 };
 export type VoteSubmitVoteMutation$data = {
@@ -26,8 +26,8 @@ export type VoteSubmitVoteMutation$data = {
       readonly node: {
         readonly id: string;
         readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
-      } | null | undefined;
-    } | null | undefined;
+      };
+    };
   } | null | undefined;
 };
 export type VoteSubmitVoteMutation = {
@@ -220,7 +220,8 @@ return {
                         "kind": "ScalarField",
                         "name": "target_id",
                         "storageKey": null
-                      }
+                      },
+                      (v5/*: any*/)
                     ],
                     "storageKey": null
                   }
@@ -236,16 +237,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "5f03e289f3a436116513ee203f8284cc",
+    "cacheID": "6c6991670aa5ff2b3bc2a0e817dd8f41",
     "id": null,
     "metadata": {},
     "name": "VoteSubmitVoteMutation",
     "operationKind": "mutation",
-    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [VoteInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n  }\n}\n"
+    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [VoteRatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "06f9044f2bfd766a6ca4f3994c967fa4";
+(node as any).hash = "24419b27055ea7e6d75a701b91e39e2b";
 
 export default node;

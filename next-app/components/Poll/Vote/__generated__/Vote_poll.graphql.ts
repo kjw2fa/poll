@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a49d9c852e098f6f4567a364c3c79293>>
+ * @generated SignedSource<<cef74b47902b524c0b5e006dbbfb2a4d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,19 +14,19 @@ export type Vote_poll$data = {
   readonly id: string;
   readonly options: ReadonlyArray<{
     readonly id: string;
-    readonly optionText: string | null | undefined;
-  } | null | undefined> | null | undefined;
+    readonly optionText: string;
+  }>;
   readonly votes: ReadonlyArray<{
     readonly ratings: ReadonlyArray<{
       readonly option: {
         readonly id: string;
       };
       readonly rating: number;
-    }> | null | undefined;
+    }>;
     readonly user: {
       readonly id: string;
     };
-  } | null | undefined> | null | undefined;
+  }>;
   readonly " $fragmentType": "Vote_poll";
 };
 export type Vote_poll$key = {

@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<6d580987de6aeb9155605201c1642185>>
+ * @generated SignedSource<<783c1ac9cc4e72348f45e66b7cfdb1f4>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -10,12 +10,12 @@
 
 import { ConcreteRequest } from 'relay-runtime';
 import { FragmentRefs } from "relay-runtime";
-export type PollOptionInput = {
+export type PollOptionEditInput = {
   id?: string | null | undefined;
   optionText: string;
 };
 export type EditPollMutation$variables = {
-  options: ReadonlyArray<PollOptionInput>;
+  options: ReadonlyArray<PollOptionEditInput>;
   pollId: string;
   title: string;
   userId: string;
@@ -25,9 +25,9 @@ export type EditPollMutation$data = {
     readonly id: string;
     readonly options: ReadonlyArray<{
       readonly id: string;
-      readonly optionText: string | null | undefined;
-    } | null | undefined> | null | undefined;
-    readonly title: string | null | undefined;
+      readonly optionText: string;
+    }>;
+    readonly title: string;
     readonly " $fragmentSpreads": FragmentRefs<"Vote_poll">;
   } | null | undefined;
 };
@@ -228,16 +228,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "b4a67da54fe56bd8fddbd6e4d79ade1d",
+    "cacheID": "0e5382465b85290d9118d73cf6277bae",
     "id": null,
     "metadata": {},
     "name": "EditPollMutation",
     "operationKind": "mutation",
-    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [PollOptionInput!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options {\n      id\n      optionText\n    }\n    ...Vote_poll\n  }\n}\n\nfragment Vote_poll on Poll {\n  id\n  options {\n    id\n    optionText\n  }\n  votes {\n    user {\n      id\n    }\n    ratings {\n      option {\n        id\n      }\n      rating\n    }\n    id\n  }\n}\n"
+    "text": "mutation EditPollMutation(\n  $pollId: ID!\n  $userId: ID!\n  $title: String!\n  $options: [PollOptionEditInput!]!\n) {\n  editPoll(pollId: $pollId, userId: $userId, title: $title, options: $options) {\n    id\n    title\n    options {\n      id\n      optionText\n    }\n    ...Vote_poll\n  }\n}\n\nfragment Vote_poll on Poll {\n  id\n  options {\n    id\n    optionText\n  }\n  votes {\n    user {\n      id\n    }\n    ratings {\n      option {\n        id\n      }\n      rating\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "55e7c91c86c6d4420fccee7fe5fb1ae4";
+(node as any).hash = "c178a9d50cc5659a1f0580b6ca1f7e9e";
 
 export default node;

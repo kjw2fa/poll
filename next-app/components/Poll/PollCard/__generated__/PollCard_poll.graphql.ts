@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d58b925bab3c4c4688c3e1270d0633db>>
+ * @generated SignedSource<<57ddceb797e45a9c26686ab756ff884c>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,13 +15,13 @@ export type PollCard_poll$data = {
   readonly id: string;
   readonly options: ReadonlyArray<{
     readonly id: string;
-    readonly optionText: string | null | undefined;
-  } | null | undefined> | null | undefined;
+    readonly optionText: string;
+  }>;
   readonly permissions: ReadonlyArray<{
-    readonly permission_type: PermissionType | null | undefined;
+    readonly permission_type: PermissionType;
     readonly target_id: string | null | undefined;
-  } | null | undefined> | null | undefined;
-  readonly title: string | null | undefined;
+  }>;
+  readonly title: string;
   readonly " $fragmentType": "PollCard_poll";
 };
 export type PollCard_poll$key = {

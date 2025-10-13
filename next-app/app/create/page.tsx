@@ -4,14 +4,14 @@ import React, { Suspense, useEffect, useState } from 'react';
 import PollForm, { PollFormData } from '@/components/PollForm/PollForm';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
-import { CreatePollPageMutation as CreatePollMutationType } from '@/components/CreatePoll/__generated__/CreatePollMutation.graphql';
+import { pageMutation as CreatePollMutationType } from './__generated__/pageMutation.graphql';
 import PageContainer from '@/components/ui/PageContainer';
 import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-const CreatePollPageMutation = graphql`
-  mutation CreatePollPageMutation($title: String!, $options: [PollOptionInput!]!, $userId: ID!) {
+const pageMutation = graphql`
+  mutation pageMutation($title: String!, $options: [PollOptionInput!]!, $userId: ID!) {
     createPoll(title: $title, options: $options, userId: $userId) {
         pollEdge {
             cursor
@@ -27,13 +27,14 @@ const CreatePollPageMutation = graphql`
 const CreatePollComponent = () => {
     const router = useRouter();
     const [userId, setUserId] = useState<string | null>(null);
-    const [commitMutation] = useMutation<CreatePollMutationType>(CreatePollPageMutation);
+    const [commitMutation] = useMutation<CreatePollMutationType>(pageMutation);
 
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         if (!storedUserId) {
             router.push('/');
-        } else {
+        }
+        else {
             setUserId(storedUserId);
         }
     }, [router]);
@@ -61,19 +62,30 @@ const CreatePollComponent = () => {
                 toast.error('Error creating poll.');
             },
             updater: (store: RecordSourceSelectorProxy) => {
+                if (!userId) return;
+
+                const userRecord = store.get(userId);
+                if (!userRecord) return;
+
+                // Invalidate the user record to ensure the polls list is refetched
+                // the next time it's requested. This ensures data consistency.
+                userRecord.invalidate();
+
+                // Optimistically update the UI with the new poll.
+                // This provides a better user experience by showing the new poll immediately.
                 const payload = store.getRootField('createPoll');
-                const newEdge = payload.getLinkedRecord('pollEdge');
-                if (!newEdge) {
-                    return;
-                }
-                if (userId) {
-                    const myPolls = store.get(ROOT_ID)?.getLinkedRecord('myPolls', { userId });
-                    if (myPolls) {
-                        const conn = ConnectionHandler.getConnection(myPolls, 'MyPolls_createdPolls');
-                        if (conn) {
-                            ConnectionHandler.insertEdgeAfter(conn, newEdge);
-                        }
-                    }
+                if (!payload) return;
+
+                const pollEdge = payload.getLinkedRecord('pollEdge');
+                if (!pollEdge) return;
+
+                const newPoll = pollEdge.getLinkedRecord('node');
+                if (!newPoll) return;
+
+                const polls = userRecord.getLinkedRecords('polls', { permission: 'EDIT' });
+                if (polls) {
+                    const newPolls = [...polls, newPoll];
+                    userRecord.setLinkedRecords(newPolls, 'polls', { permission: 'EDIT' });
                 }
             },
         });

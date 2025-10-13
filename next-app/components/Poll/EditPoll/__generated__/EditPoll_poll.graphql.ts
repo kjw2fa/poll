@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<c4a2b14e87f510eeee49ee02edbcbb30>>
+ * @generated SignedSource<<52611d389539b06aeb650e4b002f81eb>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,9 +14,9 @@ export type EditPoll_poll$data = {
   readonly id: string;
   readonly options: ReadonlyArray<{
     readonly id: string;
-    readonly optionText: string | null | undefined;
-  } | null | undefined> | null | undefined;
-  readonly title: string | null | undefined;
+    readonly optionText: string;
+  }>;
+  readonly title: string;
   readonly " $fragmentType": "EditPoll_poll";
 };
 export type EditPoll_poll$key = {

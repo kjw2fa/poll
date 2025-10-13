@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<0ba775cd62c0ffe1f2f17d7e8990e8af>>
+ * @generated SignedSource<<85e5c7cceb337f35d228193d4588a863>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,14 +14,14 @@ export type PollResults_results$data = {
   readonly votes: ReadonlyArray<{
     readonly ratings: ReadonlyArray<{
       readonly option: {
-        readonly optionText: string | null | undefined;
+        readonly optionText: string;
       };
       readonly rating: number;
-    }> | null | undefined;
+    }>;
     readonly user: {
-      readonly username: string | null | undefined;
+      readonly username: string;
     };
-  } | null | undefined> | null | undefined;
+  }>;
   readonly " $fragmentType": "PollResults_results";
 };
 export type PollResults_results$key = {

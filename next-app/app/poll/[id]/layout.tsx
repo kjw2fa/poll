@@ -5,11 +5,11 @@ import { useParams, useRouter, usePathname } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLazyLoadQuery, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
-import { PollLayoutQuery as PollQueryType } from './__generated__/PollLayoutQuery.graphql';
+import { layoutQuery as PollQueryType } from './__generated__/layoutQuery.graphql';
 import PageContainer from '@/components/ui/PageContainer';
 
-const PollLayoutQuery = graphql`
-  query PollLayoutQuery($id: ID!) {
+const layoutQuery = graphql`
+  query layoutQuery($id: ID!) {
     poll(id: $id) {
       id
       title
@@ -40,7 +40,7 @@ const PollLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 const PollComponent = ({ children, id }: { children: React.ReactNode, id: string }) => {
-    const data = useLazyLoadQuery<PollQueryType>(PollLayoutQuery, { id });
+    const data = useLazyLoadQuery<PollQueryType>(layoutQuery, { id });
     const router = useRouter();
     const pathname = usePathname();
     const [userId, setUserId] = useState<string | null>(null);

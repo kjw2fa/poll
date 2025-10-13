@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<940903503c1f7baabd68669e2edae8f6>>
+ * @generated SignedSource<<bc0257dd4a9b77ae6f14143039a22d99>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,9 +15,9 @@ export type LoginMutation$variables = {
 };
 export type LoginMutation$data = {
   readonly login: {
-    readonly token: string | null | undefined;
-    readonly userId: string | null | undefined;
-    readonly username: string | null | undefined;
+    readonly token: string;
+    readonly userId: string;
+    readonly username: string;
   } | null | undefined;
 };
 export type LoginMutation = {
@@ -51,7 +51,7 @@ v2 = [
         "variableName": "username"
       }
     ],
-    "concreteType": "LoginResponse",
+    "concreteType": "AuthPayload",
     "kind": "LinkedField",
     "name": "login",
     "plural": false,
