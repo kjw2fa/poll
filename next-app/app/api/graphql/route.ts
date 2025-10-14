@@ -53,7 +53,7 @@ const resolvers: Resolvers = {
         createPoll: async (parent: unknown, { title, options, userId }: { title: string, options: { optionText: string }[], userId: string }) => {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
-            const result = await dbRun('INSERT INTO Polls (title, userId) VALUES (?, ?)', [title, parsedUserId]);
+            const result = await dbRun('INSERT INTO Polls (title) VALUES (?)', [title]);
             const pollId = result.lastID;
 
             for (const option of options) {
