@@ -3,28 +3,13 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useLazyLoadQuery, graphql } from 'react-relay';
+import { useLazyLoadQuery } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
-import { pageQuery as PollPageQueryType } from './__generated__/pageQuery.graphql';
+import { PollPageQuery as PollPageQueryType } from './__generated__/PollPageQuery.graphql';
+import { PollPageQuery } from './PollPage.query';
 import Vote from '@/components/Poll/Vote/Vote';
 import PollResults from '@/components/Poll/PollResults/PollResults';
 import EditPoll from '@/components/Poll/EditPoll/EditPoll';
-
-const pageQuery = graphql`
-  query pageQuery($id: ID!) {
-    poll(id: $id) {
-      id
-      title
-      permissions {
-        permission_type
-        target_id
-      }
-      ...Vote_poll
-      ...EditPoll_poll
-      ...PollResults_results
-    }
-  }
-`;
 
 const PollPage = () => {
     const params = useParams();
@@ -40,7 +25,7 @@ const PollPage = () => {
 };
 
 const PollComponent = ({ id }: { id: string }) => {
-    const data = useLazyLoadQuery<PollPageQueryType>(pageQuery, { id });
+    const data = useLazyLoadQuery<PollPageQueryType>(PollPageQuery, { id });
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab') || 'vote';

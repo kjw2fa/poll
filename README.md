@@ -1,74 +1,53 @@
 # Poll Application
 
-This is a full-stack poll application built with React, Relay, GraphQL, and a Node.js backend.
+This is a full-stack poll application built with Next.js, React, Relay, and GraphQL.
+
+## Tech Stack
+
+- **Framework**: [Next.js](https://nextjs.org/)
+- **UI**: [React](https://react.dev/)
+- **GraphQL Client**: [Relay](https://relay.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
 
 ## Getting Started
 
-To get started, install the dependencies for both the frontend and the backend.
+### 1. Installation
+
+Install the project dependencies from the root directory:
 
 ```bash
 npm install
-npm install --prefix backend
 ```
 
-## Development
+### 2. Running the Development Server
 
-To run the application in development mode, you need to start both the frontend and the backend servers.
-
-**Start the backend server for development:**
-
-```bash
-npm run dev --prefix backend
-```
-
-This will start the backend server on [http://localhost:3001](http://localhost:3001) and watch for changes.
-
-**Start the frontend server:**
+To run the application in development mode, run the following command from the root directory:
 
 ```bash
 npm run dev
 ```
 
-This will start the frontend development server on [http://localhost:3000](http://localhost:3000).
+This will start the Next.js development server on [http://localhost:3000](http://localhost:3000).
 
-## Testing
+## Development Workflow
 
-To run the tests for the frontend, run the following command:
+### GraphQL and Type Generation
 
-```bash
-npm test
-```
+This project uses **Relay** for client-side GraphQL management and type generation.
 
-## Building for Production
+The workflow is tightly integrated into the Next.js development server:
 
-To build the application for production, you need to build both the frontend and the backend.
+1.  **Write a Query**: Add a `graphql` query to any React component within the `next-app` directory.
+2.  **Save the File**: Upon saving the file, the Next.js server will automatically invoke the **Relay Compiler** in the background.
+3.  **Types are Generated**: The compiler finds your query, validates it against the schema (`shared/schema.graphql`), and generates all necessary TypeScript types in a `__generated__` directory next to your component.
 
-**Build the backend:**
+#### Manual Type Generation
 
-```bash
-npm run build --prefix backend
-```
-
-**Build the frontend:**
+If you ever need to run the Relay compiler manually (e.g., for debugging or after a large number of changes), you can use the `relay` script:
 
 ```bash
-npm run build
+# From the root directory
+npm run relay -w next-app
 ```
 
-## Other Commands
-
-### Relay Compiler
-
-To run the Relay compiler, use the following command:
-
-```bash
-npm run relay
-```
-
-### GraphQL Codegen
-
-To generate GraphQL types, use the following command:
-
-```bash
-npm run codegen
-```
+This command will manually scan the `next-app` directory and generate all necessary GraphQL types.

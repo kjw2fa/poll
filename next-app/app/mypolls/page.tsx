@@ -1,27 +1,17 @@
 'use client';
 
 import React, { Suspense, useEffect, useState } from 'react';
-import { useLazyLoadQuery, graphql } from 'react-relay';
-import { pageQuery as MyPollsQueryType } from './__generated__/pageQuery.graphql';
+import { useLazyLoadQuery } from 'react-relay';
+import { MyPollsPageQuery as MyPollsQueryType } from './__generated__/MyPollsPageQuery.graphql';
+import { MyPollsPageQuery } from './MyPollsPage.query';
 import PageContainer from '@/components/ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PollCard from '@/components/Poll/PollCard/PollCard';
 import { PermissionType } from '@/../shared/generated-types';
 import { useRouter } from 'next/navigation';
 
-const pageQuery = graphql`
-  query pageQuery($userId: ID!, $permission: PermissionType) {
-    user(id: $userId) {
-      polls(permission: $permission) {
-        id
-        ...PollCard_poll
-      }
-    }
-  }
-`;
-
 const MyPollsComponent = ({ userId }: { userId: string }) => {
-  const data = useLazyLoadQuery<MyPollsQueryType>(pageQuery, { userId, permission: PermissionType.EDIT });
+  const data = useLazyLoadQuery<MyPollsQueryType>(MyPollsPageQuery, { userId, permission: PermissionType.EDIT });
 
   const createdPolls = data.user?.polls || [];
 
