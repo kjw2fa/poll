@@ -1,6 +1,5 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { useFragment, graphql } from 'react-relay';
-import { ErrorBoundary } from 'react-error-boundary';
 import { PollResults_results$key } from './__generated__/PollResults_results.graphql';
 
 import { WinningOption } from '../../../generated/graphql';
@@ -21,8 +20,8 @@ const PollResults_results = graphql`
   }
 `;
 
-const PollResultsComponent = ({ resultsRef }: { resultsRef: PollResults_results$key }) => {
-    const poll = useFragment(PollResults_results, resultsRef);
+const PollResults = ({ poll: pollProp }: { poll: PollResults_results$key }) => {
+    const poll = useFragment(PollResults_results, pollProp);
 
     if (!poll) {
         return <div>Loading results...</div>;
@@ -84,16 +83,6 @@ const PollResultsComponent = ({ resultsRef }: { resultsRef: PollResults_results$
                 )}
             </div>
         </div>
-    );
-};
-
-const PollResults = ({ resultsRef }: { resultsRef: PollResults_results$key }) => {
-    return (
-        <ErrorBoundary fallback={<div>Something went wrong</div>}>
-            <Suspense fallback={<div>Loading...</div>}>
-                <PollResultsComponent resultsRef={resultsRef} />
-            </Suspense>
-        </ErrorBoundary>
     );
 };
 
