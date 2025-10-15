@@ -3,6 +3,7 @@ import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { toast } from 'sonner';
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 import { Poll, PollOption } from '../../generated/graphql';
 
@@ -84,12 +85,30 @@ const PollForm = ({ poll, onSubmit }: PollFormProps) => {
                 {options.length === 0 ? (
                     <p className="text-muted-foreground">No options added yet. Add some options above.</p>
                 ) : (
-                    options.map((option, index) => (
-                        <div key={index} className="flex w-full items-center space-x-2">
-                            <Input type="text" value={option.optionText} onChange={(e) => handleOptionChange(index, e)} readOnly={!!option.id} />
-                            <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)}>X</Button>
-                        </div>
-                    ))
+                    options.map((option, index) => {
+                        const isExistingOption = !!option.id;
+                        const optionInput = (
+                            <div className="flex w-full items-center space-x-2">
+                                <Input type="text" value={option.optionText} onChange={(e) => handleOptionChange(index, e)} disabled={isExistingOption} />
+                                <Button type="button" variant="destructive" onClick={() => handleRemoveOption(index)} disabled={isExistingOption}>X</Button>
+                            </div>
+                        );
+
+                        if (isExistingOption) {
+                            return (
+                                <Tooltip key={index}>
+                                    <TooltipTrigger asChild>
+                                        {optionInput}
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>Existing options cannot be edited or removed.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            );
+                        }
+
+                        return <div key={index}>{optionInput}</div>;
+                    })
                 )}
             </div>
             <Button type="submit">{poll ? 'Save Changes' : 'Create Poll'}</Button>
