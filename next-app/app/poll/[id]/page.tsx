@@ -11,6 +11,7 @@ import Vote from '@/components/Poll/Vote/Vote';
 import PollResults from '@/components/Poll/PollResults/PollResults';
 import EditPoll from '@/components/Poll/EditPoll/EditPoll';
 import { useAuth } from '@/lib/AuthContext';
+import LoginRequired from '@/components/ui/LoginRequired';
 
 const PollPage = () => {
     const params = useParams();
@@ -59,7 +60,7 @@ const PollComponent = ({ id }: { id: string }) => {
                 </TabsList>
             </Tabs>
             
-            {activeTab === 'vote' && !isLoggedIn && <div className="text-center p-4">You must be logged in to vote.</div>}
+            {activeTab === 'vote' && !isLoggedIn && <LoginRequired featureName="vote on this poll" />}
             {activeTab === 'vote' && isLoggedIn && userId && <Vote poll={poll} userId={userId} />}
 
             {activeTab === 'results' && <PollResults poll={poll} />}
