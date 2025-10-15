@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<e5b134241ab185937adb0bcd776e9615>>
+ * @generated SignedSource<<544543883cd155921d3bfff825fecd16>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -21,13 +21,8 @@ export type VoteSubmitVoteMutation$variables = {
 };
 export type VoteSubmitVoteMutation$data = {
   readonly submitVote: {
-    readonly pollEdge: {
-      readonly cursor: string;
-      readonly node: {
-        readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
-      };
-    };
+    readonly id: string;
+    readonly " $fragmentSpreads": FragmentRefs<"PollResults_results">;
   } | null | undefined;
 };
 export type VoteSubmitVoteMutation = {
@@ -72,13 +67,6 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "cursor",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 };
@@ -96,39 +84,16 @@ return {
       {
         "alias": null,
         "args": (v3/*: any*/),
-        "concreteType": "SubmitVotePayload",
+        "concreteType": "Poll",
         "kind": "LinkedField",
         "name": "submitVote",
         "plural": false,
         "selections": [
+          (v4/*: any*/),
           {
-            "alias": null,
             "args": null,
-            "concreteType": "PollEdge",
-            "kind": "LinkedField",
-            "name": "pollEdge",
-            "plural": false,
-            "selections": [
-              (v4/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Poll",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v5/*: any*/),
-                  {
-                    "args": null,
-                    "kind": "FragmentSpread",
-                    "name": "PollCard_poll"
-                  }
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
+            "kind": "FragmentSpread",
+            "name": "PollResults_results"
           }
         ],
         "storageKey": null
@@ -150,84 +115,77 @@ return {
       {
         "alias": null,
         "args": (v3/*: any*/),
-        "concreteType": "SubmitVotePayload",
+        "concreteType": "Poll",
         "kind": "LinkedField",
         "name": "submitVote",
         "plural": false,
         "selections": [
+          (v4/*: any*/),
           {
             "alias": null,
             "args": null,
-            "concreteType": "PollEdge",
+            "concreteType": "Vote",
             "kind": "LinkedField",
-            "name": "pollEdge",
-            "plural": false,
+            "name": "votes",
+            "plural": true,
             "selections": [
-              (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "Poll",
+                "concreteType": "User",
                 "kind": "LinkedField",
-                "name": "node",
+                "name": "user",
                 "plural": false,
                 "selections": [
-                  (v5/*: any*/),
                   {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
-                    "name": "title",
+                    "name": "username",
                     "storageKey": null
                   },
+                  (v4/*: any*/)
+                ],
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "VoteRating",
+                "kind": "LinkedField",
+                "name": "ratings",
+                "plural": true,
+                "selections": [
                   {
                     "alias": null,
                     "args": null,
                     "concreteType": "PollOption",
                     "kind": "LinkedField",
-                    "name": "options",
-                    "plural": true,
+                    "name": "option",
+                    "plural": false,
                     "selections": [
-                      (v5/*: any*/),
                       {
                         "alias": null,
                         "args": null,
                         "kind": "ScalarField",
                         "name": "optionText",
                         "storageKey": null
-                      }
+                      },
+                      (v4/*: any*/)
                     ],
                     "storageKey": null
                   },
                   {
                     "alias": null,
                     "args": null,
-                    "concreteType": "PollPermissions",
-                    "kind": "LinkedField",
-                    "name": "permissions",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "permission_type",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "target_id",
-                        "storageKey": null
-                      },
-                      (v5/*: any*/)
-                    ],
+                    "kind": "ScalarField",
+                    "name": "rating",
                     "storageKey": null
                   }
                 ],
                 "storageKey": null
-              }
+              },
+              (v4/*: any*/)
             ],
             "storageKey": null
           }
@@ -237,16 +195,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "6c6991670aa5ff2b3bc2a0e817dd8f41",
+    "cacheID": "4463c6829410657d9e1c986e17bba511",
     "id": null,
     "metadata": {},
     "name": "VoteSubmitVoteMutation",
     "operationKind": "mutation",
-    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [VoteRatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n"
+    "text": "mutation VoteSubmitVoteMutation(\n  $pollId: ID!\n  $userId: ID!\n  $ratings: [VoteRatingInput!]!\n) {\n  submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {\n    id\n    ...PollResults_results\n  }\n}\n\nfragment PollResults_results on Poll {\n  votes {\n    user {\n      username\n      id\n    }\n    ratings {\n      option {\n        optionText\n        id\n      }\n      rating\n    }\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "24419b27055ea7e6d75a701b91e39e2b";
+(node as any).hash = "036958bf2dc07c26f4252d65db98a0e3";
 
 export default node;

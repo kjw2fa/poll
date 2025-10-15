@@ -4,6 +4,7 @@ import "./globals.css";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
 import RelayEnvironment from "@/lib/RelayEnvironment";
 import AuthWrapper from "@/components/MenuBar/AuthWrapper";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,6 +21,7 @@ export default function RootLayout({
           <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {children}
           </main>
+          <Toaster />
         </RelayEnvironmentProvider>
       </body>
     </html>

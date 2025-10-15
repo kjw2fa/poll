@@ -11,13 +11,8 @@ import { RecordSourceSelectorProxy } from 'relay-runtime';
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [VoteRatingInput!]!) {
     submitVote(pollId: $pollId, userId: $userId, ratings: $ratings) {
-        pollEdge {
-            cursor
-            node {
-                id
-                ...PollCard_poll
-            }
-        }
+        id
+        ...PollResults_results
     }
   }
 `;
@@ -50,13 +45,13 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
 
     const initialRatings = useMemo(() => {
         const previousRatings = new Map<Option, number>();
-        const userVote = poll.votes.find(v => v.user.id === userId);
+        const userVote = poll.votes?.find(v => v?.user?.id === userId);
         if (userVote) {
             userVote.ratings.forEach(r => {
                 const option = poll.options.find(o => o.id === r.option.id);
                 if (option) {
                     previousRatings.set(option, r.rating);
-                }
+                } 
             });
         }
         return previousRatings;
@@ -109,9 +104,6 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
             onError: (error) => {
                 console.error(error);
                 toast.error(error.message || 'Error submitting vote.');
-            },
-            updater: (store: RecordSourceSelectorProxy) => {
-                store.invalidateStore();
             },
         });
     };

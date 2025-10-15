@@ -30,10 +30,12 @@ const PollComponent = ({ id }: { id: string }) => {
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab') || 'vote';
     const [userId, setUserId] = useState<string | null>(null);
+    const [loadingUser, setLoadingUser] = useState(true);
 
     useEffect(() => {
         const storedUserId = localStorage.getItem('userId');
         setUserId(storedUserId);
+        setLoadingUser(false);
     }, []);
 
     const poll = data.poll;
@@ -59,7 +61,7 @@ const PollComponent = ({ id }: { id: string }) => {
                 </TabsList>
             </Tabs>
             
-            {activeTab === 'vote' && <Vote poll={poll} userId={userId} />}
+            {activeTab === 'vote' && (loadingUser ? <div>Loading user...</div> : <Vote poll={poll} userId={userId} />)}
             {activeTab === 'results' && <PollResults poll={poll} />}
             {activeTab === 'edit' && canEdit && <EditPoll poll={poll} userId={userId} />}
         </div>

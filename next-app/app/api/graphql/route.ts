@@ -86,6 +86,12 @@ const resolvers: Resolvers = {
                 throw new Error('User not found');
             }
 
+            // First, delete existing vote details for the user and poll.
+            await dbRun(`
+                DELETE FROM VoteDetails 
+                WHERE voteId IN (SELECT id FROM Votes WHERE pollId = ? AND userId = ?)
+            `, [parsedPollId, parsedUserId]);
+
             const result = await dbRun('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [parsedPollId, parsedUserId]);
             const voteId = result.lastID;
 
@@ -97,12 +103,7 @@ const resolvers: Resolvers = {
             if (!row) {
                 throw new Error('Poll not found after voting');
             }
-            return {
-                pollEdge: {
-                    cursor: toCursor(parsedPollId),
-                    node: row,
-                }
-            };
+            return row;
         },
         editPoll: async (parent: unknown, { pollId, userId, title, options }: { pollId: string, userId: string, title: string, options: { id?: string | null, optionText: string }[] }) => {
             const { id: pollIdStr } = fromGlobalId(pollId);
@@ -186,18 +187,46 @@ const resolvers: Resolvers = {
         id: (parent: PollOptionDbObject) => toGlobalId('PollOption', parent.id)
     },
     Vote: {
-        id: (parent: VoteDbObject) => toGlobalId('Vote', parent.id),
+        id: (parent: VoteDbObject) => {
+            if (typeof parent.id !== 'number') {
+                console.error(`[GQL Vote.id] parent.id is not a number:`, parent);
+            }
+            return toGlobalId('Vote', parent.id);
+        },
         user: async (parent: VoteDbObject) => {
+            if (typeof parent.userId !== 'number') {
+                const errorMessage = `[GQL Vote.user] parent.userId is not a number: ${JSON.stringify(parent)}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
             const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [parent.userId]);
-            if (!user) throw new Error('User not found');
+            if (!user) {
+                const errorMessage = `[GQL Vote.user] User not found for userId: ${parent.userId}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
             return user;
         },
         poll: async (parent: VoteDbObject) => {
+            if (typeof parent.pollId !== 'number') {
+                const errorMessage = `[GQL Vote.poll] parent.pollId is not a number: ${JSON.stringify(parent)}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
             const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
-            if (!poll) throw new Error('Poll not found');
+            if (!poll) {
+                const errorMessage = `[GQL Vote.poll] Poll not found for pollId: ${parent.pollId}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
             return poll;
         },
         ratings: async (parent: VoteDbObject) => {
+            if (typeof parent.id !== 'number') {
+                const errorMessage = `[GQL Vote.ratings] parent.id is not a number: ${JSON.stringify(parent)}`;
+                console.error(errorMessage);
+                throw new Error(errorMessage);
+            }
             const ratings = await dbAll<VoteRatingDbObject>(`
                 SELECT vd.optionId, po.optionText, vd.rating 
                 FROM VoteDetails vd

@@ -62,31 +62,9 @@ const CreatePollComponent = () => {
                 toast.error('Error creating poll.');
             },
             updater: (store: RecordSourceSelectorProxy) => {
-                if (!userId) return;
-
-                const userRecord = store.get(userId);
-                if (!userRecord) return;
-
-                // Invalidate the user record to ensure the polls list is refetched
-                // the next time it's requested. This ensures data consistency.
-                userRecord.invalidate();
-
-                // Optimistically update the UI with the new poll.
-                // This provides a better user experience by showing the new poll immediately.
-                const payload = store.getRootField('createPoll');
-                if (!payload) return;
-
-                const pollEdge = payload.getLinkedRecord('pollEdge');
-                if (!pollEdge) return;
-
-                const newPoll = pollEdge.getLinkedRecord('node');
-                if (!newPoll) return;
-
-                const polls = userRecord.getLinkedRecords('polls', { permission: 'EDIT' });
-                if (polls) {
-                    const newPolls = [...polls, newPoll];
-                    userRecord.setLinkedRecords(newPolls, 'polls', { permission: 'EDIT' });
-                }
+                // Invalidate the entire store to ensure all queries are refetched.
+                // This will ensure the new poll appears in the list of polls.
+                store.invalidateStore();
             },
         });
     };

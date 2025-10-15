@@ -13,7 +13,7 @@ type RootQueryType {
 type Mutation {
   createPoll(title: String!, options: [PollOptionInput!]!, userId: ID!): CreatePollPayload
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionEditInput!]!): Poll
-  submitVote(pollId: ID!, userId: ID!, ratings: [VoteRatingInput!]!): SubmitVotePayload
+  submitVote(pollId: ID!, userId: ID!, ratings: [VoteRatingInput!]!): Poll
   signup(username: String!, email: String!, password: String!): User
   login(username: String!, password: String!): AuthPayload
 }
@@ -78,10 +78,6 @@ type CreatePollPayload {
 type PollEdge {
   cursor: String!
   node: Poll!
-}
-
-type SubmitVotePayload {
-  pollEdge: PollEdge!
 }
 
 type AuthPayload {
