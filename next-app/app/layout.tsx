@@ -6,6 +6,7 @@ import RelayEnvironment from "@/lib/RelayEnvironment";
 import AuthWrapper from "@/components/MenuBar/AuthWrapper";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider } from "@/lib/AuthContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,11 +20,13 @@ export default function RootLayout({
       <body className={inter.className}>
         <RelayEnvironmentProvider environment={RelayEnvironment}>
           <TooltipProvider>
-            <AuthWrapper />
-            <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              {children}
-            </main>
-            <Toaster />
+            <AuthProvider>
+              <AuthWrapper />
+              <main className="pt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                {children}
+              </main>
+              <Toaster />
+            </AuthProvider>
           </TooltipProvider>
         </RelayEnvironmentProvider>
       </body>

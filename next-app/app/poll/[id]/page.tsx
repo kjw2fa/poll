@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useLazyLoadQuery } from 'react-relay';
@@ -10,6 +10,7 @@ import { PollPageQuery } from './PollPage.query';
 import Vote from '@/components/Poll/Vote/Vote';
 import PollResults from '@/components/Poll/PollResults/PollResults';
 import EditPoll from '@/components/Poll/EditPoll/EditPoll';
+import { useAuth } from '@/lib/AuthContext';
 
 const PollPage = () => {
     const params = useParams();
@@ -29,14 +30,7 @@ const PollComponent = ({ id }: { id: string }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab') || 'vote';
-    const [userId, setUserId] = useState<string | null>(null);
-    const [loadingUser, setLoadingUser] = useState(true);
-
-    useEffect(() => {
-        const storedUserId = localStorage.getItem('userId');
-        setUserId(storedUserId);
-        setLoadingUser(false);
-    }, []);
+    const { userId, isLoggedIn, loading: loadingUser } = useAuth();
 
     const poll = data.poll;
 
@@ -48,7 +42,6 @@ const PollComponent = ({ id }: { id: string }) => {
         return <div>Loading...</div>;
     }
 
-    const isLoggedIn = !!userId;
     const canEdit = isLoggedIn && poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
 
     const handleTabChange = (value: string) => {
@@ -67,12 +60,12 @@ const PollComponent = ({ id }: { id: string }) => {
             </Tabs>
             
             {activeTab === 'vote' && !isLoggedIn && <div className="text-center p-4">You must be logged in to vote.</div>}
-            {activeTab === 'vote' && isLoggedIn && <Vote poll={poll} userId={userId} />}
+            {activeTab === 'vote' && isLoggedIn && userId && <Vote poll={poll} userId={userId} />}
 
             {activeTab === 'results' && <PollResults poll={poll} />}
 
             {activeTab === 'edit' && !canEdit && <div className="text-center p-4">You do not have permission to edit this poll.</div>}
-            {activeTab === 'edit' && canEdit && <EditPoll poll={poll} userId={userId} />}
+            {activeTab === 'edit' && canEdit && userId && <EditPoll poll={poll} userId={userId} />}
         </div>
     );
 };
