@@ -44,7 +44,12 @@ const PollComponent = ({ id }: { id: string }) => {
         return <div>Poll not found</div>;
     }
 
-    const canEdit = poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
+    if (loadingUser) {
+        return <div>Loading...</div>;
+    }
+
+    const isLoggedIn = !!userId;
+    const canEdit = isLoggedIn && poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
 
     const handleTabChange = (value: string) => {
         router.push(`/poll/${id}?tab=${value}`);
@@ -61,8 +66,12 @@ const PollComponent = ({ id }: { id: string }) => {
                 </TabsList>
             </Tabs>
             
-            {activeTab === 'vote' && (loadingUser ? <div>Loading user...</div> : <Vote poll={poll} userId={userId} />)}
+            {activeTab === 'vote' && !isLoggedIn && <div className="text-center p-4">You must be logged in to vote.</div>}
+            {activeTab === 'vote' && isLoggedIn && <Vote poll={poll} userId={userId} />}
+
             {activeTab === 'results' && <PollResults poll={poll} />}
+
+            {activeTab === 'edit' && !canEdit && <div className="text-center p-4">You do not have permission to edit this poll.</div>}
             {activeTab === 'edit' && canEdit && <EditPoll poll={poll} userId={userId} />}
         </div>
     );
