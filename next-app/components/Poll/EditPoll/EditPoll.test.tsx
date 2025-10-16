@@ -1,8 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import EditPoll from './EditPoll';
-import { useMutation } from 'react-relay';
 
 // Mock react-router-dom
 vi.mock('react-router-dom', async (importOriginal) => {

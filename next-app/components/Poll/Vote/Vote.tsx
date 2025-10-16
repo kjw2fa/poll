@@ -1,12 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { DndContext, UniqueIdentifier } from '@dnd-kit/core';
+import { DndContext, DragEndEvent } from '@dnd-kit/core';
 import { useMutation, graphql, useFragment } from 'react-relay';
 import { toast } from 'sonner';
 import { VoteSubmitVoteMutation as VoteSubmitVoteMutationType } from './__generated__/VoteSubmitVoteMutation.graphql';
 import { Vote_poll$key } from './__generated__/Vote_poll.graphql';
 import { Draggable, Droppable } from '../../ui/dnd';
 import { Badge } from '../../ui/badge';
-import { RecordSourceSelectorProxy } from 'relay-runtime';
 
 const VoteSubmitVoteMutation = graphql`
   mutation VoteSubmitVoteMutation($pollId: ID!, $userId: ID!, $ratings: [VoteRatingInput!]!) {
@@ -60,7 +59,7 @@ const Vote = ({ userId, poll: pollProp }: { userId: string, poll: Vote_poll$key 
     const [optionRatingMap, setOptionRatingMap] = useState(initialRatings);
     const [commitMutation] = useMutation<VoteSubmitVoteMutationType>(VoteSubmitVoteMutation);
 
-    const handleDragEnd = (event: any) => {
+    const handleDragEnd = (event: DragEndEvent) => {
         const { active, over } = event;
         if (!over) {
             return;

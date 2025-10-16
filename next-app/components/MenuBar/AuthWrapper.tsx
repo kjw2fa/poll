@@ -10,7 +10,6 @@ import { toast } from 'sonner';
 const AuthWrapper = () => {
     const [loggedIn, setLoggedIn] = useState(false);
     const [username, setUsername] = useState('');
-    const [userId, setUserId] = useState('');
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
     const router = useRouter();
@@ -18,10 +17,8 @@ const AuthWrapper = () => {
     useEffect(() => {
         const token = localStorage.getItem('token');
         const storedUsername = localStorage.getItem('username');
-        const storedUserId = localStorage.getItem('userId');
         setLoggedIn(!!token);
         setUsername(storedUsername || '');
-        setUserId(storedUserId || '');
     }, []);
 
     const handleLogin = ({ token, userId, username }: { token: string, userId: string, username: string }) => {
@@ -30,7 +27,6 @@ const AuthWrapper = () => {
         localStorage.setItem('username', username);
         setLoggedIn(true);
         setUsername(username);
-        setUserId(userId);
         setIsLoginModalOpen(false);
         router.refresh(); // Refresh the page to update server components
     };
@@ -41,12 +37,11 @@ const AuthWrapper = () => {
         localStorage.removeItem('username');
         setLoggedIn(false);
         setUsername('');
-        setUserId('');
         router.push('/');
         router.refresh();
     };
 
-    const handleSignup = ({ userId, username }: { userId: string, username: string }) => {
+    const handleSignup = () => {
         setIsSignupModalOpen(false);
         toast.success("Account successfully created!");
         // Note: The original app logged the user in after signup.

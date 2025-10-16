@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import { useLazyLoadQuery } from 'react-relay';
 import { MyPollsPageQuery as MyPollsQueryType } from './__generated__/MyPollsPageQuery.graphql';
 import { MyPollsPageQuery } from './MyPollsPage.query';
@@ -8,7 +8,8 @@ import PageContainer from '@/components/ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import PollCard from '@/components/Poll/PollCard/PollCard';
 import { PermissionType } from '@/../shared/generated-types';
-import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/AuthContext';
+import LoginRequired from '@/components/ui/LoginRequired';
 
 const MyPollsComponent = ({ userId }: { userId: string }) => {
   const data = useLazyLoadQuery<MyPollsQueryType>(MyPollsPageQuery, { userId, permission: PermissionType.EDIT });
@@ -39,20 +40,14 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
 };
 
 const MyPollsPage = () => {
-    const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
+    const { userId, isLoggedIn, loading } = useAuth();
 
-    useEffect(() => {
-        const storedUserId = localStorage.getItem('userId');
-        if (!storedUserId) {
-            router.push('/');
-        } else {
-            setUserId(storedUserId);
-        }
-    }, [router]);
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
-    if (!userId) {
-        return null; // Or a loading spinner
+    if (!isLoggedIn || !userId) {
+        return <LoginRequired featureName="view your polls" />;
     }
 
   return (

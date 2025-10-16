@@ -2,7 +2,6 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from './Login';
-import { useMutation } from 'react-relay';
 
 // Mock react-relay
 const mockCommitMutation = vi.fn();
@@ -13,7 +12,7 @@ vi.mock('react-relay', () => ({
 
 describe('Login component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMMocks();
   });
 
   test('renders login form', () => {

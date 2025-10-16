@@ -31,7 +31,6 @@ const pollCardFragment = graphql`
 
 const PollCard = (props: { poll: PollCard_poll$key, userId: string }) => {
   const poll = useFragment(pollCardFragment, props.poll);
-  const canEdit = poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === props.userId);
 
   const pollOptions = poll.options;
   const numberOfOptionsToShow = 2;

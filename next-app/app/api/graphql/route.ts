@@ -148,12 +148,14 @@ const resolvers: Resolvers = {
                 const result = await dbRun('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
                 const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [result.lastID]);
                 return user || null;
-            } catch (err: any) {
-                if (err.message.includes('UNIQUE constraint failed: Users.username')) {
-                    throw new Error('Username already exists.');
-                }
-                if (err.message.includes('UNIQUE constraint failed: Users.email')) {
-                    throw new Error('Email already exists.');
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    if (err.message.includes('UNIQUE constraint failed: Users.username')) {
+                        throw new Error('Username already exists.');
+                    }
+                    if (err.message.includes('UNIQUE constraint failed: Users.email')) {
+                        throw new Error('Email already exists.');
+                    }
                 }
                 throw err;
             }
@@ -262,7 +264,7 @@ const resolvers: Resolvers = {
         polls: (parent: UserDbObject, { permission }: { permission?: PermissionType | null }) => {
             const userId = parent.id;
             let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
-            const params: any[] = [userId];
+            const params: (string | number)[] = [userId];
             if (permission) {
                 query += ' AND PollPermissions.permission_type = ?';
                 params.push(permission);
@@ -288,9 +290,11 @@ const handler = startServerAndCreateNextHandler(server, {
             const token = authHeader.split(' ')[1];
             try {
                 const user = jwt.verify(token, JWT_SECRET);
-                return { userId: (user as any).userId };
+                if (typeof user === 'object' && user !== null && 'userId' in user) {
+                    return { userId: user.userId };
+                }
             } catch (err) {
-                // handle error
+                console.error(err);
             }
         }
         return {};

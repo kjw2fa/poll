@@ -1,14 +1,15 @@
 'use client';
 
-import React, { Suspense, useEffect, useState } from 'react';
+import React, { Suspense } from 'react';
 import PollForm, { PollFormData } from '@/components/PollForm/PollForm';
 import { useMutation, graphql } from 'react-relay';
 import { ErrorBoundary } from 'react-error-boundary';
 import { pageMutation as CreatePollMutationType } from './__generated__/pageMutation.graphql';
 import PageContainer from '@/components/ui/PageContainer';
-import { RecordSourceSelectorProxy, ROOT_ID, ConnectionHandler } from 'relay-runtime';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/AuthContext';
+import LoginRequired from '@/components/ui/LoginRequired';
 
 const pageMutation = graphql`
   mutation pageMutation($title: String!, $options: [PollOptionInput!]!, $userId: ID!) {
@@ -26,18 +27,8 @@ const pageMutation = graphql`
 
 const CreatePollComponent = () => {
     const router = useRouter();
-    const [userId, setUserId] = useState<string | null>(null);
+    const { userId, isLoggedIn, loading } = useAuth();
     const [commitMutation] = useMutation<CreatePollMutationType>(pageMutation);
-
-    useEffect(() => {
-        const storedUserId = localStorage.getItem('userId');
-        if (!storedUserId) {
-            router.push('/');
-        }
-        else {
-            setUserId(storedUserId);
-        }
-    }, [router]);
 
     const handleSave = (pollData: Omit<PollFormData, 'id'>) => {
         if (!userId) {
@@ -61,16 +52,18 @@ const CreatePollComponent = () => {
                 console.error('Error creating poll:', error);
                 toast.error('Error creating poll.');
             },
-            updater: (store: RecordSourceSelectorProxy) => {
-                // Invalidate the entire store to ensure all queries are refetched.
-                // This will ensure the new poll appears in the list of polls.
+            updater: (store) => {
                 store.invalidateStore();
             },
         });
     };
 
-    if (!userId) {
-        return null; // Or a loading spinner
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (!isLoggedIn) {
+        return <LoginRequired featureName="create a poll" />;
     }
 
     return (

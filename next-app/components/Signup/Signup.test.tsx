@@ -1,13 +1,7 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Signup from './Signup';
-
-// Mock fetch
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Signup from './Signup';
-import { useMutation } from 'react-relay';
 
 // Mock react-relay
 const mockCommitMutation = vi.fn();

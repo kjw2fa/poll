@@ -32,7 +32,7 @@ const EditPoll_poll = graphql`
 
 const EditPoll = ({ poll: pollProp, userId }: { poll: EditPoll_poll$key, userId: string | null }) => {
   const poll = useFragment(EditPoll_poll, pollProp);
-  const [commit, isInFlight] = useMutation<EditPollMutationType>(EditPollMutation);
+  const [commit] = useMutation<EditPollMutationType>(EditPollMutation);
 
   if (!userId) {
     return <div>Loading user...</div>;
