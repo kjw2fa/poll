@@ -4,7 +4,6 @@ import React, { createContext, useState, useEffect, useContext, ReactNode } from
 
 interface AuthContextType {
     userId: string | null;
-    isLoggedIn: boolean;
     loading: boolean;
 }
 
@@ -20,10 +19,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
     }, []);
 
-    const isLoggedIn = !!userId;
-
     return (
-        <AuthContext.Provider value={{ userId, isLoggedIn, loading }}>
+        <AuthContext.Provider value={{ userId, loading }}>
             {children}
         </AuthContext.Provider>
     );

@@ -40,13 +40,13 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
 };
 
 const MyPollsPage = () => {
-    const { userId, isLoggedIn, loading } = useAuth();
+    const { userId, loading } = useAuth();
 
     if (loading) {
         return <div>Loading...</div>;
     }
 
-    if (!isLoggedIn || !userId) {
+    if (!userId) {
         return <LoginRequired featureName="view your polls" />;
     }
 

@@ -31,7 +31,7 @@ const PollComponent = ({ id }: { id: string }) => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const activeTab = searchParams.get('tab') || 'vote';
-    const { userId, isLoggedIn, loading: loadingUser } = useAuth();
+    const { userId, loading: loadingUser } = useAuth();
 
     const poll = data.poll;
 
@@ -43,7 +43,7 @@ const PollComponent = ({ id }: { id: string }) => {
         return <div>Loading...</div>;
     }
 
-    const canEdit = isLoggedIn && poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
+    const canEdit = !!userId && poll.permissions?.some(p => p.permission_type === 'EDIT' && p.target_id === userId);
 
     const handleTabChange = (value: string) => {
         router.push(`/poll/${id}?tab=${value}`);
@@ -60,8 +60,8 @@ const PollComponent = ({ id }: { id: string }) => {
                 </TabsList>
             </Tabs>
             
-            {activeTab === 'vote' && !isLoggedIn && <LoginRequired featureName="vote on this poll" />}
-            {activeTab === 'vote' && isLoggedIn && userId && <Vote poll={poll} userId={userId} />}
+            {activeTab === 'vote' && !userId && <LoginRequired featureName="vote on this poll" />}
+            {activeTab === 'vote' && userId && <Vote poll={poll} userId={userId} />}
 
             {activeTab === 'results' && <PollResults poll={poll} />}
 

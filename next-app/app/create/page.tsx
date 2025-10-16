@@ -27,7 +27,7 @@ const pageMutation = graphql`
 
 const CreatePollComponent = () => {
     const router = useRouter();
-    const { userId, isLoggedIn, loading } = useAuth();
+    const { userId, loading } = useAuth();
     const [commitMutation] = useMutation<CreatePollMutationType>(pageMutation);
 
     const handleSave = (pollData: Omit<PollFormData, 'id'>) => {
@@ -62,7 +62,7 @@ const CreatePollComponent = () => {
         return <div>Loading...</div>;
     }
 
-    if (!isLoggedIn) {
+    if (!userId) {
         return <LoginRequired featureName="create a poll" />;
     }
 
