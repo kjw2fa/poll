@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "relay": "relay-compiler"
+    "relay": "relay-compiler",
+    "relay:watch": "relay-compiler --watch"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",

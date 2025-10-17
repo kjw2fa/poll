@@ -6,10 +6,10 @@ import { MyPollsPageQuery as MyPollsQueryType } from './__generated__/MyPollsPag
 import { MyPollsPageQuery } from './MyPollsPage.query';
 import PageContainer from '@/components/ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import PollCard from '@/components/Poll/PollCard/PollCard';
 import { PermissionType } from '@/../shared/generated-types';
 import { useAuth } from '@/lib/AuthContext';
 import LoginRequired from '@/components/ui/LoginRequired';
+import PollList from '@/components/Poll/PollList/PollList';
 
 const MyPollsComponent = ({ userId }: { userId: string }) => {
   const data = useLazyLoadQuery<MyPollsQueryType>(MyPollsPageQuery, { userId, permission: PermissionType.EDIT });
@@ -24,15 +24,7 @@ const MyPollsComponent = ({ userId }: { userId: string }) => {
           <TabsTrigger value="created">Owned Polls</TabsTrigger>
         </TabsList>
         <TabsContent value="created">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {createdPolls.length > 0 ? (
-              createdPolls.map(poll => (
-                poll && <PollCard key={poll.id} poll={poll} userId={userId} />
-              ))
-            ) : (
-              <p>No polls created yet.</p>
-            )}
-          </div>
+          <PollList polls={createdPolls} userId={userId} />
         </TabsContent>
       </Tabs>
     </div>

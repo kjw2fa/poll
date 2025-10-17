@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<5c1ac88ead3e12e08597fea5dfcb5a4f>>
+ * @generated SignedSource<<ed78acbd91b12fe3e65024c1e3aa3fca>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -18,8 +18,7 @@ export type MyPollsPageQuery$variables = {
 export type MyPollsPageQuery$data = {
   readonly user: {
     readonly polls: ReadonlyArray<{
-      readonly id: string;
-      readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
+      readonly " $fragmentSpreads": FragmentRefs<"PollList_polls">;
     }>;
   } | null | undefined;
 };
@@ -86,11 +85,10 @@ return {
             "name": "polls",
             "plural": true,
             "selections": [
-              (v4/*: any*/),
               {
                 "args": null,
                 "kind": "FragmentSpread",
-                "name": "PollCard_poll"
+                "name": "PollList_polls"
               }
             ],
             "storageKey": null
@@ -190,16 +188,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "0a1d5a47bfb8eb93c9df64cbd4696d27",
+    "cacheID": "70cb2960829da1c0fe9c6cb41de6b869",
     "id": null,
     "metadata": {},
     "name": "MyPollsPageQuery",
     "operationKind": "query",
-    "text": "query MyPollsPageQuery(\n  $userId: ID!\n  $permission: PermissionType\n) {\n  user(id: $userId) {\n    polls(permission: $permission) {\n      id\n      ...PollCard_poll\n    }\n    id\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n"
+    "text": "query MyPollsPageQuery(\n  $userId: ID!\n  $permission: PermissionType\n) {\n  user(id: $userId) {\n    polls(permission: $permission) {\n      ...PollList_polls\n      id\n    }\n    id\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n\nfragment PollList_polls on Poll {\n  id\n  ...PollCard_poll\n}\n"
   }
 };
 })();
 
-(node as any).hash = "cad56ee68f2696eb0f9026ff8bf82519";
+(node as any).hash = "7c2cd5c8f221085aafcf7692be1f212a";
 
 export default node;
