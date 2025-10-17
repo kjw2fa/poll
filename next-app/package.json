@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "concurrently 'next dev' 'npm:relay:watch'",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "relay": "relay-compiler",
-    "relay:watch": "relay-compiler --watch"
+    "relay:watch": "relay-compiler --watch",
+    "type-check:watch": "tsc --noEmit --watch"
   },
   "dependencies": {
     "@apollo/server": "^5.0.0",
@@ -51,6 +52,7 @@
     "@types/react-relay": "^18.2.1",
     "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.1",
+    "concurrently": "^9.2.1",
     "eslint": "^8",
     "eslint-config-next": "^15.5.4",
     "postcss": "^8",
