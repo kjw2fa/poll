@@ -5,9 +5,20 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
-import { dbGet, dbAll, dbRun } from '../../../lib/db-utils';
-import { PollDbObject, VoteDbObject, UserDbObject, PollOptionDbObject, PollPermissionsDbObject, VoteRatingDbObject } from '../../../../shared/db-types';
-import { Resolvers, PermissionType, TargetType } from '../../../../shared/generated-types';
+import prisma from '../../../lib/prisma';
+import { Prisma } from '@prisma/client';
+import { Resolvers } from '../../../../shared/resolver-types';
+import { PermissionType, TargetType } from '../../../../shared/schema-types';
+
+
+/**
+ * The context object is shared across all resolvers in a single GraphQL request.
+ * It's used to pass down request-specific information, such as authentication data.
+ */
+export interface Context {
+  /** The ID of the currently authenticated user, or undefined if the user is not logged in. */
+  userId?: number;
+}
 
 const typeDefs = fs.readFileSync(path.join(process.cwd(), '../shared/schema.graphql'), 'utf-8');
 
@@ -24,55 +35,59 @@ const toCursor = (id: number) => Buffer.from(String(id)).toString('base64');
 
 export const JWT_SECRET = 'your-secret-key';
 
-interface UserWithPassword extends UserDbObject {
-    password?: string;
-}
-
 const resolvers: Resolvers = {
     RootQueryType: {
         polls: async () => {
-            return dbAll<PollDbObject>('SELECT * FROM Polls', []);
+            return prisma.poll.findMany();
         },
         poll: async (parent: unknown, { id }: { id: string }) => {
             const { id: pollIdStr } = fromGlobalId(id);
             const pollId = parseInt(pollIdStr, 10);
-            const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [pollId]);
-            return poll || null;
+            return prisma.poll.findUnique({ where: { id: pollId } });
         },
         searchPolls: async (parent: unknown, { searchTerm }: { searchTerm: string }) => {
-            return dbAll<PollDbObject>('SELECT * FROM Polls WHERE title LIKE ?', [`%${searchTerm}%`]);
+            return prisma.poll.findMany({
+                where: {
+                    title: {
+                        contains: searchTerm,
+                        mode: 'insensitive',
+                    },
+                },
+            });
         },
         user: async (parent: unknown, { id }: { id: string }) => {
             const { id: userIdStr } = fromGlobalId(id);
             const userId = parseInt(userIdStr, 10);
-            const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [userId]);
-            return user || null;
+            return prisma.user.findUnique({ where: { id: userId } });
         },
     },
     Mutation: {
         createPoll: async (parent: unknown, { title, options, userId }: { title: string, options: { optionText: string }[], userId: string }) => {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
-            const result = await dbRun('INSERT INTO Polls (title) VALUES (?)', [title]);
-            const pollId = result.lastID;
 
-            for (const option of options) {
-                await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [pollId, option.optionText]);
-            }
-
-            await dbRun('INSERT INTO PollPermissions (pollId, permission_type, target_type, target_id) VALUES (?, ?, ?, ?)', [pollId, PermissionType.Edit, TargetType.User, parsedUserId]);
-            
-            const row = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [pollId]);
-            
-            if (!row) {
-                throw new Error('Failed to create poll');
-            }
+            const poll = await prisma.poll.create({
+                data: {
+                    title,
+                    creator: { connect: { id: parsedUserId } },
+                    options: {
+                        create: options.map(option => ({ optionText: option.optionText })),
+                    },
+                    permissions: {
+                        create: {
+                            permission_type: 'EDIT',
+                            target_type: 'USER',
+                            target_id: parsedUserId,
+                        },
+                    },
+                },
+            });
 
             return {
                 pollEdge: {
-                    cursor: toCursor(pollId),
-                    node: row,
-                }
+                    cursor: toCursor(poll.id),
+                    node: poll,
+                },
             };
         },
         submitVote: async (parent: unknown, { pollId, userId, ratings }: { pollId: string, userId: string, ratings: { optionId: string, rating: number }[] }) => {
@@ -81,29 +96,53 @@ const resolvers: Resolvers = {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
 
-            const user = await dbGet<UserDbObject>('SELECT username FROM Users WHERE id = ?', [parsedUserId]);
-            if (!user) {
-                throw new Error('User not found');
-            }
+            return prisma.$transaction(async (tx) => {
+                // First, delete existing vote ratings for the user and poll.
+                await tx.pollVoteRating.deleteMany({
+                    where: {
+                        vote: {
+                            pollId: parsedPollId,
+                            userId: parsedUserId,
+                        },
+                    },
+                });
 
-            // First, delete existing vote details for the user and poll.
-            await dbRun(`
-                DELETE FROM VoteDetails 
-                WHERE voteId IN (SELECT id FROM Votes WHERE pollId = ? AND userId = ?)
-            `, [parsedPollId, parsedUserId]);
+                // Then, create the new vote and ratings.
+                const vote = await tx.pollVote.upsert({
+                    where: {
+                        pollId_userId: {
+                            pollId: parsedPollId,
+                            userId: parsedUserId,
+                        },
+                    },
+                    update: {},
+                    create: {
+                        pollId: parsedPollId,
+                        userId: parsedUserId,
+                    },
+                });
 
-            const result = await dbRun('INSERT OR REPLACE INTO Votes (pollId, userId) VALUES (?, ?)', [parsedPollId, parsedUserId]);
-            const voteId = result.lastID;
+                await tx.pollVoteRating.createMany({
+                    data: ratings.map(({ optionId: optionIdStr, rating }) => {
+                        const { id: optionId } = fromGlobalId(optionIdStr);
+                        return {
+                            voteId: vote.id,
+                            optionId: parseInt(optionId, 10),
+                            rating,
+                        };
+                    }),
+                });
 
-            for (const { optionId: optionIdStr, rating } of ratings) {
-                const { id: optionId } = fromGlobalId(optionIdStr);
-                await dbRun('INSERT INTO VoteDetails (voteId, optionId, rating) VALUES (?, ?, ?)', [voteId, parseInt(optionId, 10), rating]);
-            }
-            const row = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
-            if (!row) {
-                throw new Error('Poll not found after voting');
-            }
-            return row;
+                const poll = await tx.poll.findUnique({ where: { id: parsedPollId } });
+                if (!poll) {
+                    throw new Error('Poll not found after voting');
+                }
+                // We return the entire poll object here so that Relay can update its cache. 
+                // When a mutation happens, it's best practice to return all the objects
+                // that were affected by the mutation so the client-side cache can be
+                // updated accurately.
+                return poll;
+            });
         },
         editPoll: async (parent: unknown, { pollId, userId, title, options }: { pollId: string, userId: string, title: string, options: { id?: string | null, optionText: string }[] }) => {
             const { id: pollIdStr } = fromGlobalId(pollId);
@@ -111,61 +150,107 @@ const resolvers: Resolvers = {
             const { id: userIdStr } = fromGlobalId(userId);
             const parsedUserId = parseInt(userIdStr, 10);
 
-            const permission = await dbGet<PollPermissionsDbObject>('SELECT permission_type FROM PollPermissions WHERE pollId = ? AND target_id = ? AND permission_type = ?', [parsedPollId, parsedUserId, PermissionType.Edit]);
+            // TODO: Use row level security in the database instead of checking permissions here.
+            const permission = await prisma.pollPermission.findFirst({
+                where: {
+                    pollId: parsedPollId,
+                    target_id: parsedUserId,
+                    permission_type: 'EDIT',
+                },
+            });
+
             if (!permission) {
                 throw new Error('No edit permission');
             }
 
-            await dbRun('UPDATE Polls SET title = ? WHERE id = ?', [title, parsedPollId]);
+            return prisma.$transaction(async (tx) => {
+                await tx.poll.update({
+                    where: { id: parsedPollId },
+                    data: { title },
+                });
 
-            const currentOptionsRows = await dbAll<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parsedPollId]);
+                const currentOptions = await tx.pollOption.findMany({
+                    where: { pollId: parsedPollId },
+                });
 
-            const newOptions = options;
+                const newOptions = options;
 
-            const newOptionIds = newOptions.map(o => o.id ? parseInt(fromGlobalId(o.id).id, 10) : null).filter(id => id !== null);
-            const removedOptions = currentOptionsRows.filter(o => !newOptionIds.includes(o.id));
-            const addedOptions = newOptions.filter(o => !o.id);
+                const newOptionIds = newOptions.map(o => o.id ? parseInt(fromGlobalId(o.id).id, 10) : null).filter(id => id !== null);
+                
+                const removedOptions = currentOptions.filter(o => !newOptionIds.includes(o.id));
+                const addedOptions = newOptions.filter(o => !o.id);
+                const updatedOptions = newOptions.filter(o => o.id && newOptionIds.includes(parseInt(fromGlobalId(o.id).id, 10)));
 
-            if (removedOptions.length > 0) {
-                const removedOptionIds = removedOptions.map(o => o.id);
-                const placeholders = removedOptionIds.map(() => '?').join(',');
-                await dbRun(`DELETE FROM PollOptions WHERE id IN (${placeholders})`, removedOptionIds);
-                await dbRun(`DELETE FROM VoteDetails WHERE optionId IN (${placeholders})`, removedOptionIds);
-            }
-
-            if (addedOptions.length > 0) {
-                for (const option of addedOptions) {
-                    await dbRun('INSERT INTO PollOptions (pollId, optionText) VALUES (?, ?)', [parsedPollId, option.optionText]);
+                if (removedOptions.length > 0) {
+                    await tx.pollVoteRating.deleteMany({
+                        where: {
+                            optionId: {
+                                in: removedOptions.map(o => o.id),
+                            },
+                        },
+                    });
+                    await tx.pollOption.deleteMany({
+                        where: {
+                            id: {
+                                in: removedOptions.map(o => o.id),
+                            },
+                        },
+                    });
                 }
-            }
-            
-            const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parsedPollId]);
-            return poll || null;
+
+                if (addedOptions.length > 0) {
+                    await tx.pollOption.createMany({
+                        data: addedOptions.map(o => ({
+                            pollId: parsedPollId,
+                            optionText: o.optionText,
+                        })),
+                    });
+                }
+
+                if (updatedOptions.length > 0) {
+                    for (const option of updatedOptions) {
+                        await tx.pollOption.update({
+                            where: { id: parseInt(fromGlobalId(option.id!).id, 10) },
+                            data: { optionText: option.optionText },
+                        });
+                    }
+                }
+
+                return tx.poll.findUnique({ where: { id: parsedPollId } });
+            });
         },
         signup: async (parent: unknown, { username, email, password }: { username: string, email: string, password: string }) => {
             const hashedPassword = await bcrypt.hash(password, 10);
             try {
-                const result = await dbRun('INSERT INTO Users (username, email, password) VALUES (?, ?, ?)', [username, email, hashedPassword]);
-                const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [result.lastID]);
-                return user || null;
-            } catch (err: unknown) {
-                if (err instanceof Error) {
-                    if (err.message.includes('UNIQUE constraint failed: Users.username')) {
-                        throw new Error('Username already exists.');
-                    }
-                    if (err.message.includes('UNIQUE constraint failed: Users.email')) {
-                        throw new Error('Email already exists.');
+                return await prisma.user.create({
+                    data: {
+                        username,
+                        email,
+                        password: hashedPassword,
+                    },
+                });
+            } catch (e) {
+                if (e instanceof Prisma.PrismaClientKnownRequestError) {
+                    if (e.code === 'P2002') {
+                        throw new Error('Username or email already exists.');
                     }
                 }
-                throw err;
+                throw e;
             }
         },
-        login: async (parent: unknown, { username, password }: { username: string, password: string }) => {
-            const user = await dbGet<UserWithPassword>('SELECT * FROM Users WHERE username = ? OR email = ?', [username, username]);
+        login: async (parent: unknown, { usernameOrEmail, password }: { usernameOrEmail: string, password: string }) => {
+            const user = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { username: usernameOrEmail },
+                        { email: usernameOrEmail },
+                    ],
+                },
+            });
             if (!user) {
                 throw new Error('Invalid username or password.');
             }
-            const match = await bcrypt.compare(password, user.password!)
+            const match = await bcrypt.compare(password, user.password);
             if (!match) {
                 throw new Error('Invalid username or password.');
             }
@@ -174,79 +259,48 @@ const resolvers: Resolvers = {
         }
     },
     Poll: {
-        id: (parent: PollDbObject) => toGlobalId('Poll', parent.id),
-        options: (parent: PollDbObject) => {
-            return dbAll<PollOptionDbObject>('SELECT id, optionText FROM PollOptions WHERE pollId = ?', [parent.id]);
+        id: (parent: {id: number}) => toGlobalId('Poll', parent.id),
+        options: (parent: {id: number}) => {
+            return prisma.pollOption.findMany({ where: { pollId: parent.id } });
         },
-        permissions: (parent: PollDbObject) => {
-            return dbAll<PollPermissionsDbObject>('SELECT * FROM PollPermissions WHERE pollId = ?', [parent.id]);
+        permissions: (parent: {id: number}) => {
+            return prisma.pollPermission.findMany({ where: { pollId: parent.id } });
         },
-        votes: (parent: PollDbObject) => {
-            return dbAll<VoteDbObject>('SELECT * FROM Votes WHERE pollId = ?', [parent.id]);
+        votes: (parent: {id: number}) => {
+            return prisma.pollVote.findMany({ where: { pollId: parent.id } });
         },
     },
     PollOption: {
-        id: (parent: PollOptionDbObject) => toGlobalId('PollOption', parent.id)
+        id: (parent: {id: number}) => toGlobalId('PollOption', parent.id)
     },
     Vote: {
-        id: (parent: VoteDbObject) => {
-            if (typeof parent.id !== 'number') {
-                console.error(`[GQL Vote.id] parent.id is not a number:`, parent);
-            }
-            return toGlobalId('Vote', parent.id);
-        },
-        user: async (parent: VoteDbObject) => {
-            if (typeof parent.userId !== 'number') {
-                const errorMessage = `[GQL Vote.user] parent.userId is not a number: ${JSON.stringify(parent)}`;
-                console.error(errorMessage);
-                throw new Error(errorMessage);
-            }
-            const user = await dbGet<UserDbObject>('SELECT * FROM Users WHERE id = ?', [parent.userId]);
+        id: (parent: {id: number}) => toGlobalId('Vote', parent.id),
+        user: async (parent: {userId: number}) => {
+            const user = await prisma.user.findUnique({ where: { id: parent.userId } });
             if (!user) {
-                const errorMessage = `[GQL Vote.user] User not found for userId: ${parent.userId}`;
-                console.error(errorMessage);
-                throw new Error(errorMessage);
+                throw new Error('User not found for vote');
             }
             return user;
         },
-        poll: async (parent: VoteDbObject) => {
-            if (typeof parent.pollId !== 'number') {
-                const errorMessage = `[GQL Vote.poll] parent.pollId is not a number: ${JSON.stringify(parent)}`;
-                console.error(errorMessage);
-                throw new Error(errorMessage);
-            }
-            const poll = await dbGet<PollDbObject>('SELECT * FROM Polls WHERE id = ?', [parent.pollId]);
+        poll: async (parent: {pollId: number}) => {
+            const poll = await prisma.poll.findUnique({ where: { id: parent.pollId } });
             if (!poll) {
-                const errorMessage = `[GQL Vote.poll] Poll not found for pollId: ${parent.pollId}`;
-                console.error(errorMessage);
-                throw new Error(errorMessage);
+                throw new Error('Poll not found for vote');
             }
             return poll;
         },
-        ratings: async (parent: VoteDbObject) => {
-            if (typeof parent.id !== 'number') {
-                const errorMessage = `[GQL Vote.ratings] parent.id is not a number: ${JSON.stringify(parent)}`;
-                console.error(errorMessage);
-                throw new Error(errorMessage);
-            }
-            const ratings = await dbAll<VoteRatingDbObject>(`
-                SELECT vd.optionId, po.optionText, vd.rating 
-                FROM VoteDetails vd
-                JOIN PollOptions po ON vd.optionId = po.id
-                WHERE vd.voteId = ?
-            `, [parent.id]);
-            return ratings.map(r => ({
+        ratings: (parent: {id: number}) => {
+            return prisma.pollVoteRating.findMany({
+                where: { voteId: parent.id },
+                include: { option: true },
+            }).then(ratings => ratings.map(r => ({
+                option: r.option,
                 rating: r.rating,
-                option: {
-                    id: r.optionId,
-                    optionText: r.optionText,
-                    pollId: parent.pollId
-                }
-            }));
-        }
+            })));
+        },
     },
     PollPermissions: {
-        target_id: (parent: PollPermissionsDbObject) => {
+        target_id: (parent: {target_id: number | null, target_type: string}) => {
             if (parent.target_type && parent.target_type === TargetType.User) {
                 if (parent.target_id) {
                     return toGlobalId('User', parent.target_id);
@@ -260,16 +314,19 @@ const resolvers: Resolvers = {
         rating: (parent) => parent.rating,
     },
     User: {
-        id: (parent: UserDbObject) => toGlobalId('User', parent.id),
-        polls: (parent: UserDbObject, { permission }: { permission?: PermissionType | null }) => {
+        id: (parent: {id: number}) => toGlobalId('User', parent.id),
+        polls: (parent: {id: number}, { permission }: { permission?: PermissionType | null }) => {
             const userId = parent.id;
-            let query = 'SELECT Polls.* FROM Polls JOIN PollPermissions ON Polls.id = PollPermissions.pollId WHERE PollPermissions.target_id = ?';
-            const params: (string | number)[] = [userId];
-            if (permission) {
-                query += ' AND PollPermissions.permission_type = ?';
-                params.push(permission);
-            }
-            return dbAll<PollDbObject>(query, params);
+            return prisma.poll.findMany({
+                where: {
+                    permissions: {
+                        some: {
+                            target_id: userId,
+                            permission_type: permission || undefined,
+                        },
+                    },
+                },
+            });
         },
     }
 };
@@ -280,7 +337,7 @@ const schema = makeExecutableSchema({
 });
 
 const server = new ApolloServer({
-  schema,
+    schema,
 });
 
 const handler = startServerAndCreateNextHandler(server, {

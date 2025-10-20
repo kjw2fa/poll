@@ -36,3 +36,5 @@ db.sqlite
 /client/dist
 /server/dist
 /next-app/db.sqlite
+
+/generated/prisma

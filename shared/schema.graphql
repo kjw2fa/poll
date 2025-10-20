@@ -15,7 +15,7 @@ type Mutation {
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionEditInput!]!): Poll
   submitVote(pollId: ID!, userId: ID!, ratings: [VoteRatingInput!]!): Poll
   signup(username: String!, email: String!, password: String!): User
-  login(username: String!, password: String!): AuthPayload
+  login(usernameOrEmail: String!, password: String!): AuthPayload
 }
 
 type Poll {

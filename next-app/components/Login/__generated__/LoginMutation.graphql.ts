@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<bc0257dd4a9b77ae6f14143039a22d99>>
+ * @generated SignedSource<<3a524cb077c4f8013bad3c28fc4e5b30>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -11,7 +11,7 @@
 import { ConcreteRequest } from 'relay-runtime';
 export type LoginMutation$variables = {
   password: string;
-  username: string;
+  usernameOrEmail: string;
 };
 export type LoginMutation$data = {
   readonly login: {
@@ -34,7 +34,7 @@ var v0 = {
 v1 = {
   "defaultValue": null,
   "kind": "LocalArgument",
-  "name": "username"
+  "name": "usernameOrEmail"
 },
 v2 = [
   {
@@ -47,8 +47,8 @@ v2 = [
       },
       {
         "kind": "Variable",
-        "name": "username",
-        "variableName": "username"
+        "name": "usernameOrEmail",
+        "variableName": "usernameOrEmail"
       }
     ],
     "concreteType": "AuthPayload",
@@ -105,16 +105,16 @@ return {
     "selections": (v2/*: any*/)
   },
   "params": {
-    "cacheID": "f703d963c9de4940aee8c5c91e2e7a2d",
+    "cacheID": "adc30f481ac885b0eeca9cba704f8e58",
     "id": null,
     "metadata": {},
     "name": "LoginMutation",
     "operationKind": "mutation",
-    "text": "mutation LoginMutation(\n  $username: String!\n  $password: String!\n) {\n  login(username: $username, password: $password) {\n    token\n    userId\n    username\n  }\n}\n"
+    "text": "mutation LoginMutation(\n  $usernameOrEmail: String!\n  $password: String!\n) {\n  login(usernameOrEmail: $usernameOrEmail, password: $password) {\n    token\n    userId\n    username\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "1ec5b26acb70dbb18b1f5e8162cd0599";
+(node as any).hash = "e0e15e7b564a93a4fb7f92f2671395f4";
 
 export default node;

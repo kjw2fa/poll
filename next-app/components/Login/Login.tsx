@@ -13,8 +13,8 @@ import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 
 const LoginMutation = graphql`
-  mutation LoginMutation($username: String!, $password: String!) {
-    login(username: $username, password: $password) {
+  mutation LoginMutation($usernameOrEmail: String!, $password: String!) {
+    login(usernameOrEmail: $usernameOrEmail, password: $password) {
       token
       userId
       username
@@ -23,7 +23,7 @@ const LoginMutation = graphql`
 `;
 
 const Login = ({ isOpen, onClose, onLogin, onSwitchToSignup }) => {
-  const [username, setUsername] = useState('');
+  const [usernameOrEmail, setUsernameOrEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const [commitMutation, isMutationInFlight] = useMutation<LoginMutationType>(LoginMutation);
@@ -31,7 +31,7 @@ const Login = ({ isOpen, onClose, onLogin, onSwitchToSignup }) => {
   const handleLogin = () => {
     commitMutation({
       variables: {
-        username,
+        usernameOrEmail,
         password,
       },
       onCompleted: (response) => {
@@ -60,14 +60,14 @@ const Login = ({ isOpen, onClose, onLogin, onSwitchToSignup }) => {
         <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
           <div className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="username">Username</Label>
+              <Label htmlFor="usernameOrEmail">Username or Email</Label>
               <Input
-                id="username"
+                id="usernameOrEmail"
                 type="text"
                 placeholder="m@example.com"
                 required
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                value={usernameOrEmail}
+                onChange={e => setUsernameOrEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">

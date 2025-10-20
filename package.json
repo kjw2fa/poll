@@ -7,18 +7,22 @@
     "shared"
   ],
   "scripts": {
-    "dev": "npm run dev -w next-app",
+    "dev": "docker-compose up -d && npm run dev -w next-app",
     "build": "npm run build -w next-app",
     "start": "npm run start -w next-app",
     "test": "npm run test -w next-app",
-    "codegen": "graphql-codegen --config codegen.yml",
-    "generate": "npm run codegen"
+    "codegen": "npm run relay -w next-app && graphql-codegen --config codegen.ts"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.0",
+    "@graphql-codegen/import-types-preset": "^3.0.1",
     "@graphql-codegen/typescript": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^5.0.0",
     "@graphql-codegen/typescript-resolvers": "^5.0.0",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.17.1",
+    "prisma": "^6.17.1"
   }
 }
