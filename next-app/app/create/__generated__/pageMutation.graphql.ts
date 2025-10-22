@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<fb86ede4bf92aaf3901f1396def7b415>>
+ * @generated SignedSource<<fe58e152baaddce49dbc4c2a45663c40>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -20,13 +20,8 @@ export type pageMutation$variables = {
 };
 export type pageMutation$data = {
   readonly createPoll: {
-    readonly pollEdge: {
-      readonly cursor: string;
-      readonly node: {
-        readonly id: string;
-        readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
-      };
-    };
+    readonly id: string;
+    readonly " $fragmentSpreads": FragmentRefs<"PollCard_poll">;
   } | null | undefined;
 };
 export type pageMutation = {
@@ -71,13 +66,6 @@ v4 = {
   "alias": null,
   "args": null,
   "kind": "ScalarField",
-  "name": "cursor",
-  "storageKey": null
-},
-v5 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
   "name": "id",
   "storageKey": null
 };
@@ -95,39 +83,16 @@ return {
       {
         "alias": null,
         "args": (v3/*: any*/),
-        "concreteType": "CreatePollPayload",
+        "concreteType": "Poll",
         "kind": "LinkedField",
         "name": "createPoll",
         "plural": false,
         "selections": [
+          (v4/*: any*/),
           {
-            "alias": null,
             "args": null,
-            "concreteType": "PollEdge",
-            "kind": "LinkedField",
-            "name": "pollEdge",
-            "plural": false,
-            "selections": [
-              (v4/*: any*/),
-              {
-                "alias": null,
-                "args": null,
-                "concreteType": "Poll",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v5/*: any*/),
-                  {
-                    "args": null,
-                    "kind": "FragmentSpread",
-                    "name": "PollCard_poll"
-                  }
-                ],
-                "storageKey": null
-              }
-            ],
-            "storageKey": null
+            "kind": "FragmentSpread",
+            "name": "PollCard_poll"
           }
         ],
         "storageKey": null
@@ -149,84 +114,61 @@ return {
       {
         "alias": null,
         "args": (v3/*: any*/),
-        "concreteType": "CreatePollPayload",
+        "concreteType": "Poll",
         "kind": "LinkedField",
         "name": "createPoll",
         "plural": false,
         "selections": [
+          (v4/*: any*/),
           {
             "alias": null,
             "args": null,
-            "concreteType": "PollEdge",
+            "kind": "ScalarField",
+            "name": "title",
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollOption",
             "kind": "LinkedField",
-            "name": "pollEdge",
-            "plural": false,
+            "name": "options",
+            "plural": true,
             "selections": [
               (v4/*: any*/),
               {
                 "alias": null,
                 "args": null,
-                "concreteType": "Poll",
-                "kind": "LinkedField",
-                "name": "node",
-                "plural": false,
-                "selections": [
-                  (v5/*: any*/),
-                  {
-                    "alias": null,
-                    "args": null,
-                    "kind": "ScalarField",
-                    "name": "title",
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "PollOption",
-                    "kind": "LinkedField",
-                    "name": "options",
-                    "plural": true,
-                    "selections": [
-                      (v5/*: any*/),
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "optionText",
-                        "storageKey": null
-                      }
-                    ],
-                    "storageKey": null
-                  },
-                  {
-                    "alias": null,
-                    "args": null,
-                    "concreteType": "PollPermissions",
-                    "kind": "LinkedField",
-                    "name": "permissions",
-                    "plural": true,
-                    "selections": [
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "permission_type",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
-                        "kind": "ScalarField",
-                        "name": "target_id",
-                        "storageKey": null
-                      },
-                      (v5/*: any*/)
-                    ],
-                    "storageKey": null
-                  }
-                ],
+                "kind": "ScalarField",
+                "name": "optionText",
                 "storageKey": null
               }
+            ],
+            "storageKey": null
+          },
+          {
+            "alias": null,
+            "args": null,
+            "concreteType": "PollPermissions",
+            "kind": "LinkedField",
+            "name": "permissions",
+            "plural": true,
+            "selections": [
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "permission_type",
+                "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "target_id",
+                "storageKey": null
+              },
+              (v4/*: any*/)
             ],
             "storageKey": null
           }
@@ -236,16 +178,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "91fcd0e4adf6889215860a59e26fd7e9",
+    "cacheID": "1b9cc486012e1c199df6695f9d95938a",
     "id": null,
     "metadata": {},
     "name": "pageMutation",
     "operationKind": "mutation",
-    "text": "mutation pageMutation(\n  $title: String!\n  $options: [PollOptionInput!]!\n  $userId: ID!\n) {\n  createPoll(title: $title, options: $options, userId: $userId) {\n    pollEdge {\n      cursor\n      node {\n        id\n        ...PollCard_poll\n      }\n    }\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n"
+    "text": "mutation pageMutation(\n  $title: String!\n  $options: [PollOptionInput!]!\n  $userId: ID!\n) {\n  createPoll(title: $title, options: $options, userId: $userId) {\n    id\n    ...PollCard_poll\n  }\n}\n\nfragment PollCard_poll on Poll {\n  id\n  title\n  options {\n    id\n    optionText\n  }\n  permissions {\n    permission_type\n    target_id\n    id\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "6ceaf1675c2ea0403d34bc6ab501bf46";
+(node as any).hash = "f2055e3e0a4509149aa8a5b445fac14d";
 
 export default node;

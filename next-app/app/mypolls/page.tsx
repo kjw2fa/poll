@@ -6,7 +6,7 @@ import { MyPollsPageQuery as MyPollsQueryType } from './__generated__/MyPollsPag
 import { MyPollsPageQuery } from './MyPollsPage.query';
 import PageContainer from '@/components/ui/PageContainer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PermissionType } from '@/../shared/generated-types';
+import { PermissionType } from '@/../shared/schema';
 import { useAuth } from '@/lib/AuthContext';
 import LoginRequired from '@/components/ui/LoginRequired';
 import PollList from '@/components/Poll/PollList/PollList';

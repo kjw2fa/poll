@@ -11,7 +11,7 @@ type RootQueryType {
 }
 
 type Mutation {
-  createPoll(title: String!, options: [PollOptionInput!]!, userId: ID!): CreatePollPayload
+  createPoll(title: String!, options: [PollOptionInput!]!, userId: ID!): Poll
   editPoll(pollId: ID!, userId: ID!, title: String!, options: [PollOptionEditInput!]!): Poll
   submitVote(pollId: ID!, userId: ID!, ratings: [VoteRatingInput!]!): Poll
   signup(username: String!, email: String!, password: String!): User
@@ -69,15 +69,6 @@ input VoteRatingInput {
 input PollOptionEditInput {
   id: ID
   optionText: String!
-}
-
-type CreatePollPayload {
-  pollEdge: PollEdge!
-}
-
-type PollEdge {
-  cursor: String!
-  node: Poll!
 }
 
 type AuthPayload {

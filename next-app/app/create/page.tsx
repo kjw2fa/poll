@@ -14,13 +14,8 @@ import LoginRequired from '@/components/ui/LoginRequired';
 const pageMutation = graphql`
   mutation pageMutation($title: String!, $options: [PollOptionInput!]!, $userId: ID!) {
     createPoll(title: $title, options: $options, userId: $userId) {
-        pollEdge {
-            cursor
-            node {
-                id
-                ...PollCard_poll
-            }
-        }
+        id
+        ...PollCard_poll
     }
   }
 `;
@@ -42,7 +37,7 @@ const CreatePollComponent = () => {
                 userId,
             },
             onCompleted: (response) => {
-                const pollId = response.createPoll?.pollEdge?.node?.id;
+                const pollId = response.createPoll?.id;
                 if (pollId) {
                     toast.success("Poll created successfully!");
                     router.push(`/poll/${pollId}`);
