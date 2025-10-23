@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Poll {
+  id          Int              @id @default(autoincrement())
+  title       String
+  creator     User             @relation("UserPolls", fields: [creatorId], references: [id])
+  creatorId   Int
+  options     PollOption[]
+  votes       PollVote[]
+  permissions PollPermission[]
+}
+
+model PollOption {
+  id         Int        @id @default(autoincrement())
+  optionText String
+  poll       Poll       @relation(fields: [pollId], references: [id])
+  pollId     Int
+  ratings    PollVoteRating[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  polls     Poll[]   @relation("UserPolls")
+  votes     PollVote[]
+}
+
+model PollVote {
+  id      Int              @id @default(autoincrement())
+  poll    Poll             @relation(fields: [pollId], references: [id])
+  pollId  Int
+  user    User             @relation(fields: [userId], references: [id])
+  userId  Int
+  ratings PollVoteRating[]
+
+  @@unique([pollId, userId])
+}
+
+model PollVoteRating {
+  id       Int        @id @default(autoincrement())
+  vote     PollVote   @relation(fields: [voteId], references: [id])
+  voteId   Int
+  option   PollOption @relation(fields: [optionId], references: [id])
+  optionId Int
+  rating   Int
+}
+
+model PollPermission {
+  id            Int            @id @default(autoincrement())
+  poll          Poll           @relation(fields: [pollId], references: [id])
+  pollId        Int
+  permission_type PermissionType
+  target_type   TargetType
+  target_id     Int?
+}
+
+enum PermissionType {
+  VIEW
+  VOTE
+  EDIT
+}
+
+enum TargetType {
+  USER
+  PUBLIC
+}
