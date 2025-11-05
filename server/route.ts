@@ -3,13 +3,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
-import prisma from '@/lib/prisma';
+import prisma from '@/lib/prisma.js';
 import { Prisma } from '@prisma/client';
-import { Resolvers, PermissionType, TargetType } from './schema';
-import { ResolverContext } from './types/context';
-import { fromGlobalId, toGlobalId } from './utils';
+import { Resolvers, PermissionType, TargetType } from '@shared/schema.js';
+import { ResolverContext } from './types/context.js';
+import { fromGlobalId, toGlobalId } from './utils.js';
 
-const typeDefs = fs.readFileSync(path.join(process.cwd(), 'server/schema.graphql'), 'utf-8');
+const typeDefs = fs.readFileSync(path.join(process.cwd(), 'shared/schema.graphql'), 'utf-8');
 
 const resolvers: Resolvers<ResolverContext> = {
     RootQueryType: {

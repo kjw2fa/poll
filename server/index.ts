@@ -4,7 +4,7 @@ import bodyParser from 'body-parser';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { schema } from './route';
-import prisma from '@/lib/prisma';
+import prisma from './lib/prisma';
 import { AuthUser, ResolverContext } from './types/context';
 import jwt from 'jsonwebtoken';
 import { JWT_SECRET, toGlobalId } from './utils';

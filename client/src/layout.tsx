@@ -2,11 +2,10 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { RelayEnvironmentProvider } from "react-relay/hooks";
-import RelayEnvironment from "@/lib/RelayEnvironment";
-import AuthWrapper from "@/components/MenuBar/AuthWrapper";
-import { Toaster } from "sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AuthProvider } from "@/lib/AuthContext";
+import RelayEnvironment from "@/lib/RelayEnvironment.js";
+import AuthWrapper from "@/components/MenuBar/AuthWrapper.js";
+import { TooltipProvider } from "@/components/ui/tooltip.js";
+import { AuthProvider } from "@/lib/AuthContext.js";
 
 const inter = Inter({ subsets: ["latin"] });
 

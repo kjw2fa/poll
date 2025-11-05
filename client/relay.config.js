@@ -1,6 +1,6 @@
 module.exports = {
-  // ...the rest of your Relay compiler config here
   src: './src',
-  schema: '../server/schema.graphql',
+  schema: '../shared/schema.graphql',
+  exclude: ['**/node_modules/**', '**/__mocks__/**', '**/__generated__/**'],
   language: 'typescript',
 };

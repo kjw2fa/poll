@@ -1,8 +1,11 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    // Use the latest ECMAScript features
+    "target": "esnext",
+    // Use the latest ECMAScript module system
+    "module": "nodenext",
+    // Use the same module resolution as Node.js
+    "moduleResolution": "nodenext",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

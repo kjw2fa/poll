@@ -1,6 +1,16 @@
 # Poll Application
 
-This is a full-stack poll application built with Next.js, React, Relay, and GraphQL.
+This is a simple poll application.
+
+## Module System
+
+This project uses the `nodenext` module system. This means that:
+
+- The `module` and `moduleResolution` options in the `tsconfig.json` files are set to `nodenext`.
+- Relative import paths must include the file extension (e.g., `import { foo } from './bar.js';`).
+- The project uses ECMAScript modules (ESM) instead of CommonJS.
+
+
 
 ## Tech Stack
 

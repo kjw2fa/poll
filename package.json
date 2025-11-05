@@ -8,11 +8,20 @@
     "shared"
   ],
   "scripts": {
-    "dev": "docker-compose up -d && npm run dev --workspace=server",
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
     "build": "npm run build --workspaces",
     "start": "npm run start --workspace=server",
     "test": "npm run test --workspaces",
-    "codegen": "graphql-codegen --config server/codegen.ts"
+    "codegen": "npm run codegen --workspaces",
+    "db:setup": "npm run db:create && npm run db:createuser && npm run db:grant && npm run db:migrate && npm run db:generate",
+    "db:create": "createdb poll || true",
+    "db:createuser": "psql -d poll -c \"CREATE USER polluser;\" || true",
+    "db:grant": "psql -d poll -c \"ALTER USER polluser WITH SUPERUSER;\"",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate"
+  },
+  "prisma": {
+    "schema": "server/prisma/schema.prisma"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^6.0.0",
@@ -20,6 +29,7 @@
     "@graphql-codegen/typescript": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^5.0.0",
     "@graphql-codegen/typescript-resolvers": "^5.0.0",
+    "concurrently": "^9.2.1",
     "typescript": "^5.9.2"
   },
   "dependencies": {
@@ -29,6 +39,7 @@
     "cors": "^2.8.5",
     "express": "^4.19.2",
     "graphql": "^16.9.0",
-    "prisma": "^6.17.1"
+    "prisma": "^6.17.1",
+    "vite-plugin-relay": "^2.1.0"
   }
 }

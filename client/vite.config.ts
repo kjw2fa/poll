@@ -1,13 +1,29 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import svgr from 'vite-plugin-svgr';
 import relay from 'vite-plugin-relay';
+import path from "path"
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [react(), relay],
-  server: {
-    proxy: {
-      '/graphql': 'http://localhost:4000'
-    }
-  }
+  // TODO add relay plugin back after fixing the build issues. There is some bug with the relay import.
+  plugins: [
+    react(),
+    svgr(),
+
+  ],
+  define: {
+    'global': {},
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/setupTests.ts',
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      "@shared": path.resolve(__dirname, "../shared"),
+    },
+  },
 });
